@@ -1,0 +1,26 @@
+name: Discord PR Notification
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord notification
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          title: "📬 새로운 PR이 열렸어요"
+          description: |
+            **${{ github.event.pull_request.title }}**
+            ${{ github.event.pull_request.body && '---' || '' }}
+          url: ${{ github.event.pull_request.html_url }}
+          username: Tenure PR Bot
+          color: 0x00aaff
+          fields: |
+            [
+              { "name": "작성자", "value": "${{ github.event.pull_request.user.login }}", "inline": true },
+              { "name": "브랜치", "value": "`${{ github.event.pull_request.head.ref }}` → `${{ github.event.pull_request.base.ref }}`", "inline": true }
+            ]

@@ -2,8 +2,6 @@
 
 Tenure는 OOTD 기반 패션 거래 서비스입니다.
 
-<br />
-
 ## 목차
 
 - [프로젝트 소개](#프로젝트-소개)
@@ -26,11 +24,9 @@ Tenure는 OOTD 사진 속 아이템을 말풍선 태그 단위로 확인하고, 
 
 ## 팀원 및 역할 분담
 
-| 이름 | 역할 |
-|------|------|
-| <!-- 이름 --> | <!-- 담당 페이지 / 기능 --> |
-| <!-- 이름 --> | <!-- 담당 페이지 / 기능 --> |
-| <!-- 이름 --> | <!-- 담당 페이지 / 기능 --> |
+| 이름 | [강병민](https://github.com/ByungMMin) | [김은혜](https://github.com/eunhyekimyeah) | [이규동](https://github.com/lgdl24) | [염지현](https://github.com/yjudy0531) |
+|------|------|------|------|------|
+| **역할** | <!-- 담당 페이지 / 기능 --> | <!-- 담당 페이지 / 기능 --> | <!-- 담당 페이지 / 기능 --> | <!-- 담당 페이지 / 기능 --> |
 
 <br />
 
@@ -117,7 +113,7 @@ src/
 
 ### PR
 
-- 제목: `[{type}/#{issue-number}] {description}`
+- 제목: `[{type}/#{issue-number}] {description}` -> 커밋 컨벤션과 동일
 - 본문: 작업 내용, 스크린샷(UI 변경 시), 리뷰 요청 사항 포함, 체크리스트
 - 머지 전 최소 1명 이상 Approve 필요
 
@@ -171,4 +167,6 @@ pnpm preview
                   └─ 마이페이지
 ```
 
-<!-- 상세 플로우 또는 Figma 링크 추가 -->
+<img width="11328" height="3088" alt="image" src="https://github.com/user-attachments/assets/4b4767c1-45d9-47e8-88cf-d204f15aa0ee" />
+
+

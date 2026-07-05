@@ -86,10 +86,10 @@ src/
 ### 브랜치
 
 ```
-[{type}/#{issue-number}]-{description}
+{type}/#{issue-number}-{description}
 
-예) [feat/#12]-feed-page
-    [fix/#34]-login-error
+예) feat/#12-feed-page
+    fix/#34-login-error
 ```
 
 | 타입 | 설명 |

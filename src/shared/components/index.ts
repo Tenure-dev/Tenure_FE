@@ -27,3 +27,6 @@ export type { CTAButtonProps } from './CTAButton';
 
 export { default as SelectBox } from './select-box/SelectBox';
 export type { SelectOption } from './select-box/SelectBox';
+
+export { default as Input } from './input/Input';
+export type { InputProps } from './input/Input';

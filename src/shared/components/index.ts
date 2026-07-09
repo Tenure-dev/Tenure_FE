@@ -24,3 +24,6 @@ export type { FollowButtonProps } from './FollowButton';
 
 export { default as CTAButton } from './CTAButton';
 export type { CTAButtonProps } from './CTAButton';
+
+export { default as SelectBox } from './select-box/SelectBox';
+export type { SelectOption } from './select-box/SelectBox';

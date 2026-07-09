@@ -1,6 +1,10 @@
 import { createBrowserRouter } from 'react-router-dom';
 import FeedPage from '@/pages/home/FeedPage';
 import MyPage from '@/pages/mypage/MyPage';
+import PurchaseHistoryPage from '@/pages/mypage/PurchaseHistoryPage';
+import SalesHistoryPage from '@/pages/mypage/SalesHistoryPage';
+import ShippingInputPage from '@/pages/mypage/ShippingInputPage';
+import TradeDetailPage from '@/pages/mypage/TradeDetailPage';
 import SearchPage from '@/pages/search/SearchPage';
 
 export const router = createBrowserRouter([
@@ -18,6 +22,10 @@ export const router = createBrowserRouter([
       // ]},
       // 로그인 필요 (ProtectedLayout)
       { path: 'mypage', element: <MyPage /> },
+      { path: 'purchase-history', element: <PurchaseHistoryPage /> },
+      { path: 'sales-history', element: <SalesHistoryPage /> },
+      { path: 'trade/:tradeId', element: <TradeDetailPage /> },
+      { path: 'trade/:tradeId/shipping', element: <ShippingInputPage /> },
     ],
   },
 ]);

@@ -6,26 +6,39 @@
   /* Brand */
   --color-brand: #00aaff;
   --color-brand-light: #70cfff;
+  --color-brand-dark: #0096e0;
   --color-brand-pale: #cceeff;
+  --color-brand-primary: #00aaff;
+  --color-brand-secondary: #70cfff;
+  --color-brand-tertiary: #cceeff;
 
   /* Text */
   --color-text-primary: #111111;
-  --color-text-secondary: #505050;
+  --color-text-secondary: #767676;
   --color-text-tertiary: #767676;
   --color-text-inverse: #ffffff;
-  --color-text-disabled: #999999;
+  --color-text-disabled: #a3b6b8;
 
   /* Background */
   --color-bg-white: #ffffff;
+  --color-bg-black: #111111;
   --color-bg-50: #f6f9f9;
   --color-bg-100: #edf0f2;
   --color-bg-200: #e8e8ed;
   --color-bg-300: #e2e6e8;
+  --color-gray-bg: #eaedf0;
+  --color-gray-press: #dde3e9;
+
+  /* Disabled */
+  --color-disabled: #a3b6b8;
 
   /* Border */
   --color-border-strong: #181d1b;
-  --color-border: #e4e9ec;
+  --color-border: #e2e6e8;
   --color-border-light: #f0f3f4;
+  --color-border-primary: #181d1b;
+  --color-border-secondary: #e4e9ec;
+  --color-border-tertiary: #f0f3f4;
   --color-border-cyan: #33d6ff;
 
   /* Semantic */
@@ -35,11 +48,16 @@
   --color-info: #0256e0;
 
   /* Label */
-  --color-label-1: #00aaff;
-  --color-label-2: #00a0f0;
-  --color-label-3: #0096e0;
-  --color-label-4: #a3b6b8;
-  --color-label-5: #33d6ff;
+  --color-label-default: #00aaff;
+  --color-label-hover: #00a0f0;
+  --color-label-press: #0096e0;
+  --color-label-disabled: #a3b6b8;
+  --color-label-focus: #33d6ff;
+
+  /* Gray */
+  --color-gray-default: #eaedf0;
+  --color-gray-press: #dde3e9;
+  --color-gray-disabled: #eaedf0;
 }
 
 /* Typography */
@@ -49,6 +67,9 @@
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
 
   /* Headline */
   --text-headline-1: 36px;

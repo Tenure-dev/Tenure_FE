@@ -1,8 +1,80 @@
 import { type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/shared/lib/utils';
 
-export type ButtonVariant = 'filled' | 'ghost' | 'solid';
-export type ButtonSize = '54' | '48' | '44' | '36';
-export type ButtonState = 'default' | 'focus' | 'press' | 'disabled';
+const buttonVariants = cva(
+  'inline-flex items-center justify-center gap-2 rounded-sm font-sans font-semibold',
+  {
+    variants: {
+      variant: {
+        filled: '',
+        ghost: '',
+        solid: '',
+      },
+      size: {
+        '54': 'h-[54px] w-[142px] px-[20px] text-[16px]',
+        '48': 'h-[48px] w-[135px] px-[18px] text-[15px]',
+        '44': 'h-[44px] w-[128px] px-[16px] text-[14px]',
+        '36': 'h-[36px] w-[128px] px-[14px] text-[14px]',
+      },
+      state: {
+        default: '',
+        focus: '',
+        press: '',
+        disabled: '',
+      },
+    },
+    compoundVariants: [
+      { variant: 'filled', state: 'default', class: 'border-none bg-brand text-text-primary' },
+      {
+        variant: 'filled',
+        state: 'focus',
+        class: 'border-none bg-brand-light text-text-primary',
+      },
+      { variant: 'filled', state: 'press', class: 'border-none bg-brand-dark text-text-primary' },
+      { variant: 'filled', state: 'disabled', class: 'border-none bg-disabled text-text-primary' },
+
+      { variant: 'ghost', state: 'default', class: 'border-none bg-gray-bg text-text-primary' },
+      {
+        variant: 'ghost',
+        state: 'focus',
+        class: 'box-border border-2 border-brand bg-gray-bg text-text-primary',
+      },
+      { variant: 'ghost', state: 'press', class: 'border-none bg-gray-press text-text-primary' },
+      {
+        variant: 'ghost',
+        state: 'disabled',
+        class: 'border-none bg-gray-bg text-text-disabled',
+      },
+
+      {
+        variant: 'solid',
+        state: 'default',
+        class: 'box-border border-2 border-border bg-white text-text-primary',
+      },
+      {
+        variant: 'solid',
+        state: 'focus',
+        class: 'box-border border-2 border-text-primary bg-white text-text-primary',
+      },
+      { variant: 'solid', state: 'press', class: 'border-none bg-text-primary text-white' },
+      {
+        variant: 'solid',
+        state: 'disabled',
+        class: 'border-none bg-gray-bg text-text-disabled',
+      },
+    ],
+    defaultVariants: {
+      variant: 'filled',
+      size: '54',
+      state: 'default',
+    },
+  },
+);
+
+export type ButtonVariant = NonNullable<VariantProps<typeof buttonVariants>['variant']>;
+export type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;
+export type ButtonState = NonNullable<VariantProps<typeof buttonVariants>['state']>;
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -13,76 +85,6 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
 }
 
-const sizeClasses: Record<ButtonSize, string> = {
-  '54': 'w-[142px] h-[54px] text-[16px] px-[20px]',
-  '48': 'w-[135px] h-[48px] text-[15px] px-[18px]',
-  '44': 'w-[128px] h-[44px] text-[14px] px-[16px]',
-  '36': 'w-[128px] h-[36px] text-[14px] px-[14px]',
-};
-
-const backgroundClasses: Record<ButtonVariant, Record<ButtonState, string>> = {
-  filled: {
-    default: 'bg-[#00AAFF]',
-    focus: 'bg-[#70CFFF]',
-    press: 'bg-[#0096E0]',
-    disabled: 'bg-[#A3B6B8]',
-  },
-  ghost: {
-    default: 'bg-[#EAEDF0]',
-    focus: 'bg-[#EAEDF0]',
-    press: 'bg-[#DDE3E9]',
-    disabled: 'bg-[#EAEDF0]',
-  },
-  solid: {
-    default: 'bg-white',
-    focus: 'bg-white',
-    press: 'bg-[#111111]',
-    disabled: 'bg-[#F5F6F8]',
-  },
-};
-
-const textClasses: Record<ButtonVariant, Record<ButtonState, string>> = {
-  filled: {
-    default: 'text-[#111111]',
-    focus: 'text-[#111111]',
-    press: 'text-[#111111]',
-    disabled: 'text-[#111111]',
-  },
-  ghost: {
-    default: 'text-[#111111]',
-    focus: 'text-[#111111]',
-    press: 'text-[#111111]',
-    disabled: 'text-[#A3B6B8]',
-  },
-  solid: {
-    default: 'text-[#111111]',
-    focus: 'text-[#111111]',
-    press: 'text-white',
-    disabled: 'text-[#A3B6B8]',
-  },
-};
-
-const borderClasses: Record<ButtonVariant, Record<ButtonState, string>> = {
-  filled: {
-    default: 'border-none',
-    focus: 'border-none',
-    press: 'border-none',
-    disabled: 'border-none',
-  },
-  ghost: {
-    default: 'border-none',
-    focus: 'box-border border-2 border-[#00AAFF]',
-    press: 'border-none',
-    disabled: 'border-none',
-  },
-  solid: {
-    default: 'box-border border-2 border-[#E2E6E8]',
-    focus: 'box-border border-2 border-[#111111]',
-    press: 'border-none',
-    disabled: 'border-none',
-  },
-};
-
 const Button = ({
   variant = 'filled',
   size = '54',
@@ -91,7 +93,7 @@ const Button = ({
   leftIcon,
   rightIcon,
   children,
-  className = '',
+  className,
   ...rest
 }: ButtonProps) => {
   const isDisabled = disabled || state === 'disabled';
@@ -101,7 +103,7 @@ const Button = ({
     <button
       type="button"
       disabled={isDisabled}
-      className={`inline-flex items-center justify-center gap-2 rounded-[4px] font-sans font-semibold ${sizeClasses[size]} ${backgroundClasses[variant][resolvedState]} ${textClasses[variant][resolvedState]} ${borderClasses[variant][resolvedState]} ${className}`}
+      className={cn(buttonVariants({ variant, size, state: resolvedState }), className)}
       {...rest}
     >
       {leftIcon}

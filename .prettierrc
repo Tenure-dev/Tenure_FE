@@ -5,5 +5,6 @@
   "tabWidth": 2,
   "printWidth": 100,
   "endOfLine": "lf",
-  "jsxSingleQuote": false
+  "jsxSingleQuote": false,
+  "plugins": ["prettier-plugin-tailwindcss"]
 }

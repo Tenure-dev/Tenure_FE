@@ -2,7 +2,6 @@ import { createBrowserRouter } from 'react-router-dom';
 import FeedPage from '@/pages/home/FeedPage';
 import MyPage from '@/pages/mypage/MyPage';
 import SearchPage from '@/pages/search/SearchPage';
-import TestPage from '@/pages/onboarding/Test';
 
 export const router = createBrowserRouter([
   {
@@ -19,7 +18,6 @@ export const router = createBrowserRouter([
       // ]},
       // 로그인 필요 (ProtectedLayout)
       { path: 'mypage', element: <MyPage /> },
-      { path: 'test', element: <TestPage /> },
     ],
   },
 ]);

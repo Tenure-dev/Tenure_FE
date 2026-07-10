@@ -1,7 +1,7 @@
 import buy from '@/shared/assets/buy.svg';
 import sell from '@/shared/assets/sell.svg';
 import tag from '@/shared/assets/tag_inactive.svg';
-/* import { Button } from '@/shared/components'; */
+import { Button } from '@/shared/components';
 
 const ProfileActions = () => (
   <div className="flex flex-col gap-2 px-4">

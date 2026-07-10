@@ -1,3 +1,4 @@
+import MyPageFeed from './component/MyPageFeed';
 import MyPageHeader from './component/MyPageHeader';
 import ProfileActions from './component/ProfileAction';
 import ProfileSection from './component/ProfileSection';
@@ -12,6 +13,7 @@ const MyPage = () => {
       <ProfileStats />
       <ProfileActions />
       <ProfileTabs />
+      <MyPageFeed />
     </div>
   );
 };

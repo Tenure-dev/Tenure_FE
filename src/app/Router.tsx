@@ -5,7 +5,11 @@ import PurchaseHistoryPage from '@/pages/mypage/PurchaseHistoryPage';
 import SalesHistoryPage from '@/pages/mypage/SalesHistoryPage';
 import ShippingInputPage from '@/pages/mypage/ShippingInputPage';
 import TradeDetailPage from '@/pages/mypage/TradeDetailPage';
+import SettingsPage from '@/pages/mypage/SettingsPage';
 import SearchPage from '@/pages/search/SearchPage';
+import LoginPage from '@/pages/onboarding/LoginPage';
+import SignupPage from '@/pages/onboarding/SignupPage';
+import TestPage from '@/pages/onboarding/Test';
 
 export const router = createBrowserRouter([
   {
@@ -16,6 +20,8 @@ export const router = createBrowserRouter([
       { index: true, element: <FeedPage /> },
       { path: 'feed', element: <FeedPage /> },
       { path: 'search', element: <SearchPage /> },
+      { path: 'login', element: <LoginPage /> },
+      { path: 'signup', element: <SignupPage /> },
       // 비로그인 전용 (PublicOnlyLayout)
       // { element: <PublicOnlyLayout />, children: [
       //   { path: 'login', element: <LoginPage /> },
@@ -26,6 +32,8 @@ export const router = createBrowserRouter([
       { path: 'sales-history', element: <SalesHistoryPage /> },
       { path: 'trade/:tradeId', element: <TradeDetailPage /> },
       { path: 'trade/:tradeId/shipping', element: <ShippingInputPage /> },
+      { path: 'settings', element: <SettingsPage /> },
+      { path: 'test', element: <TestPage /> },
     ],
   },
 ]);

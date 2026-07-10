@@ -8,11 +8,12 @@
     "build": "tsc -b && vite build && npx cap sync",
     "lint": "eslint .",
     "preview": "vite preview",
+    "icons": "node scripts/generate-icons.mjs",
     "prepare": "husky"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
-      "eslint --fix",
+      "npx eslint --fix",
       "prettier --write"
     ],
     "src/**/*.{css,md,json}": [

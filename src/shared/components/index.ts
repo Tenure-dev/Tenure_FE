@@ -27,3 +27,9 @@ export type { CTAButtonProps } from './CTAButton';
 
 export { default as SelectBox } from './select-box/SelectBox';
 export type { SelectOption } from './select-box/SelectBox';
+
+export { default as FeedCard } from './feed/FeedCard';
+export type { FeedCardProps } from './feed/FeedCard';
+
+export { default as FeedGrid } from './feed/FeedGrid';
+export type { FeedGridProps } from './feed/FeedGrid';

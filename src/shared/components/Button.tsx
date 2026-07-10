@@ -1,6 +1,6 @@
 import { type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/lib/cn';
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center gap-2 rounded-sm font-sans font-semibold',

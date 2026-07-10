@@ -13,7 +13,7 @@
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
-      "npx eslint --fix",
+      "eslint --fix",
       "prettier --write"
     ],
     "src/**/*.{css,md,json}": [

@@ -6,6 +6,7 @@ import SearchPage from '@/pages/search/SearchPage';
 import LoginPage from '@/pages/onboarding/LoginPage';
 import SignupPage from '@/pages/onboarding/SignupPage';
 import TestPage from '@/pages/onboarding/Test';
+import ChatListPage from '@/pages/chat/ChatListPage';
 
 export const router = createBrowserRouter([
   {
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
       { path: 'mypage', element: <MyPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'test', element: <TestPage /> },
+      { path: 'chatlist', element: <ChatListPage /> },
     ],
   },
 ]);

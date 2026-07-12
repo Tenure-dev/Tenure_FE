@@ -33,3 +33,6 @@ export type { FeedCardProps } from './feed/FeedCard';
 
 export { default as FeedGrid } from './feed/FeedGrid';
 export type { FeedGridProps } from './feed/FeedGrid';
+
+export { default as Input } from './input/Input';
+export type { InputProps } from './input/Input';

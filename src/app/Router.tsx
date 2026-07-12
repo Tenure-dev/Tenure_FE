@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
-import FeedPage from '@/pages/home/FeedPage';
+import RootLayout from './RootLayout';
+import FeedPage from '@/pages/feed/FeedPage';
 import MyPage from '@/pages/mypage/MyPage';
 import SettingsPage from '@/pages/mypage/SettingsPage';
 import SearchPage from '@/pages/search/SearchPage';
@@ -10,7 +11,7 @@ import TestPage from '@/pages/onboarding/Test';
 export const router = createBrowserRouter([
   {
     path: '/',
-    // element: <RootLayout />,   // TODO: RootLayout 추가
+    element: <RootLayout />,
     // errorElement: <NotFoundPage />,  // TODO: NotFoundPage 추가
     children: [
       { index: true, element: <FeedPage /> },

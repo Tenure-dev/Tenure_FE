@@ -43,6 +43,11 @@ const ChatRoomPage = ({
     setMessages((prev) => [...prev, { id: Date.now(), mine: true, images, time: nowTime() }]);
   };
 
+  // 텍스트 전송 → 내 메시지로 추가 (로컬)
+  const handleSendText = (text: string) => {
+    setMessages((prev) => [...prev, { id: Date.now(), mine: true, text, time: nowTime() }]);
+  };
+
   const handleBlock = () => {
     setBlocked(true);
     setToast(
@@ -88,7 +93,7 @@ const ChatRoomPage = ({
         name={partnerName}
         scrollTrigger={vvHeight}
       />
-      <ChatInput onSendImages={handleSendImages} />
+      <ChatInput onSendImages={handleSendImages} onSendText={handleSendText} />
 
       {toast && (
         <div className="absolute inset-x-0 bottom-3 flex justify-center px-4">

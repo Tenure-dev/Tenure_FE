@@ -8,7 +8,15 @@ import ChatMoreSheet from './component/ChatMoreSheet';
 import { Toast } from '@/shared/components';
 import { useVisualViewportHeight } from '@/shared/hooks/useVisualViewport';
 import { chatProduct, chatMessages, chatDate, partnerName, partnerAvatar } from './roomMock';
-import type { ChatRole, SaleStatus, TradeStatus } from '@/features/chat/model/types';
+import type { ChatMessage, ChatRole, SaleStatus, TradeStatus } from '@/features/chat/model/types';
+
+// 현재 시각을 '오전/오후 H:MM' 형식으로
+const nowTime = () => {
+  const d = new Date();
+  const ampm = d.getHours() < 12 ? '오전' : '오후';
+  const hh = d.getHours() % 12 === 0 ? 12 : d.getHours() % 12;
+  return `${ampm} ${hh}:${d.getMinutes().toString().padStart(2, '0')}`;
+};
 
 // role: 'buyer' | 'seller' (내 입장)
 // saleStatus: 'onSale' 판매중 / 'unlisted' 미판매
@@ -27,6 +35,13 @@ const ChatRoomPage = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [toast, setToast] = useState<ReactNode>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>(chatMessages);
+
+  // 이미지 첨부 → 내 이미지 메시지로 추가 (로컬)
+  const handleSendImages = (files: FileList) => {
+    const images = Array.from(files).map((file) => URL.createObjectURL(file));
+    setMessages((prev) => [...prev, { id: Date.now(), mine: true, images, time: nowTime() }]);
+  };
 
   const handleBlock = () => {
     setBlocked(true);
@@ -67,13 +82,13 @@ const ChatRoomPage = ({
         tradeStatus={tradeStatus}
       />
       <ChatMessages
-        messages={chatMessages}
+        messages={messages}
         date={chatDate}
         avatar={partnerAvatar}
         name={partnerName}
         scrollTrigger={vvHeight}
       />
-      <ChatInput />
+      <ChatInput onSendImages={handleSendImages} />
 
       {toast && (
         <div className="absolute inset-x-0 bottom-3 flex justify-center px-4">

@@ -30,3 +30,6 @@ export type { SelectOption } from './select-box/SelectBox';
 
 export { default as Input } from './input/Input';
 export type { InputProps } from './input/Input';
+
+export { default as Toast } from './Toast';
+export type { ToastProps } from './Toast';

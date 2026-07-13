@@ -11,6 +11,7 @@ export const chatRooms: ChatRoom[] = [
     date: '6월 21일',
     unread: 1,
     avatar: 'https://picsum.photos/seed/gildong/100',
+    category: 'sell',
   },
   {
     id: 2,
@@ -20,6 +21,7 @@ export const chatRooms: ChatRoom[] = [
     date: '6월 23일',
     unread: 3,
     avatar: 'https://picsum.photos/seed/yujin/100',
+    category: 'buy',
   },
   {
     id: 3,
@@ -29,6 +31,7 @@ export const chatRooms: ChatRoom[] = [
     date: '6월 25일',
     unread: 0,
     avatar: 'https://picsum.photos/seed/ssucc/100',
+    category: 'sell',
   },
   {
     id: 4,
@@ -38,5 +41,6 @@ export const chatRooms: ChatRoom[] = [
     date: '6월 19일',
     unread: 0,
     avatar: 'https://picsum.photos/seed/kkkas/100',
+    category: 'buy',
   },
 ];

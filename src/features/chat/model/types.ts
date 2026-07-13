@@ -6,6 +6,7 @@ export type ChatRoom = {
   date: string;
   unread: number;
   avatar: string;
+  category: 'buy' | 'sell'; // 구매 채팅 / 판매 채팅
 };
 
 // 채팅방 내 내 역할 (buyer: 구매자 / seller: 판매자)

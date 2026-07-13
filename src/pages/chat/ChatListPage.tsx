@@ -1,18 +1,38 @@
+import { useLocation, useNavigate } from 'react-router-dom';
 import ChatListFilter from './component/ChatListFilter';
 import ChatListHeader from './component/ChatListHeader';
 import ChatListItem from './component/ChatListItem';
 import { chatRooms } from './mock';
+import { Toast } from '@/shared/components';
+import { useState } from 'react';
 
 const ChatListPage = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const leftChat = (location.state as { leftChat?: boolean } | null)?.leftChat ?? false;
+  const [toast, setToast] = useState<string | null>(leftChat ? '채팅방을 나갔습니다.' : null);
+  const [filter, setFilter] = useState('전체');
+
+  const visibleRooms = chatRooms.filter((room) => {
+    if (filter === '구매 채팅') return room.category === 'buy';
+    if (filter === '판매 채팅') return room.category === 'sell';
+    if (filter === '읽지않음') return room.unread > 0;
+    return true;
+  });
   return (
     <div className="bg-bg-white text-text-primary relative flex min-h-screen flex-col">
-      <ChatListHeader />
-      <ChatListFilter />
+      <ChatListHeader onBack={() => navigate(-1)} />
+      <ChatListFilter active={filter} onChange={setFilter} />
       <div>
-        {chatRooms.map((room) => (
+        {visibleRooms.map((room) => (
           <ChatListItem key={room.id} room={room} />
         ))}
       </div>
+      {toast && (
+        <div className="absolute inset-x-0 bottom-3 flex justify-center px-4">
+          <Toast message={toast} onClose={() => setToast(null)} />
+        </div>
+      )}
     </div>
   );
 };

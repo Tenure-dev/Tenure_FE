@@ -1,8 +1,12 @@
 import type { ChatRoom } from '@/features/chat/model/types';
+import { Link } from 'react-router-dom';
 
 const ChatListItem = ({ room }: { room: ChatRoom }) => {
   return (
-    <div className="border-border-secondary flex items-center gap-3 border-b px-5 py-4">
+    <Link
+      to={`/chat/${room.id}`}
+      className="border-border-secondary flex items-center gap-3 border-b px-5 py-4"
+    >
       <img
         src={room.avatar}
         alt={room.name}
@@ -20,7 +24,7 @@ const ChatListItem = ({ room }: { room: ChatRoom }) => {
           {room.unread}
         </span>
       )}
-    </div>
+    </Link>
   );
 };
 

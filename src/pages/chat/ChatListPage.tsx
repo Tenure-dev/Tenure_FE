@@ -4,7 +4,7 @@ import ChatListHeader from './component/ChatListHeader';
 import ChatListItem from './component/ChatListItem';
 import { chatRooms } from './mock';
 import { Toast } from '@/shared/components';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const ChatListPage = () => {
   const location = useLocation();
@@ -12,6 +12,11 @@ const ChatListPage = () => {
   const leftChat = (location.state as { leftChat?: boolean } | null)?.leftChat ?? false;
   const [toast, setToast] = useState<string | null>(leftChat ? '채팅방을 나갔습니다.' : null);
   const [filter, setFilter] = useState('전체');
+
+  // leftChat 신호는 한 번만 쓰고 히스토리에서 비운다 (새로고침 시 토스트 재등장 방지)
+  useEffect(() => {
+    if (leftChat) window.history.replaceState({}, '');
+  }, [leftChat]);
 
   const visibleRooms = chatRooms.filter((room) => {
     if (filter === '구매 채팅') return room.category === 'buy';
@@ -29,7 +34,7 @@ const ChatListPage = () => {
         ))}
       </div>
       {toast && (
-        <div className="absolute inset-x-0 bottom-3 flex justify-center px-4">
+        <div className="fixed inset-x-0 bottom-3 flex justify-center px-4">
           <Toast message={toast} onClose={() => setToast(null)} />
         </div>
       )}

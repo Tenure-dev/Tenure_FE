@@ -1,4 +1,4 @@
-import image from '@/shared/assets/imagee.svg';
+import image from '@/shared/assets/image.svg';
 
 const ChatInput = () => (
   <div className="border-border-secondary flex items-center border-t px-4 py-3">

@@ -57,7 +57,7 @@ const ChatActions = ({
       <Button
         variant={right.filled ? 'filled' : 'solid'}
         size="36"
-        className={right.filled ? 'text-body-2 w-full! flex-1' : 'text-body-2 w-full! flex-1'}
+        className="text-body-2 w-full! flex-1"
       >
         {right.label}
       </Button>

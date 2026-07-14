@@ -7,6 +7,7 @@ import SalesHistoryPage from '@/pages/mypage/SalesHistoryPage';
 import ShippingInputPage from '@/pages/mypage/ShippingInputPage';
 import TradeDetailPage from '@/pages/mypage/TradeDetailPage';
 import SettingsPage from '@/pages/mypage/SettingsPage';
+import ItemDetailPage from '@/pages/item/ItemDetailPage';
 import SearchPage from '@/pages/search/SearchPage';
 import LoginPage from '@/pages/onboarding/LoginPage';
 import SignupPage from '@/pages/onboarding/SignupPage';
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
       { path: 'sales-history', element: <SalesHistoryPage /> },
       { path: 'trade/:tradeId', element: <TradeDetailPage /> },
       { path: 'trade/:tradeId/shipping', element: <ShippingInputPage /> },
+      { path: 'item/:itemId', element: <ItemDetailPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'test', element: <TestPage /> },
     ],

@@ -24,7 +24,7 @@ const DoubleButton = ({
       <Button
         variant="filled"
         size="54"
-        className="!w-[335px]"
+        className="!w-full"
         disabled={disabled}
         onClick={onLeftClick}
       >
@@ -35,11 +35,11 @@ const DoubleButton = ({
 
   if (layout === 'half') {
     return (
-      <div className="flex w-[335px] gap-[10px]">
+      <div className="flex w-full gap-[10px]">
         <Button
           variant="ghost"
           size="54"
-          className="!w-[162.5px]"
+          className="min-w-0 flex-1"
           disabled={disabled}
           onClick={onLeftClick}
         >
@@ -48,7 +48,7 @@ const DoubleButton = ({
         <Button
           variant="filled"
           size="54"
-          className="!w-[162.5px]"
+          className="min-w-0 flex-1"
           disabled={disabled}
           onClick={onRightClick}
         >
@@ -59,11 +59,11 @@ const DoubleButton = ({
   }
 
   return (
-    <div className="flex w-[335px] gap-[10px]">
+    <div className="flex w-full gap-[10px]">
       <Button
         variant="ghost"
         size="54"
-        className="!w-[220px]"
+        className="min-w-0 flex-[2]"
         disabled={disabled}
         onClick={onLeftClick}
       >
@@ -72,7 +72,7 @@ const DoubleButton = ({
       <Button
         variant="filled"
         size="54"
-        className="!w-[105px]"
+        className="min-w-0 flex-1"
         disabled={disabled}
         onClick={onRightClick}
       >

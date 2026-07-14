@@ -1,6 +1,11 @@
 @import 'pretendard/dist/web/variable/pretendardvariable.css';
 @import 'tailwindcss';
 
+/* Breakpoint */
+@theme {
+  --breakpoint-md: 600px;
+}
+
 /* Color */
 @theme {
   /* Brand */
@@ -22,10 +27,10 @@
   /* Background */
   --color-bg-white: #ffffff;
   --color-bg-black: #111111;
-  --color-bg-50: #f6f9f9;
-  --color-bg-100: #edf0f2;
-  --color-bg-200: #e8e8ed;
-  --color-bg-300: #e2e6e8;
+  --color-bg-quaternary: #f6f9f9;
+  --color-bg-tertiary: #edf0f2;
+  --color-bg-secondary: #e8e8ed;
+  --color-bg-primary: #e2e6e8;
   --color-gray-bg: #eaedf0;
   --color-gray-press: #dde3e9;
 
@@ -171,4 +176,14 @@
   --radius-xxl: 20px;
   --radius-xxxl: 24px;
   --radius-full: 9999px;
+}
+
+/* Utilities */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }

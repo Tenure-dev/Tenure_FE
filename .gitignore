@@ -31,3 +31,5 @@ dist-ssr
 # capacitor native folders
 /ios
 /android
+
+CLAUDE.md

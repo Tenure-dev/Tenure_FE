@@ -27,5 +27,11 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    files: ['src/shared/lib/cn.ts'],
+    rules: {
+      'tailwindcss/no-custom-classname': 'off',
+    },
+  },
   prettierConfig,
 ])

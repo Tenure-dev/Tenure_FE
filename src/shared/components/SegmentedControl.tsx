@@ -6,7 +6,7 @@ export interface SegmentedControlProps {
 
 const SegmentedControl = ({ tabs, activeTab, onChange }: SegmentedControlProps) => {
   return (
-    <div className="flex h-[42px] w-[375px]">
+    <div className="bg-bg-white flex h-[42px] w-full">
       {tabs.map((tab) => {
         const isActive = tab === activeTab;
 
@@ -15,7 +15,7 @@ const SegmentedControl = ({ tabs, activeTab, onChange }: SegmentedControlProps) 
             key={tab}
             type="button"
             onClick={() => onChange(tab)}
-            className={`relative flex flex-1 items-center justify-center font-sans text-[14px] font-semibold ${
+            className={`text-body-1 relative flex flex-1 items-center justify-center font-medium ${
               isActive ? 'text-text-primary' : 'text-text-secondary'
             }`}
           >

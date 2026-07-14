@@ -16,11 +16,11 @@ const SegmentedControl = ({ tabs, activeTab, onChange }: SegmentedControlProps) 
             type="button"
             onClick={() => onChange(tab)}
             className={`relative flex flex-1 items-center justify-center font-sans text-[14px] font-semibold ${
-              isActive ? 'text-[#111111]' : 'text-[#767676]'
+              isActive ? 'text-text-primary' : 'text-text-secondary'
             }`}
           >
             {tab}
-            {isActive && <span className="absolute bottom-0 left-0 h-[2px] w-full bg-[#00AAFF]" />}
+            {isActive && <span className="bg-brand absolute bottom-0 left-0 h-[2px] w-full" />}
           </button>
         );
       })}

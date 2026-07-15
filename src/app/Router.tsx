@@ -7,6 +7,8 @@ import SalesHistoryPage from '@/pages/mypage/SalesHistoryPage';
 import ShippingInputPage from '@/pages/mypage/ShippingInputPage';
 import TradeDetailPage from '@/pages/mypage/TradeDetailPage';
 import SettingsPage from '@/pages/mypage/SettingsPage';
+import NotificationSettingsPage from '@/pages/mypage/NotificationSettingsPage';
+import WithdrawPage from '@/pages/mypage/WithdrawPage';
 import ItemDetailPage from '@/pages/item/ItemDetailPage';
 import SearchPage from '@/pages/search/SearchPage';
 import LoginPage from '@/pages/onboarding/LoginPage';
@@ -38,6 +40,8 @@ export const router = createBrowserRouter([
       { path: 'trade/:tradeId/shipping', element: <ShippingInputPage /> },
       { path: 'item/:itemId', element: <ItemDetailPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      { path: 'settings/notifications', element: <NotificationSettingsPage /> },
+      { path: 'settings/withdraw', element: <WithdrawPage /> },
       { path: 'test', element: <TestPage /> },
 
       { path: 'chat', element: <ChatListPage /> },

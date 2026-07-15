@@ -19,7 +19,7 @@ const FeeChip = ({ value, onChange }: FeeChipProps) => {
             type="button"
             onClick={() => onChange(option)}
             className={`inline-flex h-[40px] w-[103px] items-center justify-center rounded-[16px] font-sans text-[14px] font-semibold ${
-              isSelected ? 'bg-[#111111] text-[#FFFFFF]' : 'bg-[#E2E6E8] text-[#111111]'
+              isSelected ? 'bg-bg-black text-text-inverse' : 'bg-border text-text-primary'
             }`}
           >
             {option}

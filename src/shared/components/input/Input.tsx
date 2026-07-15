@@ -18,7 +18,7 @@ const boxVariants = cva('flex w-full items-center border-[1.5px] bg-bg-white tra
       active: 'border-border-strong',
       error: 'border-error',
       completion: 'border-border',
-      disabled: 'cursor-not-allowed border-border-light bg-bg-100',
+      disabled: 'bg-bg-100 cursor-not-allowed border-border-light',
     },
   },
   defaultVariants: {

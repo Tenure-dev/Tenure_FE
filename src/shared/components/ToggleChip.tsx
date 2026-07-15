@@ -10,7 +10,7 @@ const ToggleChip = ({ label, selected, onToggle }: ToggleChipProps) => {
       type="button"
       onClick={onToggle}
       className={`inline-flex h-[35px] w-[55px] items-center justify-center rounded-[12px] font-sans text-[14px] font-semibold ${
-        selected ? 'bg-[#111111] text-[#FFFFFF]' : 'bg-[#EAEDF0] text-[#111111]'
+        selected ? 'bg-bg-black text-text-inverse' : 'bg-gray-bg text-text-primary'
       }`}
     >
       {label}

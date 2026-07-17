@@ -3,7 +3,7 @@ import BottomNavBar from '@/shared/components/BottomNavBar';
 import { cn } from '@/shared/lib/cn';
 
 // 하단 탭바를 숨길 경로 (카메라/OOTD 등록 플로우)
-const HIDE_NAV_PATHS = ['/ootd/camera', '/ootd/create', '/ootd/tag'];
+const HIDE_NAV_PATHS = ['/ootd/camera', '/ootd/create', '/ootd/tag', '/ootd/preview'];
 
 const RootLayout = () => {
   const { pathname } = useLocation();

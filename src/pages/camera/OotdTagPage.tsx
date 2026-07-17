@@ -44,8 +44,11 @@ const OotdTagPage = () => {
     setExpanded(true);
   };
 
-  // 선택 완료: 실제 게시글 작성은 다음 작업 (지금은 이전 화면으로 복귀)
-  const handleComplete = () => navigate(-1);
+  // 선택 완료 → 게시물 미리보기로 (사진 + 선택한 태그 아이템 전달)
+  const handleComplete = () => {
+    const selected = items.filter((item) => selectedIds.has(item.id));
+    navigate('/ootd/preview', { state: { photo, items: selected } });
+  };
 
   const title = phase === 'loading' ? '새 게시물 작성' : 'OOTD 등록';
 
@@ -60,7 +63,7 @@ const OotdTagPage = () => {
       </header>
 
       {/* 진행바 */}
-      <div className="bg-bg-100 h-1 w-full">
+      <div className="bg-bg-tertiary h-1 w-full">
         <div className={phase === 'loading' ? 'bg-brand h-full w-1/3' : 'bg-brand h-full w-2/3'} />
       </div>
 

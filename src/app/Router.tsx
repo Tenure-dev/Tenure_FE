@@ -17,6 +17,7 @@ import ChatRoomPage from '@/pages/chat/ChatRoomPage';
 import OotdTagPage from '@/pages/camera/OotdTagPage';
 import OotdCreatePage from '@/pages/camera/OotdCreatePage';
 import OotdCameraPage from '@/pages/camera/OotdCameraPage';
+import OotdPreviewPage from '@/pages/camera/OotdPreviewPage';
 
 export const router = createBrowserRouter([
   {
@@ -45,6 +46,7 @@ export const router = createBrowserRouter([
       { path: 'ootd/camera', element: <OotdCameraPage /> },
       { path: 'ootd/create', element: <OotdCreatePage /> },
       { path: 'ootd/tag', element: <OotdTagPage /> },
+      { path: 'ootd/preview', element: <OotdPreviewPage /> },
 
       { path: 'chat', element: <ChatListPage /> },
       { path: 'chat/:id', element: <ChatRoomPage /> },

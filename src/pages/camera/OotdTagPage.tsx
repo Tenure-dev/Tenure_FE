@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import chevon from '@/shared/assets/chevon.svg';
+import chevon from '@/shared/assets/chevron-left.svg';
 import type { OotdItem } from '@/features/ootd/model/item';
 import { existingItems } from '@/features/ootd/mock';
 import TagLoading from './component/TagLoading';
@@ -71,8 +71,11 @@ const OotdTagPage = () => {
           {/* 사진 */}
           {photo && <img src={photo} alt="촬영한 사진" className="size-full object-cover" />}
 
-          {/* 감지 박스 (목업 위치) */}
-          <div className="pointer-events-none absolute top-1/3 left-1/4 h-1/3 w-1/2 rounded-2xl border-2 border-white/80" />
+          {/* 감지 박스: 박스 안은 사진 그대로, 주변은 어둡게 (스포트라이트) */}
+          <div
+            className="border-border-primary pointer-events-none absolute top-1/2 left-1/2 h-[185px] w-[275px] -translate-1/2 rounded-lg border-4"
+            style={{ boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.4)' }}
+          />
 
           {/* 분석 결과 바텀시트 */}
           <TagResultSheet

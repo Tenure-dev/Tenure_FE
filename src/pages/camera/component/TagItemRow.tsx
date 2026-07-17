@@ -13,14 +13,14 @@ const TagItemRow = ({ item, selected, onToggle }: Props) => {
       type="button"
       onClick={() => onToggle(item.id)}
       className={cn(
-        'bg-bg-50 flex w-full items-center gap-3 rounded-xl border p-3 text-left',
+        'bg-bg-quaternary flex h-20 w-full items-center gap-2.5 rounded-xl border px-3 text-left',
         selected ? 'border-brand' : 'border-transparent',
       )}
     >
       {item.thumbnail ? (
         <img src={item.thumbnail} alt="" className="size-12 shrink-0 rounded-full object-cover" />
       ) : (
-        <div className="bg-bg-200 size-12 shrink-0 rounded-full" />
+        <div className="bg-bg-secondary size-12 shrink-0 rounded-full" />
       )}
       <div className="min-w-0">
         <p className="text-body-2 truncate font-semibold">

@@ -1,7 +1,7 @@
-import { Input } from '@/shared/components';
 import { cn } from '@/shared/lib/cn';
 import type { OotdItem } from '@/features/ootd/model/item';
 import { SIMILAR_COUNT } from '@/features/ootd/mock';
+import imageUpload from '@/shared/assets/image-upload.svg';
 import TagItemRow from './TagItemRow';
 
 type Props = {
@@ -58,20 +58,41 @@ const TagResultSheet = ({
         aria-label={expanded ? '접기' : '펼치기'}
         className="flex justify-center py-3"
       >
-        <span className="bg-bg-200 h-1 w-10 rounded-full" />
+        <span className="bg-bg-secondary h-1 w-10 rounded-full" />
       </button>
 
       <div className="flex-1 overflow-y-auto px-5">
         {searchMode ? (
           <div className="flex items-center gap-2 pb-3">
-            <Input
-              size={44}
-              value={query}
-              onChange={(e) => onQueryChange(e.target.value)}
-              onClear={() => onQueryChange('')}
-              placeholder="검색어를 입력하세요."
-              className="flex-1"
-            />
+            <div className="border-border-secondary bg-bg-white flex h-11 flex-1 items-center gap-2 rounded-md border px-3.5">
+              <span className="text-text-tertiary shrink-0">
+                <SearchIcon />
+              </span>
+              <input
+                value={query}
+                onChange={(e) => onQueryChange(e.target.value)}
+                placeholder="검색어를 입력하세요."
+                className="placeholder:text-text-tertiary flex-1 bg-transparent text-[16px] outline-none"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => onQueryChange('')}
+                  aria-label="지우기"
+                  className="shrink-0"
+                >
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden>
+                    <circle cx="10" cy="10" r="9" fill="#C4C4C4" />
+                    <path
+                      d="M7 7l6 6M13 7l-6 6"
+                      stroke="#fff"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
             <button type="button" onClick={onSearchClose} className="text-body-2 shrink-0">
               취소
             </button>
@@ -96,11 +117,9 @@ const TagResultSheet = ({
             <button
               type="button"
               onClick={onNewItem}
-              className="bg-bg-50 flex w-full items-center gap-3 rounded-xl p-3"
+              className="bg-bg-quaternary flex h-20 w-full items-center gap-2.5 rounded-xl px-3"
             >
-              <span className="bg-bg-200 text-text-secondary flex size-12 shrink-0 items-center justify-center rounded-full text-2xl">
-                +
-              </span>
+              <img src={imageUpload} width={48} height={48} alt="" className="shrink-0" />
               <span className="text-body-2 font-semibold">새 아이템 등록</span>
             </button>
 

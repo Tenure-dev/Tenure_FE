@@ -1,7 +1,7 @@
 // 로딩 스피너: Figma 그라데이션 링 (#CCFFE6 → #00AAFF), 회전
 const TagLoading = () => {
   return (
-    <div className="flex flex-1 items-center justify-center">
+    <div className="flex flex-1 items-center justify-center pb-32">
       <svg
         width="60"
         height="58"

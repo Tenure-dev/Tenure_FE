@@ -1,10 +1,30 @@
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import chevon from '@/shared/assets/chevron-left.svg';
+import TagLoading from './component/TagLoading';
 
 const OotdCreatePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const photo = (location.state as { photo?: string } | null)?.photo ?? null;
+  const [posting, setPosting] = useState(false);
+
+  // 게시하기 직접 클릭 → 로딩 후 자동 태그되어 피드로 게시
+  useEffect(() => {
+    if (!posting) return;
+    const timer = setTimeout(() => {
+      navigate('/feed', { state: { autoTagged: true } });
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [posting, navigate]);
+
+  if (posting) {
+    return (
+      <div className="bg-bg-white flex h-dvh w-full flex-col">
+        <TagLoading title="태그를 작성할 준비를 하고 있어요!" subtitle="잠시만 기다려 주세요!" />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-bg-white text-text-primary flex min-h-dvh flex-col">
@@ -17,7 +37,7 @@ const OotdCreatePage = () => {
       </header>
 
       {/* 진행바 */}
-      <div className="bg-bg-100 h-1 w-full">
+      <div className="bg-bg-tertiary h-1 w-full">
         <div className="bg-brand h-full w-1/3" />
       </div>
 
@@ -48,6 +68,7 @@ const OotdCreatePage = () => {
         </button>
         <button
           type="button"
+          onClick={() => setPosting(true)}
           className="bg-brand text-btn-2 text-text-primary flex-1 rounded-md py-3.5 font-medium"
         >
           게시하기

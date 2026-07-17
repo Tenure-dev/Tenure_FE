@@ -1,7 +1,10 @@
 // 로딩 스피너: Figma 그라데이션 링 (#CCFFE6 → #00AAFF), 회전
-const TagLoading = () => {
+// title/subtitle 주면 스피너 아래 문구 표시 (미지정 시 스피너만)
+type Props = { title?: string; subtitle?: string };
+
+const TagLoading = ({ title, subtitle }: Props) => {
   return (
-    <div className="flex flex-1 items-center justify-center pb-32">
+    <div className="flex flex-1 flex-col items-center justify-center pb-32">
       <svg
         width="60"
         height="58"
@@ -30,6 +33,9 @@ const TagLoading = () => {
           </linearGradient>
         </defs>
       </svg>
+
+      {title && <p className="text-title-2 mt-8 font-semibold">{title}</p>}
+      {subtitle && <p className="text-body-2 text-text-secondary mt-2">{subtitle}</p>}
     </div>
   );
 };

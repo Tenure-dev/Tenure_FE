@@ -1,8 +1,8 @@
 export type ItemStatus = '판매중' | '미판매';
 
 export interface TagPosition {
-  x: number; // 0-100, 사진 왼쪽 기준 %
-  y: number; // 0-100, 사진 위쪽 기준 %
+  x: number;
+  y: number;
 }
 
 export interface TaggedItem {

@@ -6,6 +6,7 @@ export type EditTagTarget = { type: 'edit'; tagId: string } | { type: 'add' } | 
 
 export interface EditTagSheetProps {
   target: EditTagTarget;
+  isAnalyzing?: boolean;
   closetItems: ClosetItem[];
   selectedClosetItemId: string | null;
   onSelectClosetItem: (item: ClosetItem) => void;
@@ -15,6 +16,7 @@ export interface EditTagSheetProps {
 
 const EditTagSheet = ({
   target,
+  isAnalyzing = false,
   closetItems,
   selectedClosetItemId,
   onSelectClosetItem,
@@ -23,26 +25,35 @@ const EditTagSheet = ({
 }: EditTagSheetProps) => {
   const isAdd = target?.type === 'add';
   const submitLabel = isAdd ? '추가하기' : '수정하기';
-  const canSubmit = target !== null && selectedClosetItemId !== null;
+  const canSubmit = target !== null && selectedClosetItemId !== null && !isAnalyzing;
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      {target === null ? (
-        <div className="flex h-[180px] flex-col items-center justify-center px-6 text-center">
-          <p className="text-body-2 text-text-secondary">수정할 태그를 선택해 주세요.</p>
+      {isAnalyzing ? (
+        <div className="px-5 pt-3">
+          <div className="bg-gray-bg h-14 w-full animate-pulse rounded-lg" />
+          <div className="border-border-secondary mt-4 border-b" />
+        </div>
+      ) : target === null ? (
+        <div className="px-5 pt-3">
+          <p className="text-body-1 text-text-primary font-semibold">
+            수정할 태그를 선택해 주세요.
+          </p>
           <p className="text-body-3 text-text-tertiary mt-1">
             사진 속 태그를 누르면 연결된 아이템을 바꿀 수 있어요.
           </p>
+          <div className="border-border-secondary mt-4 border-b" />
         </div>
       ) : (
         <div className="flex flex-1 flex-col overflow-hidden px-5">
-          <div className="flex items-center justify-between py-3">
+          <div className="flex items-center justify-between pt-3">
             <h3 className="text-body-1 text-text-primary font-semibold">분석한 결과</h3>
             <Search size={18} className="text-text-tertiary" />
           </div>
-          <p className="text-body-3 text-text-tertiary -mt-2 mb-3">
+          <p className="text-body-3 text-text-tertiary mt-1">
             유사한 아이템 {closetItems.length}개 찾았습니다.
           </p>
+          <div className="border-border-secondary my-3 border-b" />
 
           <button
             type="button"

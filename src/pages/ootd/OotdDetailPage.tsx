@@ -8,7 +8,6 @@ import {
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Bookmark, Eye, EyeOff, Heart } from 'lucide-react';
 import { BottomSheet, FollowButton, Toast } from '@/shared/components';
-import { cn } from '@/shared/lib/cn';
 import { useToast } from '@/shared/hooks/useToast';
 import { MAX_TAGGED_ITEMS, type TaggedItem, type TagPosition } from '@/features/ootd/model/types';
 import { mockClosetItems, mockOotdPost } from '@/features/ootd/model/mocks';
@@ -22,6 +21,8 @@ import ViewHeader from './components/ViewHeader';
 import EditHeader from './components/EditHeader';
 
 const SHEET_DRAG_OPEN_THRESHOLD = 80;
+const TAG_ANALYZE_DELAY_MS = 700;
+const RESULT_EXPAND_RATIO = 0.8;
 
 const OotdDetailPage = () => {
   const navigate = useNavigate();
@@ -45,11 +46,22 @@ const OotdDetailPage = () => {
   const [changeCount, setChangeCount] = useState(0);
   const [editTagsVisible, setEditTagsVisible] = useState(true);
   const [editTarget, setEditTarget] = useState<EditTagTarget>(null);
+  const [isAnalyzingTag, setIsAnalyzingTag] = useState(false);
   const [selectedClosetItemId, setSelectedClosetItemId] = useState<string | null>(null);
   const [pendingPosition, setPendingPosition] = useState<TagPosition | null>(null);
-  const [editSheetOpen, setEditSheetOpen] = useState(false);
-  const [editSheetDragPx, setEditSheetDragPx] = useState<number | undefined>(undefined);
-  const editDragStartYRef = useRef<number | null>(null);
+  const analyzeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [resultExpanded, setResultExpanded] = useState(false);
+  const collapsedDragStartYRef = useRef<number | null>(null);
+  const expandedDragStartYRef = useRef<number | null>(null);
+
+  const clearAnalyzeTimeout = () => {
+    if (analyzeTimeoutRef.current !== null) {
+      clearTimeout(analyzeTimeoutRef.current);
+      analyzeTimeoutRef.current = null;
+    }
+  };
+
+  useEffect(() => clearAnalyzeTimeout, []);
 
   const { message: toastMessage, show: showToast, hide: hideToast } = useToast();
 
@@ -92,6 +104,47 @@ const OotdDetailPage = () => {
     setTagsVisible((v) => !v);
   };
 
+  const beginTagAnalysis = (target: EditTagTarget, presetClosetItemId: string | null) => {
+    clearAnalyzeTimeout();
+    setEditTarget(null);
+    setIsAnalyzingTag(true);
+    setResultExpanded(false);
+    setSelectedClosetItemId(presetClosetItemId);
+    analyzeTimeoutRef.current = setTimeout(() => {
+      setEditTarget(target);
+      setIsAnalyzingTag(false);
+      analyzeTimeoutRef.current = null;
+    }, TAG_ANALYZE_DELAY_MS);
+  };
+
+  const getResultExpandedHeightPx = () => window.innerHeight * RESULT_EXPAND_RATIO;
+
+  // 접힌 상태(사진 아래, 일반 문서 흐름)에서 핸들을 위로 슬라이드하거나 탭하면 펼친다.
+  const handleCollapsedHandlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    collapsedDragStartYRef.current = e.clientY;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handleCollapsedHandlePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const startY = collapsedDragStartYRef.current;
+    collapsedDragStartYRef.current = null;
+    if (startY === null) return;
+    if (startY - e.clientY > SHEET_DRAG_OPEN_THRESHOLD) setResultExpanded(true);
+  };
+
+  // 펼친 상태(사진 위 오버레이)에서 핸들을 아래로 슬라이드하거나 탭하면 접는다.
+  const handleExpandedHandlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    expandedDragStartYRef.current = e.clientY;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handleExpandedHandlePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const startY = expandedDragStartYRef.current;
+    expandedDragStartYRef.current = null;
+    if (startY === null) return;
+    if (e.clientY - startY > SHEET_DRAG_OPEN_THRESHOLD) setResultExpanded(false);
+  };
+
   const handleEditPhotoClick = (e: ReactMouseEvent<HTMLDivElement>) => {
     if (draftTags.length >= MAX_TAGGED_ITEMS) {
       showToast(`태그는 최대 ${MAX_TAGGED_ITEMS}개까지 가능해요.`);
@@ -101,52 +154,32 @@ const OotdDetailPage = () => {
     const x = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100));
     const y = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100));
     setPendingPosition({ x, y });
-    setEditTarget({ type: 'add' });
-    setSelectedClosetItemId(null);
-    setEditSheetOpen(true);
+    beginTagAnalysis({ type: 'add' }, null);
   };
 
   const handleStartEdit = () => {
+    clearAnalyzeTimeout();
     setDraftTags(post.taggedItems.map((tag) => ({ ...tag })));
     setChangeCount(0);
     setEditTarget(null);
+    setIsAnalyzingTag(false);
+    setResultExpanded(false);
     setSelectedClosetItemId(null);
     setPendingPosition(null);
     setEditTagsVisible(true);
-    setEditSheetOpen(true);
     setMode('edit');
     setShowMoreMenu(false);
   };
 
   const handleCancelEdit = () => {
+    clearAnalyzeTimeout();
     setMode('view');
     setEditTarget(null);
+    setIsAnalyzingTag(false);
+    setResultExpanded(false);
     setSelectedClosetItemId(null);
     setPendingPosition(null);
-    setEditSheetOpen(false);
     setChangeCount(0);
-  };
-
-  const handleEditPeekPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
-    editDragStartYRef.current = e.clientY;
-    setEditSheetDragPx(0);
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handleEditPeekPointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
-    if (editDragStartYRef.current === null) return;
-    const draggedUp = editDragStartYRef.current - e.clientY;
-    setEditSheetDragPx(Math.max(0, draggedUp));
-  };
-
-  const handleEditPeekPointerEnd = () => {
-    if (editDragStartYRef.current === null) return;
-    const finalDrag = editSheetDragPx ?? 0;
-    editDragStartYRef.current = null;
-    setEditSheetDragPx(undefined);
-    if (finalDrag > SHEET_DRAG_OPEN_THRESHOLD) {
-      setEditSheetOpen(true);
-    }
   };
 
   const handleEditSubmit = () => {
@@ -262,7 +295,7 @@ const OotdDetailPage = () => {
         className="relative aspect-[3/4] w-full shrink-0 overflow-hidden bg-black"
         onClick={mode === 'view' ? handlePhotoClick : handleEditPhotoClick}
       >
-        <img src={post.imageUrl} alt="" className="size-full object-cover" />
+        <img src={post.imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
 
         {mode === 'edit' && (
           <button
@@ -289,10 +322,8 @@ const OotdDetailPage = () => {
               onClick={
                 mode === 'edit'
                   ? () => {
-                      setEditTarget({ type: 'edit', tagId: tag.id });
-                      setSelectedClosetItemId(tag.closetItemId ?? null);
                       setPendingPosition(null);
-                      setEditSheetOpen(true);
+                      beginTagAnalysis({ type: 'edit', tagId: tag.id }, tag.closetItemId ?? null);
                     }
                   : undefined
               }
@@ -367,34 +398,45 @@ const OotdDetailPage = () => {
         </>
       )}
 
-      {mode === 'edit' && (
-        <button
-          type="button"
-          onClick={() => setEditSheetOpen(true)}
-          onPointerDown={handleEditPeekPointerDown}
-          onPointerMove={handleEditPeekPointerMove}
-          onPointerUp={handleEditPeekPointerEnd}
-          onPointerCancel={handleEditPeekPointerEnd}
-          className="mt-auto flex touch-none flex-col items-center gap-2 pt-2 pb-6"
-        >
-          <span className="bg-gray-bg h-1 w-9 rounded-full" />
-        </button>
+      {mode === 'edit' && !resultExpanded && (
+        // 접힌 상태: 사진을 절대 가리지 않도록 사진 바로 아래 일반 문서 흐름에 놓는다.
+        // 항상 같은 높이(placeholder와 동일)로 고정해 내용(목록 등)은 잘려 보이고,
+        // 펼쳐야만 전체 내용이 나온다. 화면이 좁아도 이 고정 높이는 페이지를 스크롤시킬 뿐
+        // 사진을 건드리지 않는다.
+        <div className="bg-bg-white flex h-60 shrink-0 flex-col overflow-hidden rounded-t-2xl shadow-[0_-8px_24px_rgba(0,0,0,0.12)]">
+          <div
+            className="flex cursor-grab touch-none justify-center py-2 active:cursor-grabbing"
+            onClick={() => setResultExpanded(true)}
+            onPointerDown={handleCollapsedHandlePointerDown}
+            onPointerUp={handleCollapsedHandlePointerUp}
+          >
+            <span className="bg-border-secondary h-1 w-10 rounded-full" />
+          </div>
+          <EditTagSheet
+            target={editTarget}
+            isAnalyzing={isAnalyzingTag}
+            closetItems={mockClosetItems}
+            selectedClosetItemId={selectedClosetItemId}
+            onSelectClosetItem={(item) => setSelectedClosetItemId(item.id)}
+            onRegisterNewItem={() => showToast('새 아이템 등록은 추후 지원될 예정이에요.')}
+            onSubmit={handleEditSubmit}
+          />
+        </div>
       )}
 
       {mode === 'edit' && (
         <BottomSheet
-          open={editSheetOpen}
-          onClose={() => {
-            setEditSheetOpen(false);
-            setEditTarget(null);
-            setSelectedClosetItemId(null);
-            setPendingPosition(null);
-          }}
-          dragProgressPx={editSheetDragPx}
-          className={cn('flex flex-col', editTarget && 'max-h-[75vh]')}
+          open={resultExpanded}
+          onClose={() => setResultExpanded(false)}
+          variant="plain"
+          heightPx={getResultExpandedHeightPx()}
+          onHandlePointerDown={handleExpandedHandlePointerDown}
+          onHandlePointerUp={handleExpandedHandlePointerUp}
+          className="flex max-w-md flex-col"
         >
           <EditTagSheet
             target={editTarget}
+            isAnalyzing={isAnalyzingTag}
             closetItems={mockClosetItems}
             selectedClosetItemId={selectedClosetItemId}
             onSelectClosetItem={(item) => setSelectedClosetItemId(item.id)}

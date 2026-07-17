@@ -43,5 +43,8 @@ export type { ModalProps } from './Modal';
 export { default as BottomSheet } from './BottomSheet';
 export type { BottomSheetProps } from './BottomSheet';
 
+export { default as MenuRow } from './MenuRow';
+export type { MenuRowProps } from './MenuRow';
+
 export { default as Toast } from './Toast';
 export type { ToastProps } from './Toast';

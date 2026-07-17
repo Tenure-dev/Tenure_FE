@@ -31,7 +31,6 @@ const RelatedSection = ({ title, subtitle, images }: RelatedSectionProps) => (
   </div>
 );
 
-// TODO(API 연동): 태그된 아이템과 같은 category의 상품을 서버에서 받아와 각 섹션 이미지로 채운다.
 const buildMockImages = (seed: string) =>
   Array.from({ length: 6 }, (_, i) => `https://picsum.photos/seed/${seed}-${i}/300/400`);
 

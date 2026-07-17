@@ -25,6 +25,12 @@ export type { FollowButtonProps } from './FollowButton';
 export { default as CTAButton } from './CTAButton';
 export type { CTAButtonProps } from './CTAButton';
 
+export { default as BottomSheet } from './BottomSheet';
+export type { BottomSheetProps } from './BottomSheet';
+
+export { default as ConfirmDialog } from './ConfirmDialog';
+export type { ConfirmDialogProps } from './ConfirmDialog';
+
 export { default as SelectBox } from './select-box/SelectBox';
 export type { SelectOption } from './select-box/SelectBox';
 

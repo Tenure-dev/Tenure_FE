@@ -1,0 +1,9 @@
+export { default as feedActive } from './feed-active.svg';
+export { default as feedInactive } from './feed-inactive.svg';
+export { default as searchActive } from './search-active.svg';
+export { default as searchInactive } from './search-inactive.svg';
+export { default as cameraInactive } from './camera-inactive.svg';
+export { default as chatActive } from './chat-active.svg';
+export { default as chatInactive } from './chat-inactive.svg';
+export { default as myActive } from './my-active.svg';
+export { default as myInactive } from './my-inactive.svg';

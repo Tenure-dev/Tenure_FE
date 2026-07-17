@@ -12,16 +12,16 @@ const FollowButton = ({ following, onToggle, disabled = false }: FollowButtonPro
   const getClassName = () => {
     if (following) {
       if (pressed) {
-        return 'bg-[#DDE3E9] text-[#111111]';
+        return 'bg-gray-press text-text-primary';
       }
-      return 'bg-[#E8EBED] text-[#111111]';
+      return 'bg-bg-200 text-text-primary';
     }
 
     if (disabled) {
-      return 'bg-[#70CFFF] text-[#FFFFFF]';
+      return 'bg-brand-light text-text-inverse';
     }
 
-    return 'bg-[#00AAFF] text-[#FFFFFF]';
+    return 'bg-brand text-text-inverse';
   };
 
   return (

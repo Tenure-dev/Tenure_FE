@@ -119,7 +119,6 @@ const OotdDetailPage = () => {
 
   const getResultExpandedHeightPx = () => window.innerHeight * RESULT_EXPAND_RATIO;
 
-  // 접힌 상태(사진 아래, 일반 문서 흐름)에서 핸들을 위로 슬라이드하거나 탭하면 펼친다.
   const handleCollapsedHandlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     collapsedDragStartYRef.current = e.clientY;
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -132,7 +131,6 @@ const OotdDetailPage = () => {
     if (startY - e.clientY > SHEET_DRAG_OPEN_THRESHOLD) setResultExpanded(true);
   };
 
-  // 펼친 상태(사진 위 오버레이)에서 핸들을 아래로 슬라이드하거나 탭하면 접는다.
   const handleExpandedHandlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     expandedDragStartYRef.current = e.clientY;
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -399,10 +397,6 @@ const OotdDetailPage = () => {
       )}
 
       {mode === 'edit' && !resultExpanded && (
-        // 접힌 상태: 사진을 절대 가리지 않도록 사진 바로 아래 일반 문서 흐름에 놓는다.
-        // 항상 같은 높이(placeholder와 동일)로 고정해 내용(목록 등)은 잘려 보이고,
-        // 펼쳐야만 전체 내용이 나온다. 화면이 좁아도 이 고정 높이는 페이지를 스크롤시킬 뿐
-        // 사진을 건드리지 않는다.
         <div className="bg-bg-white flex h-60 shrink-0 flex-col overflow-hidden rounded-t-2xl shadow-[0_-8px_24px_rgba(0,0,0,0.12)]">
           <div
             className="flex cursor-grab touch-none justify-center py-2 active:cursor-grabbing"

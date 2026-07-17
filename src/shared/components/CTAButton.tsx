@@ -21,13 +21,11 @@ const CTAButton = ({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'inline-flex items-center justify-center rounded-lg font-sans font-semibold text-white',
+        'inline-flex items-center justify-center font-sans font-semibold text-white',
         fullWidth ? 'h-[52px] w-full text-[16px]' : 'h-[32px] w-[166.5px] text-[14px]',
         disabled && 'cursor-not-allowed',
         variant === 'dark'
-          ? disabled
-            ? 'bg-gray-bg text-text-disabled'
-            : 'bg-text-primary'
+          ? ['rounded-lg', disabled ? 'bg-gray-bg text-text-disabled' : 'bg-text-primary']
           : disabled
             ? 'bg-[#CCEEFF]'
             : 'bg-[#00AAFF]',

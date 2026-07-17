@@ -52,5 +52,7 @@ export type { BottomSheetProps } from './BottomSheet';
 export { default as MenuRow } from './MenuRow';
 export type { MenuRowProps } from './MenuRow';
 
+export { default as BackHeader } from './BackHeader';
+export type { BackHeaderProps } from './BackHeader';
 export { default as Toast } from './Toast';
 export type { ToastProps } from './Toast';

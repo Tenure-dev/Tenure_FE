@@ -45,3 +45,5 @@ export type { InputProps } from './input/Input';
 
 export { default as BackHeader } from './BackHeader';
 export type { BackHeaderProps } from './BackHeader';
+export { default as Toast } from './Toast';
+export type { ToastProps } from './Toast';

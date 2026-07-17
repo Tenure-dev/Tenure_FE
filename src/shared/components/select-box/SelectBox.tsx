@@ -21,7 +21,7 @@ const boxVariants = cva(
         default: 'cursor-pointer rounded-lg bg-bg-white',
         completion: 'cursor-pointer rounded-lg bg-bg-white',
         active: 'cursor-pointer rounded-t-lg bg-bg-white',
-        disabled: 'bg-gray-disabled cursor-not-allowed rounded-lg',
+        disabled: 'cursor-not-allowed rounded-lg bg-gray-disabled',
       },
     },
     defaultVariants: {

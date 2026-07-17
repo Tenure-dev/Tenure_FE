@@ -7,9 +7,9 @@ export interface ChipProps {
 }
 
 const stateClasses: Record<ChipState, string> = {
-  default: 'bg-[#EAEDF0] text-[#111111]',
-  press: 'bg-[#DDE3E9] text-[#111111]',
-  completion: 'bg-[#111111] text-[#FFFFFF]',
+  default: 'bg-gray-bg text-text-primary',
+  press: 'bg-gray-press text-text-primary',
+  completion: 'bg-bg-black text-text-inverse',
 };
 
 const Chip = ({ label, state = 'default', onRemove }: ChipProps) => {

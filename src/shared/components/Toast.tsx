@@ -1,8 +1,9 @@
+import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 
 export interface ToastProps {
-  message: string | null;
+  message: ReactNode;
   onClose?: () => void;
   className?: string;
 }

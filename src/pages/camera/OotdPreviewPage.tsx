@@ -44,7 +44,7 @@ const OotdPreviewPage = () => {
   }
 
   return (
-    <div className="bg-bg-white text-text-primary flex h-dvh w-full flex-col">
+    <div className="bg-bg-white text-text-primary flex h-dvh w-full flex-col overflow-hidden">
       {/* 헤더 */}
       <header className="flex items-center gap-3 px-5 py-4">
         <button type="button" onClick={() => navigate(-1)} aria-label="뒤로">
@@ -58,24 +58,29 @@ const OotdPreviewPage = () => {
         <div className="bg-brand size-full" />
       </div>
 
-      {/* 사진 + 태그칩 */}
-      <div className="relative aspect-[3/4] w-full bg-black">
-        {photo && <img src={photo} alt="촬영한 사진" className="size-full object-cover" />}
+      {/* 사진 + 태그칩: 남은 공간에 맞춰 (버튼 항상 보임) */}
+      <div className="flex min-h-0 flex-1 items-center justify-center bg-black">
+        <div className="relative aspect-[3/4] max-h-full w-full overflow-hidden">
+          {photo && <img src={photo} alt="촬영한 사진" className="size-full object-cover" />}
 
-        {items.map((item, i) => (
-          <div key={item.id} className={cn('absolute max-w-[55%]', CHIP_POS[i % CHIP_POS.length])}>
-            <div className="bg-bg-white rounded-lg px-3 py-2 shadow-md">
-              <p className="text-body-4 truncate font-semibold">
-                {item.brand} / {item.name}
-              </p>
-              <p className="text-body-4 text-text-secondary">#판매중</p>
+          {items.map((item, i) => (
+            <div
+              key={item.id}
+              className={cn('absolute max-w-[55%]', CHIP_POS[i % CHIP_POS.length])}
+            >
+              <div className="bg-bg-white rounded-lg px-3 py-2 shadow-md">
+                <p className="text-body-4 truncate font-semibold">
+                  {item.brand} / {item.name}
+                </p>
+                <p className="text-body-4 text-text-secondary">#판매중</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* 하단 버튼 */}
-      <div className="mt-auto flex gap-2 px-5 pb-6">
+      <div className="flex gap-2 px-5 pb-6">
         <button
           type="button"
           onClick={() => navigate(-1)}

@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { cn } from '@/shared/lib/cn';
+import calendar from '@/shared/assets/calendar.svg';
 import type { OotdItem, WearTarget } from '@/features/ootd/model/item';
 
 type Props = {
   onBack: () => void;
-  onRegister: (item: OotdItem) => void;
+  onSubmit: (item: OotdItem) => void;
 };
 
 const TARGETS: WearTarget[] = ['남성복', '여성복', '공용'];
@@ -15,17 +16,25 @@ const Label = ({ children }: { children: string }) => (
   </label>
 );
 
+// 입력값을 우리 날짜 양식(YY.MM.DD)으로 강제: 숫자만, 6자리, 점 자동 삽입
+const formatDate = (raw: string) => {
+  const digits = raw.replace(/\D/g, '').slice(0, 6);
+  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 6)].filter(Boolean).join('.');
+};
+
 // 공용 Input(lucide 의존) 대신 일반 입력 필드 + clear 버튼
 const TextField = ({
   value,
   onChange,
   placeholder,
   leftIcon,
+  inputMode,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
   leftIcon?: string;
+  inputMode?: 'text' | 'numeric';
 }) => (
   <div className="bg-bg-secondary flex h-[54px] w-full items-center gap-2 rounded-md px-4">
     {leftIcon && <img src={leftIcon} width={20} height={20} alt="" className="shrink-0" />}
@@ -33,6 +42,7 @@ const TextField = ({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
+      inputMode={inputMode}
       className="placeholder:text-text-tertiary flex-1 bg-transparent text-[16px] outline-none"
     />
     {value && (
@@ -45,7 +55,7 @@ const TextField = ({
   </div>
 );
 
-const NewItemSheet = ({ onBack, onRegister }: Props) => {
+const NewItemSheet = ({ onBack, onSubmit }: Props) => {
   const [brand, setBrand] = useState('');
   const [name, setName] = useState('');
   const [target, setTarget] = useState<WearTarget>('남성복');
@@ -53,9 +63,9 @@ const NewItemSheet = ({ onBack, onRegister }: Props) => {
 
   const canSubmit = brand.trim() !== '' && name.trim() !== '';
 
-  const handleRegister = () => {
+  const handleSubmit = () => {
     if (!canSubmit) return;
-    onRegister({
+    onSubmit({
       id: `new-${Date.now()}`,
       brand: brand.trim(),
       name: name.trim(),
@@ -105,7 +115,13 @@ const NewItemSheet = ({ onBack, onRegister }: Props) => {
 
         <div className="mb-6">
           <label className="text-body-3 mb-1.5 block font-medium">최초 보유 날짜</label>
-          <TextField value={date} onChange={setDate} placeholder="ex. 26.03.04" />
+          <TextField
+            value={date}
+            onChange={(v) => setDate(formatDate(v))}
+            placeholder="ex. 26.03.04"
+            leftIcon={calendar}
+            inputMode="numeric"
+          />
         </div>
 
         <div className="flex gap-2">
@@ -118,7 +134,7 @@ const NewItemSheet = ({ onBack, onRegister }: Props) => {
           </button>
           <button
             type="button"
-            onClick={handleRegister}
+            onClick={handleSubmit}
             disabled={!canSubmit}
             className={cn(
               'text-btn-2 flex-1 rounded-md py-3.5 font-medium',

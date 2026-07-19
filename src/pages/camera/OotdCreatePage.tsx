@@ -27,7 +27,7 @@ const OotdCreatePage = () => {
   }
 
   return (
-    <div className="bg-bg-white text-text-primary flex min-h-dvh flex-col">
+    <div className="bg-bg-white text-text-primary flex h-dvh flex-col overflow-hidden">
       {/* 헤더 */}
       <header className="flex items-center gap-3 px-5 py-4">
         <button type="button" onClick={() => navigate(-1)} aria-label="뒤로">
@@ -41,14 +41,12 @@ const OotdCreatePage = () => {
         <div className="bg-brand h-full w-1/3" />
       </div>
 
-      {/* 사진 (3:4 고정 박스 + 원본 비율 유지, 남는 세로는 검정 배경) */}
-      <div className="aspect-[3/4] w-full bg-black">
+      {/* 사진: 남은 공간에 맞춰 원본 비율 유지 (버튼 항상 보임) */}
+      <div className="flex min-h-0 flex-1 items-center justify-center bg-black">
         {photo ? (
-          <img src={photo} alt="촬영한 사진" className="size-full object-contain" />
+          <img src={photo} alt="촬영한 사진" className="max-h-full max-w-full object-contain" />
         ) : (
-          <div className="bg-gray-bg flex size-full items-center justify-center">
-            <span className="text-body-3 text-text-secondary">사진이 없어요</span>
-          </div>
+          <span className="text-body-3 text-white/70">사진이 없어요</span>
         )}
       </div>
 

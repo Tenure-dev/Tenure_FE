@@ -104,7 +104,7 @@ const OotdTagPage = () => {
 
           {/* 새 아이템 등록 시트 */}
           {newItemOpen && (
-            <NewItemSheet onBack={() => setNewItemOpen(false)} onRegister={handleRegister} />
+            <NewItemSheet onBack={() => setNewItemOpen(false)} onSubmit={handleRegister} />
           )}
         </div>
       )}

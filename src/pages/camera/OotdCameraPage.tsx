@@ -37,7 +37,7 @@ const OotdCameraPage = () => {
   };
 
   return (
-    <div className="relative flex h-dvh w-full flex-col bg-black text-white">
+    <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-black text-white">
       {/* 헤더 */}
       <header className="flex items-center gap-3 px-5 py-4">
         {captured ? (
@@ -54,9 +54,9 @@ const OotdCameraPage = () => {
         )}
       </header>
 
-      {/* 프리뷰 영역: 세로 가운데 정렬 (비율 바뀌어도 중앙 기준으로 줄어듦) */}
-      <div className="relative aspect-[3/4] w-full bg-black">
-        <div className={cn('relative w-full overflow-hidden bg-black', ratio.aspect)}>
+      {/* 프리뷰 영역: 남은 공간에 맞춰 최대 높이 제한 (화면 밖으로 안 넘침) */}
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+        <div className={cn('relative max-h-full w-full overflow-hidden bg-black', ratio.aspect)}>
           <video
             ref={videoRef}
             autoPlay
@@ -75,19 +75,19 @@ const OotdCameraPage = () => {
               {error}
             </p>
           )}
-        </div>
 
-        {/* 비율 버튼: 프리뷰 영역 기준 고정 (비율 바뀌어도 위치 유지) */}
-        {!captured && (
-          <button
-            type="button"
-            onClick={cycleRatio}
-            aria-label={`촬영 비율 ${ratio.label}, 탭하여 변경`}
-            className="absolute top-3 right-3 flex size-11 items-center justify-center rounded-lg bg-black/50"
-          >
-            <img src={ratio.icon} alt={ratio.label} />
-          </button>
-        )}
+          {/* 비율 버튼: 프리뷰 우상단 고정 */}
+          {!captured && (
+            <button
+              type="button"
+              onClick={cycleRatio}
+              aria-label={`촬영 비율 ${ratio.label}, 탭하여 변경`}
+              className="absolute top-3 right-3 flex size-11 items-center justify-center rounded-lg bg-black/50"
+            >
+              <img src={ratio.icon} alt={ratio.label} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 컨트롤 영역: 고정 높이 (비율 바뀌어도 촬영버튼 위치 고정) */}

@@ -145,7 +145,6 @@ const OotdTagPage = () => {
               setQuery('');
             }}
             onNewItem={() => setNewItemOpen(true)}
-            onComplete={handleComplete}
           />
 
           {/* 새 아이템 등록 시트 */}

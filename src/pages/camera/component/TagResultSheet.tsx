@@ -15,7 +15,6 @@ type Props = {
   onSearchOpen: () => void;
   onSearchClose: () => void;
   onNewItem: () => void;
-  onComplete: () => void;
 };
 
 const SearchIcon = () => (
@@ -40,7 +39,6 @@ const TagResultSheet = ({
   onSearchOpen,
   onSearchClose,
   onNewItem,
-  onComplete,
 }: Props) => {
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
@@ -48,6 +46,7 @@ const TagResultSheet = ({
   const [dragging, setDragging] = useState(false);
 
   const count = selectedIds.size;
+  const collapsed = height <= COLLAPSED; // 접힌 상태면 버튼 닫힌 색
 
   const filtered = items.filter((item) => {
     const q = query.trim().toLowerCase();
@@ -178,15 +177,17 @@ const TagResultSheet = ({
         </div>
       </div>
 
-      {/* 선택 완료 */}
+      {/* 선택 완료 → 시트 접기 (게시물 미리보기 이동은 헤더 '완료' 버튼만) */}
       <div className="shrink-0 px-5 pt-2 pb-6">
         <button
           type="button"
           disabled={count === 0}
-          onClick={onComplete}
+          onClick={() => setHeight(COLLAPSED)}
           className={cn(
             'text-btn-2 w-full rounded-md py-3.5 font-medium',
-            count > 0 ? 'bg-brand text-text-primary' : 'bg-disabled text-text-inverse',
+            count > 0 && !collapsed
+              ? 'bg-brand text-text-primary'
+              : 'bg-disabled text-text-inverse',
           )}
         >
           선택 완료{count > 0 ? ` (${count})` : ''}

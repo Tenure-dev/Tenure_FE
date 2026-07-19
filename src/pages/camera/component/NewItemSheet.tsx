@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { cn } from '@/shared/lib/cn';
 import calendar from '@/shared/assets/calendar.svg';
 import type { OotdItem, WearTarget } from '@/features/ootd/model/item';
+import DatePickerSheet from './DatePickerSheet';
 
 type Props = {
   onBack: () => void;
@@ -16,10 +17,10 @@ const Label = ({ children }: { children: string }) => (
   </label>
 );
 
-// 입력값을 우리 날짜 양식(YY.MM.DD)으로 강제: 숫자만, 6자리, 점 자동 삽입
-const formatDate = (raw: string) => {
-  const digits = raw.replace(/\D/g, '').slice(0, 6);
-  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 6)].filter(Boolean).join('.');
+// Date → 'YY.MM.DD'
+const formatDate = (d: Date) => {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${p(d.getFullYear() % 100)}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
 };
 
 // 공용 Input(lucide 의존) 대신 일반 입력 필드 + clear 버튼
@@ -27,22 +28,16 @@ const TextField = ({
   value,
   onChange,
   placeholder,
-  leftIcon,
-  inputMode,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
-  leftIcon?: string;
-  inputMode?: 'text' | 'numeric';
 }) => (
   <div className="bg-bg-secondary flex h-[54px] w-full items-center gap-2 rounded-md px-4">
-    {leftIcon && <img src={leftIcon} width={20} height={20} alt="" className="shrink-0" />}
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      inputMode={inputMode}
       className="placeholder:text-text-tertiary flex-1 bg-transparent text-[16px] outline-none"
     />
     {value && (
@@ -60,6 +55,7 @@ const NewItemSheet = ({ onBack, onSubmit }: Props) => {
   const [name, setName] = useState('');
   const [target, setTarget] = useState<WearTarget>('남성복');
   const [date, setDate] = useState('');
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const canSubmit = brand.trim() !== '' && name.trim() !== '';
 
@@ -76,55 +72,65 @@ const NewItemSheet = ({ onBack, onSubmit }: Props) => {
 
   return (
     <div className="absolute inset-0 z-10 flex flex-col justify-end bg-black/30">
-      <div className="bg-bg-white max-h-[88%] overflow-y-auto rounded-t-2xl px-5 pt-3 pb-6">
-        <div className="mb-2 flex justify-center">
+      <div
+        className={cn(
+          'bg-bg-white flex h-[calc(100%-48px)] flex-col rounded-t-2xl px-5 pt-3 pb-6',
+          datePickerOpen && 'hidden',
+        )}
+      >
+        <div className="mb-2 flex shrink-0 justify-center">
           <span className="bg-bg-secondary h-1 w-10 rounded-full" />
         </div>
-        <h2 className="text-title-2 mb-5 font-semibold">새 아이템 등록</h2>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <h2 className="text-title-2 mb-5 font-semibold">새 아이템 등록</h2>
 
-        <div className="mb-4">
-          <Label>브랜드명</Label>
-          <TextField value={brand} onChange={setBrand} placeholder="브랜드명을 입력하세요." />
-        </div>
+          <div className="mb-4">
+            <Label>브랜드명</Label>
+            <TextField value={brand} onChange={setBrand} placeholder="브랜드명을 입력하세요." />
+          </div>
 
-        <div className="mb-4">
-          <Label>제품명</Label>
-          <TextField value={name} onChange={setName} placeholder="제품명을 입력하세요." />
-        </div>
+          <div className="mb-4">
+            <Label>제품명</Label>
+            <TextField value={name} onChange={setName} placeholder="제품명을 입력하세요." />
+          </div>
 
-        <div className="mb-4">
-          <Label>착용 대상</Label>
-          <div className="flex gap-3">
-            {TARGETS.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTarget(t)}
-                className={cn(
-                  'bg-bg-white text-body-3 h-11 rounded-sm border-[1.5px] px-6 font-medium',
-                  target === t
-                    ? 'border-border-primary text-text-primary'
-                    : 'border-border-secondary text-text-secondary',
-                )}
-              >
-                {t}
-              </button>
-            ))}
+          <div className="mb-4">
+            <Label>착용 대상</Label>
+            <div className="flex gap-3">
+              {TARGETS.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTarget(t)}
+                  className={cn(
+                    'bg-bg-white text-body-3 h-11 rounded-sm border-[1.5px] px-6 font-medium',
+                    target === t
+                      ? 'border-border-primary text-text-primary'
+                      : 'border-border-secondary text-text-secondary',
+                  )}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="text-body-3 mb-1.5 block font-medium">최초 보유 날짜</label>
+            <button
+              type="button"
+              onClick={() => setDatePickerOpen(true)}
+              className="bg-bg-secondary flex h-[54px] w-full items-center gap-2 rounded-md px-4 text-left"
+            >
+              <img src={calendar} width={20} height={20} alt="" className="shrink-0" />
+              <span className={date ? 'text-text-primary' : 'text-text-tertiary'}>
+                {date || '26.05.24'}
+              </span>
+            </button>
           </div>
         </div>
 
-        <div className="mb-6">
-          <label className="text-body-3 mb-1.5 block font-medium">최초 보유 날짜</label>
-          <TextField
-            value={date}
-            onChange={(v) => setDate(formatDate(v))}
-            placeholder="ex. 26.03.04"
-            leftIcon={calendar}
-            inputMode="numeric"
-          />
-        </div>
-
-        <div className="flex gap-2">
+        <div className="mt-4 flex shrink-0 gap-2">
           <button
             type="button"
             onClick={onBack}
@@ -145,6 +151,16 @@ const NewItemSheet = ({ onBack, onSubmit }: Props) => {
           </button>
         </div>
       </div>
+
+      {datePickerOpen && (
+        <DatePickerSheet
+          onClose={() => setDatePickerOpen(false)}
+          onSelect={(d) => {
+            setDate(formatDate(d));
+            setDatePickerOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };

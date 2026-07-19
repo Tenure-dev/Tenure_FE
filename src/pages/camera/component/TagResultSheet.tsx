@@ -1,3 +1,4 @@
+import { useRef, useState, type PointerEvent } from 'react';
 import { cn } from '@/shared/lib/cn';
 import type { OotdItem } from '@/features/ootd/model/item';
 import { SIMILAR_COUNT } from '@/features/ootd/mock';
@@ -8,8 +9,6 @@ type Props = {
   items: OotdItem[];
   selectedIds: Set<string>;
   onToggle: (id: string) => void;
-  expanded: boolean;
-  onToggleExpand: () => void;
   searchMode: boolean;
   query: string;
   onQueryChange: (v: string) => void;
@@ -26,12 +25,15 @@ const SearchIcon = () => (
   </svg>
 );
 
+// 3단계 스냅 높이
+const COLLAPSED = 100; // 맨 아래 (선택 완료 버튼만)
+const MIDDLE = 178; // 중간 (분석한 결과 헤더 + 검색까지) — 기본
+const TOP_GAP = 48; // 끝까지 올렸을 때 헤더 아래로 남기는 여백
+
 const TagResultSheet = ({
   items,
   selectedIds,
   onToggle,
-  expanded,
-  onToggleExpand,
   searchMode,
   query,
   onQueryChange,
@@ -40,8 +42,12 @@ const TagResultSheet = ({
   onNewItem,
   onComplete,
 }: Props) => {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ startY: number; startH: number } | null>(null);
+  const [height, setHeight] = useState(MIDDLE);
+  const [dragging, setDragging] = useState(false);
+
   const count = selectedIds.size;
-  const showList = expanded || searchMode;
 
   const filtered = items.filter((item) => {
     const q = query.trim().toLowerCase();
@@ -49,19 +55,55 @@ const TagResultSheet = ({
     return `${item.brand} ${item.name}`.toLowerCase().includes(q);
   });
 
+  // 끝까지 올렸을 때 최대 높이 (헤더 아래 살짝 남김)
+  const getMaxH = () =>
+    (sheetRef.current?.parentElement?.clientHeight ?? window.innerHeight) - TOP_GAP;
+
+  // 드래그로 자유롭게, 놓으면 3단계 중 가까운 곳으로 스냅
+  const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    dragRef.current = { startY: e.clientY, startH: sheetRef.current?.offsetHeight ?? height };
+    setDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const handlePointerMove = (e: PointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current) return;
+    const delta = dragRef.current.startY - e.clientY; // 위로 = +
+    setHeight(Math.min(Math.max(dragRef.current.startH + delta, COLLAPSED), getMaxH()));
+  };
+  const handlePointerUp = (e: PointerEvent<HTMLDivElement>) => {
+    dragRef.current = null;
+    setDragging(false);
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
+    // 현재 실제 높이 기준으로 가까운 스냅 지점으로
+    const current = sheetRef.current?.offsetHeight ?? height;
+    const points = [COLLAPSED, MIDDLE, getMaxH()];
+    const nearest = points.reduce((a, b) =>
+      Math.abs(b - current) < Math.abs(a - current) ? b : a,
+    );
+    setHeight(nearest);
+  };
+
   return (
-    <div className="bg-bg-white absolute inset-x-0 bottom-0 flex max-h-[80%] flex-col rounded-t-2xl">
-      {/* 손잡이 (탭하여 펼침/접기) */}
-      <button
-        type="button"
-        onClick={onToggleExpand}
-        aria-label={expanded ? '접기' : '펼치기'}
-        className="flex justify-center py-3"
+    <div
+      ref={sheetRef}
+      style={{ height }}
+      className={cn(
+        'bg-bg-white absolute inset-x-0 bottom-0 flex flex-col rounded-t-2xl shadow-xl',
+        !dragging && 'transition-[height] duration-200',
+      )}
+    >
+      {/* 드래그 핸들 */}
+      <div
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        className="flex shrink-0 cursor-grab touch-none justify-center py-3 active:cursor-grabbing"
       >
         <span className="bg-bg-secondary h-1 w-10 rounded-full" />
-      </button>
+      </div>
 
-      <div className="flex-1 overflow-y-auto px-5">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5">
         {searchMode ? (
           <div className="flex items-center gap-2 pb-3">
             <div className="border-border-secondary bg-bg-white flex h-11 flex-1 items-center gap-2 rounded-md border px-3.5">
@@ -111,35 +153,33 @@ const TagResultSheet = ({
           </div>
         )}
 
-        {showList && (
-          <div className="pt-3 pb-2">
-            {/* 새 아이템 등록 */}
-            <button
-              type="button"
-              onClick={onNewItem}
-              className="bg-bg-quaternary flex h-20 w-full items-center gap-2.5 rounded-xl px-3"
-            >
-              <img src={imageUpload} width={48} height={48} alt="" className="shrink-0" />
-              <span className="text-body-2 font-semibold">새 아이템 등록</span>
-            </button>
+        <div className="pt-3 pb-2">
+          {/* 새 아이템 등록 */}
+          <button
+            type="button"
+            onClick={onNewItem}
+            className="bg-bg-quaternary flex h-20 w-full items-center gap-2.5 rounded-xl px-3"
+          >
+            <img src={imageUpload} width={48} height={48} alt="" className="shrink-0" />
+            <span className="text-body-2 font-semibold">새 아이템 등록</span>
+          </button>
 
-            <h3 className="text-body-2 mt-5 mb-2 font-semibold">기존 아이템</h3>
-            <div className="flex flex-col gap-2">
-              {filtered.map((item) => (
-                <TagItemRow
-                  key={item.id}
-                  item={item}
-                  selected={selectedIds.has(item.id)}
-                  onToggle={onToggle}
-                />
-              ))}
-            </div>
+          <h3 className="text-body-2 mt-5 mb-2 font-semibold">기존 아이템</h3>
+          <div className="flex flex-col gap-2">
+            {filtered.map((item) => (
+              <TagItemRow
+                key={item.id}
+                item={item}
+                selected={selectedIds.has(item.id)}
+                onToggle={onToggle}
+              />
+            ))}
           </div>
-        )}
+        </div>
       </div>
 
       {/* 선택 완료 */}
-      <div className="px-5 pt-2 pb-6">
+      <div className="shrink-0 px-5 pt-2 pb-6">
         <button
           type="button"
           disabled={count === 0}

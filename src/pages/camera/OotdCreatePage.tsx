@@ -27,7 +27,7 @@ const OotdCreatePage = () => {
   }
 
   return (
-    <div className="bg-bg-white text-text-primary flex h-dvh flex-col overflow-hidden">
+    <div className="bg-bg-white text-text-primary flex min-h-dvh flex-col">
       {/* 헤더 */}
       <header className="flex items-center gap-3 px-5 py-4">
         <button type="button" onClick={() => navigate(-1)} aria-label="뒤로">
@@ -41,22 +41,22 @@ const OotdCreatePage = () => {
         <div className="bg-brand h-full w-1/3" />
       </div>
 
-      {/* 사진: 남은 공간에 맞춰 원본 비율 유지 (버튼 항상 보임) */}
-      <div className="flex min-h-0 flex-1 items-center justify-center bg-black">
-        {photo ? (
-          <img src={photo} alt="촬영한 사진" className="max-h-full max-w-full object-contain" />
-        ) : (
-          <span className="text-body-3 text-white/70">사진이 없어요</span>
-        )}
-      </div>
+      {/* 사진: 원본 비율 그대로 헤더 아래에 붙임 (여백 없음) */}
+      {photo ? (
+        <img src={photo} alt="촬영한 사진" className="block w-full" />
+      ) : (
+        <div className="bg-gray-bg flex aspect-square items-center justify-center">
+          <span className="text-body-3 text-text-secondary">사진이 없어요</span>
+        </div>
+      )}
 
-      {/* 안내 문구 */}
+      {/* 안내 문구 (사진 바로 아래) */}
       <p className="text-body-3 text-warning p-4 text-center font-medium">
         게시하기를 누르면 사진 속 아이템이 자동으로 태그돼요.
       </p>
 
-      {/* 하단 버튼 (안내문구 바로 아래) */}
-      <div className="mt-5 flex gap-2 px-5 pb-6">
+      {/* 하단 버튼 (하단 고정) */}
+      <div className="mt-auto flex gap-2 px-5 pb-6">
         <button
           type="button"
           onClick={() => navigate('/ootd/tag', { state: { photo } })}

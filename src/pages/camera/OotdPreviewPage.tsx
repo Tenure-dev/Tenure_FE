@@ -4,6 +4,7 @@ import { cn } from '@/shared/lib/cn';
 import chevron from '@/shared/assets/chevron-left.svg';
 import type { OotdItem } from '@/features/ootd/model/item';
 import TagLoading from './component/TagLoading';
+import TagMessage from './component/TagMessage';
 
 type Phase = 'loading' | 'preview' | 'posting';
 
@@ -44,7 +45,7 @@ const OotdPreviewPage = () => {
   }
 
   return (
-    <div className="bg-bg-white text-text-primary flex h-dvh w-full flex-col overflow-hidden">
+    <div className="bg-bg-white text-text-primary flex min-h-dvh w-full flex-col">
       {/* 헤더 */}
       <header className="flex items-center gap-3 px-5 py-4">
         <button type="button" onClick={() => navigate(-1)} aria-label="뒤로">
@@ -58,29 +59,26 @@ const OotdPreviewPage = () => {
         <div className="bg-brand size-full" />
       </div>
 
-      {/* 사진 + 태그칩: 남은 공간에 맞춰 (버튼 항상 보임) */}
-      <div className="flex min-h-0 flex-1 items-center justify-center bg-black">
-        <div className="relative aspect-[3/4] max-h-full w-full overflow-hidden">
-          {photo && <img src={photo} alt="촬영한 사진" className="size-full object-cover" />}
+      {/* 사진 + 태그칩: 원본 비율 그대로 헤더 아래 (여백 없음) */}
+      <div className="relative w-full">
+        {photo && <img src={photo} alt="촬영한 사진" className="block w-full" />}
 
-          {items.map((item, i) => (
-            <div
+        {items.map((item, i) => {
+          const pos = CHIP_POS[i % CHIP_POS.length];
+          return (
+            <TagMessage
               key={item.id}
-              className={cn('absolute max-w-[55%]', CHIP_POS[i % CHIP_POS.length])}
-            >
-              <div className="bg-bg-white rounded-lg px-3 py-2 shadow-md">
-                <p className="text-body-4 truncate font-semibold">
-                  {item.brand} / {item.name}
-                </p>
-                <p className="text-body-4 text-text-secondary">#판매중</p>
-              </div>
-            </div>
-          ))}
-        </div>
+              className={cn('absolute', pos)}
+              title={`${item.brand} / ${item.name}`}
+              status="판매중"
+              side={pos.includes('left') ? 'left' : 'right'}
+            />
+          );
+        })}
       </div>
 
-      {/* 하단 버튼 */}
-      <div className="flex gap-2 px-5 pb-6">
+      {/* 하단 버튼 (하단 고정) */}
+      <div className="mt-auto flex gap-2 px-5 pb-6">
         <button
           type="button"
           onClick={() => navigate(-1)}

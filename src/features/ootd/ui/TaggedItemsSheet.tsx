@@ -1,0 +1,169 @@
+import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { Bell } from 'lucide-react';
+import { BottomSheet, CTAButton } from '@/shared/components';
+import { cn } from '@/shared/lib/cn';
+import type { TaggedItem } from '@/features/ootd/model/types';
+
+export interface TaggedItemsSheetProps {
+  open: boolean;
+  onClose: () => void;
+  items: TaggedItem[];
+  onViewRelatedOotd: () => void;
+  dragProgressPx?: number;
+}
+
+const formatPrice = (price?: number) => (price ? `${price.toLocaleString()}원` : '');
+
+const ACTION_WIDTH = 84;
+const SWIPE_OPEN_THRESHOLD = ACTION_WIDTH / 2;
+
+interface TaggedItemRowProps {
+  item: TaggedItem;
+}
+
+const TaggedItemRow = ({ item }: TaggedItemRowProps) => {
+  const hasAction = item.status === '판매중' || (item.status === '미판매' && item.canOffer);
+  const [swipePx, setSwipePx] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ x: number; startSwipe: number } | null>(null);
+
+  const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!hasAction) return;
+    dragStartRef.current = { x: e.clientX, startSwipe: swipePx };
+    setIsDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!dragStartRef.current) return;
+    const draggedLeft = dragStartRef.current.x - e.clientX;
+    const next = Math.min(ACTION_WIDTH, Math.max(0, dragStartRef.current.startSwipe + draggedLeft));
+    setSwipePx(next);
+  };
+
+  const handlePointerEnd = () => {
+    if (!dragStartRef.current) return;
+    dragStartRef.current = null;
+    setIsDragging(false);
+    setSwipePx((prev) => (prev > SWIPE_OPEN_THRESHOLD ? ACTION_WIDTH : 0));
+  };
+
+  return (
+    <li className="flex items-center gap-2">
+      <div className="relative min-w-0 flex-1 overflow-hidden">
+        {hasAction && (
+          <div
+            className="absolute inset-y-0 right-0 flex items-center"
+            style={{ width: ACTION_WIDTH }}
+          >
+            <button
+              type="button"
+              className={cn(
+                'text-btn-4 h-10 w-full rounded-md font-semibold',
+                item.status === '판매중'
+                  ? 'bg-brand text-white'
+                  : 'border-border text-text-primary border',
+              )}
+            >
+              {item.status === '판매중' ? '구매' : '구매제안'}
+            </button>
+          </div>
+        )}
+
+        <div
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerEnd}
+          onPointerCancel={handlePointerEnd}
+          className={cn(
+            'bg-bg-white flex touch-pan-y items-center gap-3',
+            !isDragging && 'transition-transform duration-200 ease-out',
+          )}
+          style={{ transform: `translateX(-${swipePx}px)` }}
+        >
+          <div
+            className={cn(
+              'flex size-14 shrink-0 overflow-hidden rounded-md border-l-4',
+              item.status === '판매중' ? 'border-brand' : 'border-gray-press',
+            )}
+          >
+            <div className="bg-gray-bg size-full">
+              {item.imageUrl && (
+                <img src={item.imageUrl} alt="" className="size-full object-cover" />
+              )}
+            </div>
+          </div>
+          <div className="min-w-0 flex-1 py-1">
+            <p className="text-body-2 text-text-primary truncate font-semibold">
+              {item.brand} / {item.name}
+            </p>
+            <p
+              className={cn(
+                'text-body-3',
+                item.status === '판매중' ? 'text-brand' : 'text-text-primary',
+              )}
+            >
+              {item.status === '판매중'
+                ? `판매중 · ${formatPrice(item.price)}`
+                : `미판매 · 구매제안 ${item.canOffer ? '가능' : '불가능'}`}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        aria-label="알림 설정"
+        className="border-border-secondary text-text-tertiary flex size-9 shrink-0 items-center justify-center rounded-full border"
+      >
+        <Bell size={16} />
+      </button>
+    </li>
+  );
+};
+
+const TaggedItemsSheet = ({
+  open,
+  onClose,
+  items,
+  onViewRelatedOotd,
+  dragProgressPx,
+}: TaggedItemsSheetProps) => {
+  return (
+    <BottomSheet
+      open={open}
+      onClose={onClose}
+      variant="plain"
+      dragProgressPx={dragProgressPx}
+      className="max-h-[70vh] max-w-md overflow-y-auto"
+    >
+      <div className="px-5 pb-6">
+        <h2 className="text-title-4 text-text-primary font-semibold">태그된 아이템</h2>
+        <p className="text-body-3 text-text-tertiary mt-1">사진 속에서 태그된 것만 모아봅니다.</p>
+
+        {items.length === 0 ? (
+          <div className="bg-bg-tertiary text-body-3 text-text-secondary mt-5 rounded-lg px-4 py-8 text-center">
+            관련된 태그가 없습니다.
+          </div>
+        ) : (
+          <ul className="mt-4 flex flex-col gap-3">
+            {items.map((item) => (
+              <TaggedItemRow key={`${item.id}-${open}`} item={item} />
+            ))}
+          </ul>
+        )}
+
+        <div className="mt-5">
+          <CTAButton
+            label="관련된 OOTD 보러가기"
+            onClick={onViewRelatedOotd}
+            fullWidth
+            variant="dark"
+          />
+        </div>
+      </div>
+    </BottomSheet>
+  );
+};
+
+export default TaggedItemsSheet;

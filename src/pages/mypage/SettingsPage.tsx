@@ -45,7 +45,7 @@ const SettingsPage = () => {
   const sections: SettingsSectionData[] = [
     {
       items: [
-        { label: '프로필 수정', onClick: () => {} },
+        { label: '프로필 수정', onClick: () => navigate('/mypage/edit') },
         { label: '계정 공개 범위', onClick: () => {} },
         { label: '로그인 정보', onClick: () => {} },
         { label: '알림', onClick: () => navigate('/settings/notifications') },

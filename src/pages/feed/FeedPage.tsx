@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react';
-import { SegmentedControl } from '@/shared/components';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { SegmentedControl, Toast } from '@/shared/components';
 import FeedGrid from '@/shared/components/feed/FeedGrid';
 import FollowAvatarRow from '@/features/feed/ui/FollowAvatarRow';
+import { useToast } from '@/shared/hooks/useToast';
 import FeedHeader from './components/FeedHeader';
 import FeedIntro from './components/FeedIntro';
 import { mockFeedItems, mockFollowedUsers } from '@/features/feed/model/mocks';
@@ -14,6 +16,20 @@ const FeedPage = () => {
   const [activeTab, setActiveTab] = useState<FeedTab>('모두');
   const [items, setItems] = useState<FeedItem[]>(mockFeedItems);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { message: toastMessage, show: showToast, hide: hideToast } = useToast();
+  const initialToastRef = useRef((location.state as { toast?: string } | null)?.toast ?? null);
+
+  useEffect(() => {
+    if (initialToastRef.current) {
+      const msg = initialToastRef.current;
+      initialToastRef.current = null;
+      showToast(msg);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, navigate, showToast]);
 
   const toggleLike = (id: string) => {
     setItems((prev) =>
@@ -79,6 +95,8 @@ const FeedPage = () => {
           onToggleBookmark={toggleBookmark}
         />
       </div>
+
+      <Toast message={toastMessage} onClose={hideToast} />
     </div>
   );
 };

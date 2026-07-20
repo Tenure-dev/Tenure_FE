@@ -43,6 +43,12 @@ export type { FeedGridProps } from './feed/FeedGrid';
 export { default as Input } from './input/Input';
 export type { InputProps } from './input/Input';
 
+export { default as Modal } from './Modal';
+export type { ModalProps } from './Modal';
+
+export { default as MenuRow } from './MenuRow';
+export type { MenuRowProps } from './MenuRow';
+
 export { default as BackHeader } from './BackHeader';
 export type { BackHeaderProps } from './BackHeader';
 export { default as Toast } from './Toast';

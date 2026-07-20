@@ -46,7 +46,12 @@ const ProfilePhotoPicker = ({ imageUrl, onFileSelected }: ProfilePhotoPickerProp
         onChange={handleFileChange}
       />
 
-      <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} variant="menu">
+      <BottomSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        variant="menu"
+        className="max-w-md"
+      >
         <MenuRow
           icon={<img src={imageIcon} width={18} height={18} alt="" />}
           label="앨범에서 선택하기"

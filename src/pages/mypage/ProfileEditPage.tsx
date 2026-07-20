@@ -37,7 +37,6 @@ const ProfileEditPage = () => {
   };
 
   const handleSave = () => {
-    // TODO: 프로필 수정 API 연동
     storedProfile.setProfile({ name: nickname, gender, height, weight, photoUrl });
     navigate('/mypage', { state: { toast: '프로필이 저장되었습니다' } });
   };

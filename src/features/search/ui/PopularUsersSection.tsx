@@ -16,7 +16,7 @@ const PopularUsersSection = ({ users }: PopularUsersSectionProps) => {
         <ArrowRight size={18} className="text-text-tertiary mt-1 shrink-0" />
       </div>
 
-      <div className="no-scrollbar mt-4 flex gap-4 overflow-x-auto">
+      <div className="no-scrollbar mt-4 flex gap-4 overflow-x-auto py-1">
         {users.map((user) => (
           <div key={user.id} className="flex w-15 shrink-0 flex-col items-center gap-1">
             <img

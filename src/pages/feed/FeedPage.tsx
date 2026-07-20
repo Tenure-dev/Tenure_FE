@@ -68,7 +68,7 @@ const FeedPage = () => {
 
   return (
     <div className="bg-bg-white flex min-h-screen flex-col">
-      <FeedHeader userName={userName} />
+      <FeedHeader userName={userName} onNotificationClick={() => navigate('/notifications')} />
 
       <FeedIntro />
 

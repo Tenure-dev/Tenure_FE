@@ -1,7 +1,9 @@
 import { createBrowserRouter } from 'react-router-dom';
 import RootLayout from './RootLayout';
 import FeedPage from '@/pages/feed/FeedPage';
+import NotificationPage from '@/pages/feed/NotificationPage';
 import MyPage from '@/pages/mypage/MyPage';
+import WishListPage from '@/pages/mypage/WishListPage';
 import PurchaseHistoryPage from '@/pages/mypage/PurchaseHistoryPage';
 import SalesHistoryPage from '@/pages/mypage/SalesHistoryPage';
 import ShippingInputPage from '@/pages/mypage/ShippingInputPage';
@@ -26,6 +28,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <FeedPage /> },
       { path: 'feed', element: <FeedPage /> },
+      { path: 'notifications', element: <NotificationPage /> },
       { path: 'search', element: <SearchPage /> },
       { path: 'ootd/:id', element: <OotdDetailPage /> },
       { path: 'ootd/:id/report', element: <ReportPage /> },
@@ -38,6 +41,7 @@ export const router = createBrowserRouter([
       // ]},
       // 로그인 필요 (ProtectedLayout)
       { path: 'mypage', element: <MyPage /> },
+      { path: 'wishlist', element: <WishListPage /> },
       { path: 'purchase-history', element: <PurchaseHistoryPage /> },
       { path: 'sales-history', element: <SalesHistoryPage /> },
       { path: 'trade/:tradeId', element: <TradeDetailPage /> },

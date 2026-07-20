@@ -3,6 +3,7 @@ export const profile = {
   grade: '레코드 사용자',
   height: 168,
   weight: 58,
+  gender: 'male' as const,
   stats: { feed: 60, item: 16, wish: 4, follower: 201 },
 };
 

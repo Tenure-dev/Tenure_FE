@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import RootLayout from './RootLayout';
 import FeedPage from '@/pages/feed/FeedPage';
 import MyPage from '@/pages/mypage/MyPage';
+import ProfileEditPage from '@/pages/mypage/ProfileEditPage';
 import PurchaseHistoryPage from '@/pages/mypage/PurchaseHistoryPage';
 import SalesHistoryPage from '@/pages/mypage/SalesHistoryPage';
 import ShippingInputPage from '@/pages/mypage/ShippingInputPage';
@@ -40,6 +41,7 @@ export const router = createBrowserRouter([
       // ]},
       // 로그인 필요 (ProtectedLayout)
       { path: 'mypage', element: <MyPage /> },
+      { path: 'mypage/edit', element: <ProfileEditPage /> },
       { path: 'purchase-history', element: <PurchaseHistoryPage /> },
       { path: 'sales-history', element: <SalesHistoryPage /> },
       { path: 'trade/:tradeId', element: <TradeDetailPage /> },

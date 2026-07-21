@@ -1,5 +1,18 @@
 import type { RegisteredItem, RegisteredItemDetail } from '@/features/mypage/model/items';
 
+export type OotdPickerItem = { id: string; imageUrl: string };
+
+export const ootdPickerItems: OotdPickerItem[] = [
+  { id: 'ootd-1', imageUrl: 'https://picsum.photos/seed/ootdp1/400/600' },
+  { id: 'ootd-2', imageUrl: 'https://picsum.photos/seed/ootdp2/400/450' },
+  { id: 'ootd-3', imageUrl: 'https://picsum.photos/seed/ootdp3/400/700' },
+  { id: 'ootd-4', imageUrl: 'https://picsum.photos/seed/ootdp4/400/500' },
+  { id: 'ootd-5', imageUrl: 'https://picsum.photos/seed/ootdp5/400/550' },
+  { id: 'ootd-6', imageUrl: 'https://picsum.photos/seed/ootdp6/400/480' },
+  { id: 'ootd-7', imageUrl: 'https://picsum.photos/seed/ootdp7/400/620' },
+  { id: 'ootd-8', imageUrl: 'https://picsum.photos/seed/ootdp8/400/520' },
+];
+
 export const profile = {
   name: '홍길동',
   grade: '레코드 사용자',

@@ -48,7 +48,15 @@ const RIGHT_ITEMS: NavItem[] = [
   },
 ];
 
-const HIDDEN_PATHS = ['/login', '/signup', '/test', '/trade', '/search', '/mypage/edit'];
+const HIDDEN_PATHS = [
+  '/login',
+  '/signup',
+  '/test',
+  '/trade',
+  '/search',
+  '/mypage/edit',
+  '/mypage/items',
+];
 
 const NavLink = ({ item, pathname }: { item: NavItem; pathname: string }) => {
   const isActive = item.activeWhen(pathname);

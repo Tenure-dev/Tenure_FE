@@ -9,6 +9,7 @@ import ShippingInputPage from '@/pages/mypage/ShippingInputPage';
 import TradeDetailPage from '@/pages/mypage/TradeDetailPage';
 import RegisteredItemsPage from '@/pages/mypage/RegisteredItemsPage';
 import RegisteredItemDetailPage from '@/pages/mypage/RegisteredItemDetailPage';
+import SaleConversionPage from '@/pages/mypage/SaleConversionPage';
 import SettingsPage from '@/pages/mypage/SettingsPage';
 import ItemDetailPage from '@/pages/item/ItemDetailPage';
 import SearchHomePage from '@/pages/search/SearchHomePage';
@@ -46,6 +47,7 @@ export const router = createBrowserRouter([
       { path: 'mypage/edit', element: <ProfileEditPage /> },
       { path: 'mypage/items', element: <RegisteredItemsPage /> },
       { path: 'mypage/items/:itemId', element: <RegisteredItemDetailPage /> },
+      { path: 'mypage/items/:itemId/sell', element: <SaleConversionPage /> },
       { path: 'purchase-history', element: <PurchaseHistoryPage /> },
       { path: 'sales-history', element: <SalesHistoryPage /> },
       { path: 'trade/:tradeId', element: <TradeDetailPage /> },

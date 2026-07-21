@@ -4,9 +4,10 @@ import type { RegisteredItem } from '../model/items';
 interface RegisteredItemRowProps {
   item: RegisteredItem;
   onClick: () => void;
+  onSaleConvert?: () => void;
 }
 
-const RegisteredItemRow = ({ item, onClick }: RegisteredItemRowProps) => {
+const RegisteredItemRow = ({ item, onClick, onSaleConvert }: RegisteredItemRowProps) => {
   const statusText = `${item.forSale ? '판매중' : '미판매'} · 최근 착용 ${item.lastWornDaysAgo}일 전`;
 
   return (
@@ -31,7 +32,10 @@ const RegisteredItemRow = ({ item, onClick }: RegisteredItemRowProps) => {
           variant="solid"
           size="36"
           className="text-body-3 text-text-secondary w-auto shrink-0 px-2 font-medium"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSaleConvert?.();
+          }}
         >
           판매 전환
         </Button>

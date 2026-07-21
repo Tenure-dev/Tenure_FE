@@ -38,6 +38,7 @@ const RegisteredItemsPage = () => {
       <RegisteredItemListSection
         items={filtered}
         onItemClick={(id) => navigate(`/mypage/items/${id}`)}
+        onSaleConvert={(id) => navigate(`/mypage/items/${id}/sell`)}
       />
     </div>
   );

@@ -17,7 +17,7 @@ const RegisteredItemRow = ({ item, onClick }: RegisteredItemRowProps) => {
       onKeyDown={(e) => e.key === 'Enter' && onClick()}
       className="border-border-light flex items-center gap-3 border-b px-4 py-3"
     >
-      <div className="bg-gray-bg size-16 shrink-0 overflow-hidden rounded-lg">
+      <div className="bg-gray-bg size-[17vw] max-h-25 max-w-25 shrink-0 overflow-hidden rounded-lg">
         <img src={item.imageUrl} alt={item.name} className="size-full object-cover" />
       </div>
       <div className="flex flex-1 flex-col gap-0.5">

@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Toast } from '@/shared/components';
 import { useToast } from '@/shared/hooks/useToast';
+import { useMyPage } from '@/features/mypage/api/useMyPage';
+import { useProfileStore } from '@/store/useProfileStore';
 import MyPageFeed from './component/MyPageFeed';
 import MyPageHeader from './component/MyPageHeader';
 import ProfileActions from './component/ProfileAction';
@@ -23,6 +25,22 @@ const MyPage = () => {
       navigate(location.pathname, { replace: true, state: null });
     }
   }, [location.pathname, navigate, showToast]);
+
+  // 서버 프로필을 스토어에 주입한다.
+  // 응답이 오기 전/실패 시에는 스토어의 기존 값(목업)이 그대로 유지된다.
+  const { data: myPage } = useMyPage();
+  const setProfile = useProfileStore((state) => state.setProfile);
+
+  useEffect(() => {
+    if (!myPage) return;
+    // 서버가 null을 준 값은 덮어쓰지 않는다 (기존 값 유지)
+    setProfile({
+      name: myPage.username,
+      photoUrl: myPage.profileImageUrl,
+      ...(myPage.heightCm != null && { height: myPage.heightCm }),
+      ...(myPage.weightKg != null && { weight: myPage.weightKg }),
+    });
+  }, [myPage, setProfile]);
 
   return (
     <div className="bg-bg-white text-text-primary mx-auto min-h-screen max-w-md">

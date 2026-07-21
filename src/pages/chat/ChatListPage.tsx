@@ -33,11 +33,7 @@ const ChatListPage = () => {
           <ChatListItem key={room.id} room={room} />
         ))}
       </div>
-      {toast && (
-        <div className="fixed inset-x-0 bottom-3 flex justify-center px-4">
-          <Toast message={toast} onClose={() => setToast(null)} />
-        </div>
-      )}
+      <Toast message={toast} onClose={() => setToast(null)} />
     </div>
   );
 };

@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, ChevronLeft, Clock } from 'lucide-react';
 import { Button, DoubleButton } from '@/shared/components';
 import { formatPrice, TRADE_DETAILS } from './trade/mock';
@@ -29,6 +29,7 @@ const TradeDetailPage = () => {
   const { tradeId = '' } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const role: TradeRole = searchParams.get('role') === 'seller' ? 'seller' : 'buyer';
   const trade = TRADE_DETAILS[tradeId];
 
@@ -36,6 +37,19 @@ const TradeDetailPage = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [showShippingToast, setShowShippingToast] = useState(() =>
+    Boolean((location.state as { shippingConfirmed?: boolean } | null)?.shippingConfirmed),
+  );
+  const shippingToastHandledRef = useRef(false);
+
+  useEffect(() => {
+    if (!showShippingToast || shippingToastHandledRef.current) return;
+    shippingToastHandledRef.current = true;
+
+    navigate(location.pathname + location.search, { replace: true, state: {} });
+    const timer = setTimeout(() => setShowShippingToast(false), 2000);
+    return () => clearTimeout(timer);
+  }, [showShippingToast, location, navigate]);
 
   if (!trade) {
     return (
@@ -76,7 +90,9 @@ const TradeDetailPage = () => {
           <div className="flex items-center gap-1 text-[13px] text-[#767676]">
             <span>{trade.productType === 'sale' ? '판매 상품' : '미판매 상품'}</span>
             <span>·</span>
-            <span className="text-[#111111]">{formatPrice(trade.offerPrice)}</span>
+            <span className={isPending ? 'text-[#FF3B30]' : 'text-[#111111]'}>
+              {formatPrice(trade.offerPrice)}
+            </span>
           </div>
           {trade.orderNumber && (
             <p className="text-[12px] text-[#767676]">주문번호 {trade.orderNumber}</p>
@@ -85,17 +101,16 @@ const TradeDetailPage = () => {
             <p className="text-[12px] text-[#767676]">
               {trade.courierName} 택배 {trade.trackingNumber}
             </p>
+          ) : role === 'seller' && trade.status === 'progress' ? (
+            <button
+              type="button"
+              onClick={() => navigate(`/trade/${trade.tradeId}/shipping`)}
+              className="text-[12px] text-[#00AAFF]"
+            >
+              운송 번호 입력
+            </button>
           ) : (
-            role === 'seller' &&
-            trade.status === 'progress' && (
-              <button
-                type="button"
-                onClick={() => navigate(`/trade/${trade.tradeId}/shipping`)}
-                className="text-[12px] text-[#00AAFF]"
-              >
-                운송 번호 입력
-              </button>
-            )
+            <p className="text-[12px] text-[#767676]">운송 번호 없음</p>
           )}
         </div>
       </div>
@@ -184,6 +199,11 @@ const TradeDetailPage = () => {
                         {trade.courierName} 택배 {trade.trackingNumber}
                       </span>
                     )}
+                    {step.label === '상품 발송' &&
+                      !trade.trackingNumber &&
+                      !(role === 'seller' && trade.status === 'progress') && (
+                        <span className="text-[12px] text-[#767676]">운송 번호 없음</span>
+                      )}
                     {step.label === '구매 확정' && isAwaitingConfirm && (
                       <span className="text-[12px] text-[#FF3B30]">
                         {trade.autoConfirmDeadline}
@@ -433,6 +453,12 @@ const TradeDetailPage = () => {
       {showToast && (
         <div className="fixed bottom-[24px] left-1/2 z-50 -translate-x-1/2 rounded-[8px] bg-[#111111] px-[16px] py-[12px] text-[13px] text-white">
           거래가 확정되었습니다
+        </div>
+      )}
+
+      {showShippingToast && (
+        <div className="fixed bottom-[24px] left-1/2 z-50 -translate-x-1/2 rounded-[8px] bg-[#111111] px-[16px] py-[12px] text-[13px] text-white">
+          배송 정보가 확인되었습니다
         </div>
       )}
     </div>

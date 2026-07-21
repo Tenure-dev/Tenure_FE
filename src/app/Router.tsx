@@ -8,6 +8,8 @@ import SalesHistoryPage from '@/pages/mypage/SalesHistoryPage';
 import ShippingInputPage from '@/pages/mypage/ShippingInputPage';
 import TradeDetailPage from '@/pages/mypage/TradeDetailPage';
 import SettingsPage from '@/pages/mypage/SettingsPage';
+import NotificationSettingsPage from '@/pages/mypage/NotificationSettingsPage';
+import WithdrawPage from '@/pages/mypage/WithdrawPage';
 import ItemDetailPage from '@/pages/item/ItemDetailPage';
 import SearchHomePage from '@/pages/search/SearchHomePage';
 import SearchResultPage from '@/pages/search/SearchResultPage';
@@ -19,6 +21,10 @@ import ReportPage from '@/pages/ootd/ReportPage';
 import RelatedOotdPage from '@/pages/ootd/RelatedOotdPage';
 import ChatListPage from '@/pages/chat/ChatListPage';
 import ChatRoomPage from '@/pages/chat/ChatRoomPage';
+import OotdTagPage from '@/pages/camera/OotdTagPage';
+import OotdCreatePage from '@/pages/camera/OotdCreatePage';
+import OotdCameraPage from '@/pages/camera/OotdCameraPage';
+import OotdPreviewPage from '@/pages/camera/OotdPreviewPage';
 
 export const router = createBrowserRouter([
   {
@@ -48,7 +54,13 @@ export const router = createBrowserRouter([
       { path: 'trade/:tradeId/shipping', element: <ShippingInputPage /> },
       { path: 'item/:itemId', element: <ItemDetailPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      { path: 'settings/notifications', element: <NotificationSettingsPage /> },
+      { path: 'settings/withdraw', element: <WithdrawPage /> },
       { path: 'test', element: <TestPage /> },
+      { path: 'ootd/camera', element: <OotdCameraPage /> },
+      { path: 'ootd/create', element: <OotdCreatePage /> },
+      { path: 'ootd/tag', element: <OotdTagPage /> },
+      { path: 'ootd/preview', element: <OotdPreviewPage /> },
 
       { path: 'chat', element: <ChatListPage /> },
       { path: 'chat/:id', element: <ChatRoomPage /> },

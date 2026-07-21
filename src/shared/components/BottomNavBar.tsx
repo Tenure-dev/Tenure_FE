@@ -79,7 +79,7 @@ const BottomNavBar = () => {
         ))}
 
         <Link
-          to="/camera"
+          to="/ootd/camera"
           className="bg-bg-black flex size-13 flex-shrink-0 items-center justify-center rounded-full shadow-md transition-transform active:scale-95"
         >
           <img src={cameraInactive} alt="camera" className="size-6" />

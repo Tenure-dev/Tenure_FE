@@ -95,11 +95,7 @@ const ChatRoomPage = ({
       />
       <ChatInput onSendImages={handleSendImages} onSendText={handleSendText} />
 
-      {toast && (
-        <div className="absolute inset-x-0 bottom-3 flex justify-center px-4">
-          <Toast message={toast} onClose={() => setToast(null)} />
-        </div>
-      )}
+      <Toast message={toast} onClose={() => setToast(null)} />
 
       {menuOpen && (
         <ChatMoreSheet

@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import { fileURLToPath, URL } from 'node:url'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import { fileURLToPath, URL } from 'node:url';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -11,4 +11,8 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-})
+  server: {
+    host: true,
+    allowedHosts: ['.ts.net'], // https 환경에서만 카메라가 켜져서 테스트겸 넣었습니다
+  },
+});

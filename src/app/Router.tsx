@@ -21,6 +21,10 @@ import ReportPage from '@/pages/ootd/ReportPage';
 import RelatedOotdPage from '@/pages/ootd/RelatedOotdPage';
 import ChatListPage from '@/pages/chat/ChatListPage';
 import ChatRoomPage from '@/pages/chat/ChatRoomPage';
+import OotdTagPage from '@/pages/camera/OotdTagPage';
+import OotdCreatePage from '@/pages/camera/OotdCreatePage';
+import OotdCameraPage from '@/pages/camera/OotdCameraPage';
+import OotdPreviewPage from '@/pages/camera/OotdPreviewPage';
 
 export const router = createBrowserRouter([
   {
@@ -53,6 +57,10 @@ export const router = createBrowserRouter([
       { path: 'settings/notifications', element: <NotificationSettingsPage /> },
       { path: 'settings/withdraw', element: <WithdrawPage /> },
       { path: 'test', element: <TestPage /> },
+      { path: 'ootd/camera', element: <OotdCameraPage /> },
+      { path: 'ootd/create', element: <OotdCreatePage /> },
+      { path: 'ootd/tag', element: <OotdTagPage /> },
+      { path: 'ootd/preview', element: <OotdPreviewPage /> },
 
       { path: 'chat', element: <ChatListPage /> },
       { path: 'chat/:id', element: <ChatRoomPage /> },

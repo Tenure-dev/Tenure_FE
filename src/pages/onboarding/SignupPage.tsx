@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Camera, ChevronLeft, Search } from 'lucide-react';
-import { Button } from '@/shared/components';
+import { Button, DoubleButton } from '@/shared/components';
 
 const TOTAL_STEPS = 4;
 type Step = 1 | 2 | 3 | 4;
@@ -189,11 +189,28 @@ const SignupPage = () => {
   const [weight, setWeight] = useState(60);
   const canComplete = nickname.trim().length > 0;
 
+  const [isPhotoSheetOpen, setIsPhotoSheetOpen] = useState(false);
+  const [pendingPhotoPreview, setPendingPhotoPreview] = useState<string | null>(null);
+  const [showProfileToast, setShowProfileToast] = useState(false);
+
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setPhotoPreview(URL.createObjectURL(file));
+      setPendingPhotoPreview(URL.createObjectURL(file));
     }
+    e.target.value = '';
+  };
+
+  const handleCancelPendingPhoto = () => setPendingPhotoPreview(null);
+
+  const handleConfirmPendingPhoto = () => {
+    setPhotoPreview(pendingPhotoPreview);
+    setPendingPhotoPreview(null);
+  };
+
+  const handleCompleteProfile = () => {
+    setShowProfileToast(true);
+    setTimeout(() => setShowProfileToast(false), 2000);
   };
 
   const handleBack = () => {
@@ -412,7 +429,7 @@ const SignupPage = () => {
           <div className="flex justify-center">
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => setIsPhotoSheetOpen(true)}
               className="relative flex size-[96px] items-center justify-center overflow-hidden rounded-full bg-[#EAEDF0]"
             >
               {photoPreview ? (
@@ -499,11 +516,87 @@ const SignupPage = () => {
               size="54"
               className="!w-full"
               disabled={!canComplete}
-              onClick={() => {}}
+              onClick={handleCompleteProfile}
             >
               완료
             </Button>
           </div>
+        </div>
+      )}
+
+      {isPhotoSheetOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+          onClick={() => setIsPhotoSheetOpen(false)}
+        >
+          <div
+            className="w-full max-w-[390px] rounded-t-[16px] bg-white"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setIsPhotoSheetOpen(false);
+                fileInputRef.current?.click();
+              }}
+              className="flex h-[52px] w-full items-center justify-center border-b border-[#F0F0F0] text-[15px] text-[#111111]"
+            >
+              앨범에서 선택하기
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPhotoPreview(null);
+                setIsPhotoSheetOpen(false);
+              }}
+              className="flex h-[52px] w-full items-center justify-center border-b border-[#F0F0F0] text-[15px] text-[#111111]"
+            >
+              기본 이미지로 변경
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsPhotoSheetOpen(false)}
+              className="flex h-[52px] w-full items-center justify-center border-b border-[#F0F0F0] text-[15px] text-[#111111]"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {pendingPhotoPreview && (
+        <div className="fixed inset-0 z-50 mx-auto flex w-full max-w-[390px] flex-col bg-[#FFFFFF]">
+          <header className="flex h-[52px] items-center justify-between px-[16px]">
+            <button type="button" onClick={handleCancelPendingPhoto} aria-label="닫기">
+              <ChevronLeft size={24} className="text-[#111111]" />
+            </button>
+            <h1 className="text-[15px] font-semibold text-[#111111]">사진 확인</h1>
+            <div className="size-[24px]" />
+          </header>
+          <div className="flex flex-1 items-center justify-center">
+            <div className="size-[200px] overflow-hidden rounded-full">
+              <img
+                src={pendingPhotoPreview}
+                alt="선택한 프로필 사진 미리보기"
+                className="size-full object-cover"
+              />
+            </div>
+          </div>
+          <div className="px-[20px] pb-[24px]">
+            <DoubleButton
+              layout="half"
+              leftLabel="취소하기"
+              rightLabel="완료하기"
+              onLeftClick={handleCancelPendingPhoto}
+              onRightClick={handleConfirmPendingPhoto}
+            />
+          </div>
+        </div>
+      )}
+
+      {showProfileToast && (
+        <div className="fixed bottom-[24px] left-1/2 z-50 -translate-x-1/2 rounded-[8px] bg-[#111111] px-[16px] py-[12px] text-[13px] text-white">
+          프로필이 수정되었습니다
         </div>
       )}
 

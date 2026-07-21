@@ -13,7 +13,7 @@ const OotdCreatePage = () => {
   useEffect(() => {
     if (!posting) return;
     const timer = setTimeout(() => {
-      navigate('/feed', { state: { autoTagged: true } });
+      navigate('/feed', { state: { toast: '자동 태그되어 게시됨.' } });
     }, 2000);
     return () => clearTimeout(timer);
   }, [posting, navigate]);

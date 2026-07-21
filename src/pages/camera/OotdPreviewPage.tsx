@@ -31,7 +31,7 @@ const OotdPreviewPage = () => {
   useEffect(() => {
     if (phase !== 'posting') return;
     const timer = setTimeout(() => {
-      navigate('/ootd/1', { state: { posted: true } });
+      navigate('/ootd/1', { state: { toast: '게시물이 등록되었습니다.' } });
     }, 1500);
     return () => clearTimeout(timer);
   }, [phase, navigate]);

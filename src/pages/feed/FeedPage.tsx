@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { SegmentedControl, Toast } from '@/shared/components';
 import FeedGrid from '@/shared/components/feed/FeedGrid';
 import FollowAvatarRow from '@/features/feed/ui/FollowAvatarRow';
+import { useToast } from '@/shared/hooks/useToast';
 import FeedHeader from './components/FeedHeader';
 import FeedIntro from './components/FeedIntro';
 import { mockFeedItems, mockFollowedUsers } from '@/features/feed/model/mocks';
@@ -11,20 +12,24 @@ import type { FeedItem, FeedTab } from '@/features/feed/model/types';
 const TABS: FeedTab[] = ['모두', '팔로우'];
 
 const FeedPage = () => {
-  const location = useLocation();
   const userName = '테뉴어';
-  // OOTD 자동 태그 게시 후 진입 시 토스트, 게시글 생성흐름으로 인해 추가하였습니다.
-  const [toast, setToast] = useState<string | null>(
-    (location.state as { autoTagged?: boolean } | null)?.autoTagged
-      ? '자동 태그되어 게시됨.'
-      : null,
-  );
-  useEffect(() => {
-    if (toast) window.history.replaceState({}, '');
-  }, [toast]);
   const [activeTab, setActiveTab] = useState<FeedTab>('모두');
   const [items, setItems] = useState<FeedItem[]>(mockFeedItems);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { message: toastMessage, show: showToast, hide: hideToast } = useToast();
+  const initialToastRef = useRef((location.state as { toast?: string } | null)?.toast ?? null);
+
+  useEffect(() => {
+    if (initialToastRef.current) {
+      const msg = initialToastRef.current;
+      initialToastRef.current = null;
+      showToast(msg);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, navigate, showToast]);
 
   const toggleLike = (id: string) => {
     setItems((prev) =>
@@ -91,11 +96,7 @@ const FeedPage = () => {
         />
       </div>
 
-      {toast && (
-        <div className="fixed inset-x-0 bottom-24 z-30 flex justify-center px-4">
-          <Toast message={toast} onClose={() => setToast(null)} />
-        </div>
-      )}
+      <Toast message={toastMessage} onClose={hideToast} />
     </div>
   );
 };

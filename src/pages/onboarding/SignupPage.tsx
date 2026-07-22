@@ -3,8 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useMutation } from '@tanstack/react-query';
 import { Camera, ChevronLeft, Search } from 'lucide-react';
 import { Button, DoubleButton } from '@/shared/components';
+import { signup } from '@/features/auth/api/authApi';
+import { createAddress } from '@/features/auth/api/addressApi';
+import { getMyInfo } from '@/features/auth/api/userApi';
+import { toApiGender } from '@/features/auth/lib/gender';
+import { USER_ID_STORAGE_KEY } from '@/shared/lib/api';
+import { useUserStore } from '@/store/userStore';
 
 const TOTAL_STEPS = 4;
 type Step = 1 | 2 | 3 | 4;
@@ -180,6 +187,26 @@ const SignupPage = () => {
     : MOCK_ADDRESSES;
   const canProceedStep3 = selectedAddress.length > 0;
 
+  const addressMutation = useMutation({ mutationFn: createAddress });
+
+  const handleAddressNext = () => {
+    // 주소 검색 UI에 수취인/연락처/우편번호 입력이 없어 빈 값으로 전송하고,
+    // 선택 사항이므로 실패 여부와 무관하게 다음 단계로 진행한다.
+    addressMutation.mutate(
+      {
+        receiverName: '',
+        phone: '',
+        addressLine1: selectedAddress,
+        addressLine2: addressDetail,
+        postalCode: '',
+        requestNote: '',
+        isDefault: true,
+      },
+      { onError: (error) => console.error(error) },
+    );
+    setStep(4);
+  };
+
   // Step 4 — 프로필 작성
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -187,11 +214,43 @@ const SignupPage = () => {
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [height, setHeight] = useState(170);
   const [weight, setWeight] = useState(60);
+  const [signupError, setSignupError] = useState<string | null>(null);
   const canComplete = nickname.trim().length > 0;
 
   const [isPhotoSheetOpen, setIsPhotoSheetOpen] = useState(false);
   const [pendingPhotoPreview, setPendingPhotoPreview] = useState<string | null>(null);
-  const [showProfileToast, setShowProfileToast] = useState(false);
+
+  const setUser = useUserStore((state) => state.setUser);
+  const signupMutation = useMutation({ mutationFn: signup });
+
+  const handleSignupComplete = () => {
+    setSignupError(null);
+    signupMutation.mutate(
+      {
+        email,
+        password,
+        nickname,
+        gender: toApiGender(gender),
+        height,
+        weight,
+      },
+      {
+        onSuccess: async ({ userId }) => {
+          localStorage.setItem(USER_ID_STORAGE_KEY, String(userId));
+          try {
+            setUser(await getMyInfo());
+          } catch (error) {
+            console.error(error);
+          }
+          navigate('/feed');
+        },
+        onError: (error) => {
+          console.error(error);
+          setSignupError('회원가입에 실패했습니다. 다시 시도해주세요.');
+        },
+      },
+    );
+  };
 
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -206,11 +265,6 @@ const SignupPage = () => {
   const handleConfirmPendingPhoto = () => {
     setPhotoPreview(pendingPhotoPreview);
     setPendingPhotoPreview(null);
-  };
-
-  const handleCompleteProfile = () => {
-    setShowProfileToast(true);
-    setTimeout(() => setShowProfileToast(false), 2000);
   };
 
   const handleBack = () => {
@@ -416,7 +470,7 @@ const SignupPage = () => {
               size="54"
               className="!w-full"
               disabled={!canProceedStep3}
-              onClick={() => setStep(4)}
+              onClick={handleAddressNext}
             >
               다음
             </Button>
@@ -509,14 +563,16 @@ const SignupPage = () => {
             />
           </div>
 
+          {signupError && <p className="mt-3 text-[13px] text-[#FF3B30]">{signupError}</p>}
+
           <div className="mt-auto pt-6">
             <Button
               type="button"
               variant="filled"
               size="54"
               className="!w-full"
-              disabled={!canComplete}
-              onClick={handleCompleteProfile}
+              disabled={!canComplete || signupMutation.isPending}
+              onClick={handleSignupComplete}
             >
               완료
             </Button>
@@ -591,12 +647,6 @@ const SignupPage = () => {
               onRightClick={handleConfirmPendingPhoto}
             />
           </div>
-        </div>
-      )}
-
-      {showProfileToast && (
-        <div className="fixed bottom-[24px] left-1/2 z-50 -translate-x-1/2 rounded-[8px] bg-[#111111] px-[16px] py-[12px] text-[13px] text-white">
-          프로필이 수정되었습니다
         </div>
       )}
 

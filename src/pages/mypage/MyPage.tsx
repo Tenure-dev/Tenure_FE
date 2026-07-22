@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Toast } from '@/shared/components';
 import { useToast } from '@/shared/hooks/useToast';
 import { useMyPage } from '@/features/mypage/api/useMyPage';
+import type { FeedTab } from '@/features/mypage/api/useMyFeed';
 import { useProfileStore } from '@/store/useProfileStore';
 import MyPageFeed from './component/MyPageFeed';
 import MyPageHeader from './component/MyPageHeader';
@@ -42,14 +43,17 @@ const MyPage = () => {
     });
   }, [myPage, setProfile]);
 
+  // 탭 상태를 여기서 들고 탭바·피드에 함께 내려준다.
+  const [activeTab, setActiveTab] = useState<FeedTab>('게시물');
+
   return (
-    <div className="bg-bg-white text-text-primary mx-auto min-h-screen max-w-md">
+    <div className="bg-bg-white text-text-primary mx-auto min-h-screen">
       <MyPageHeader />
       <ProfileSection />
       <ProfileStats />
       <ProfileActions />
-      <ProfileTabs />
-      <MyPageFeed />
+      <ProfileTabs active={activeTab} onChange={setActiveTab} />
+      <MyPageFeed active={activeTab} />
       <Toast message={toastMessage} onClose={hideToast} />
     </div>
   );

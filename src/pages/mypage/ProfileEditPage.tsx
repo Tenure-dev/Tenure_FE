@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BackHeader, DoubleButton, Input } from '@/shared/components';
+import { useMutation } from '@tanstack/react-query';
+import { BackHeader, DoubleButton, Input, Toast } from '@/shared/components';
 import { useProfileStore, type Gender } from '@/store/useProfileStore';
+import { useUserStore } from '@/store/userStore';
+import { useToast } from '@/shared/hooks/useToast';
+import { updateMyInfo } from '@/features/auth/api/userApi';
+import { fromApiGender, toApiGender } from '@/features/auth/lib/gender';
 import ProfileImagePreview from './component/ProfileImagePreview';
 import GenderToggle from './component/GenderToggle';
 import ProfilePhotoPicker from './component/ProfilePhotoPicker';
@@ -13,6 +18,8 @@ const WEIGHT_RANGE = { min: 30, max: 150 };
 const ProfileEditPage = () => {
   const navigate = useNavigate();
   const storedProfile = useProfileStore();
+  const setUser = useUserStore((state) => state.setUser);
+  const { message: errorToast, show: showErrorToast, hide: hideErrorToast } = useToast();
 
   const [nickname, setNickname] = useState(storedProfile.name);
   const [gender, setGender] = useState<Gender>(storedProfile.gender);
@@ -20,6 +27,8 @@ const ProfileEditPage = () => {
   const [weight, setWeight] = useState(storedProfile.weight);
   const [photoUrl, setPhotoUrl] = useState<string | null>(storedProfile.photoUrl);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
+
+  const updateProfileMutation = useMutation({ mutationFn: updateMyInfo });
 
   const handleFileSelected = (file: File) => {
     setPendingPhoto(URL.createObjectURL(file));
@@ -37,8 +46,26 @@ const ProfileEditPage = () => {
   };
 
   const handleSave = () => {
-    storedProfile.setProfile({ name: nickname, gender, height, weight, photoUrl });
-    navigate('/mypage', { state: { toast: '프로필이 저장되었습니다' } });
+    updateProfileMutation.mutate(
+      { nickname, gender: toApiGender(gender), height, weight },
+      {
+        onSuccess: (data) => {
+          storedProfile.setProfile({
+            name: data.nickname,
+            gender: fromApiGender(data.gender),
+            height: data.height,
+            weight: data.weight,
+            photoUrl,
+          });
+          setUser(data);
+          navigate('/mypage', { state: { toast: '프로필이 수정되었습니다' } });
+        },
+        onError: (error) => {
+          console.error(error);
+          showErrorToast('프로필 수정에 실패했습니다');
+        },
+      },
+    );
   };
 
   return (
@@ -97,6 +124,8 @@ const ProfileEditPage = () => {
           onConfirm={handleConfirmPhoto}
         />
       )}
+
+      <Toast message={errorToast} onClose={hideErrorToast} />
     </div>
   );
 };

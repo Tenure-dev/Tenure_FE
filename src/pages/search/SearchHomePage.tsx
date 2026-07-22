@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchTopBar from '@/features/search/ui/SearchTopBar';
 import RecommendedKeywords from '@/features/search/ui/RecommendedKeywords';
@@ -9,26 +9,23 @@ import CarouselSection from '@/features/search/ui/CarouselSection';
 import PopularUsersSection from '@/features/search/ui/PopularUsersSection';
 import FilterBottomSheet from '@/features/search/ui/FilterBottomSheet';
 import {
-  keywordSuggestionPool,
-  newArrivalImages,
-  popularUsers,
-  RELATED_OOTD_ID,
-  recentSearchesInitial,
-  recentViewedUsersInitial,
-  recommendedKeywords,
-  similarToRecentImages,
-  trendingStyleImages,
-} from '@/features/search/model/mocks';
+  deleteRecentUser,
+  deleteRecentKeyword,
+  getSearchHome,
+  getSearchRecent,
+} from '@/features/search/api/searchApi';
+import type { SearchHomeData } from '@/features/search/api/types';
+import type { RecentSearchItem, RecentViewedUser } from '@/features/search/model/types';
 import {
   DEFAULT_SEARCH_FILTERS,
   isFiltersActive,
   type SearchFilters,
 } from '@/features/search/model/types';
 
-const buildRelatedKeywords = (query: string) => {
+const buildRelatedKeywords = (query: string, suggestions: string[]) => {
   const trimmed = query.trim();
   if (!trimmed) return [];
-  const matches = keywordSuggestionPool.filter((k) => k.includes(trimmed) && k !== trimmed);
+  const matches = suggestions.filter((k) => k.includes(trimmed) && k !== trimmed);
   return [trimmed, ...matches].slice(0, 8);
 };
 
@@ -36,21 +33,38 @@ const SearchHomePage = () => {
   const navigate = useNavigate();
   const [active, setActive] = useState(false);
   const [query, setQuery] = useState('');
-  const [recentViewedUsers, setRecentViewedUsers] = useState(recentViewedUsersInitial);
-  const [recentSearches, setRecentSearches] = useState(recentSearchesInitial);
+  const [recentViewedUsers, setRecentViewedUsers] = useState<RecentViewedUser[]>([]);
+  const [recentSearches, setRecentSearches] = useState<RecentSearchItem[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [home, setHome] = useState<SearchHomeData | null>(null);
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
-  const relatedKeywords = useMemo(() => buildRelatedKeywords(query), [query]);
+  useEffect(() => {
+    getSearchRecent().then((data) => {
+      setRecentViewedUsers(
+        data.recentUsers.map((u) => ({
+          id: u.userId,
+          name: u.username,
+          avatarUrl: u.profileImageUrl,
+        })),
+      );
+      setRecentSearches(data.recentKeywords.map((k) => ({ id: k.id, keyword: k.keyword })));
+      setSuggestions(data.suggestions);
+    });
+    getSearchHome().then(setHome);
+  }, []);
+
+  const relatedKeywords = useMemo(
+    () => buildRelatedKeywords(query, suggestions),
+    [query, suggestions],
+  );
 
   const goToResult = (keyword: string, nextFilters: SearchFilters) => {
     const trimmed = keyword.trim();
-    if (trimmed) {
-      setRecentSearches((prev) => {
-        const withoutDup = prev.filter((item) => item.keyword !== trimmed);
-        return [{ id: `rs-${Date.now()}`, keyword: trimmed }, ...withoutDup].slice(0, 10);
-      });
-    }
+    if (!trimmed) return;
+
+    setRecentSearches((prev) => prev.filter((item) => item.keyword !== trimmed));
     navigate('/search/result', { state: { keyword: trimmed, filters: nextFilters } });
   };
 
@@ -65,6 +79,28 @@ const SearchHomePage = () => {
     setFilters(nextFilters);
     setActive(false);
     setQuery('');
+  };
+
+  const handleRemoveRecentUser = (id: number) => {
+    setRecentViewedUsers((prev) => prev.filter((u) => u.id !== id));
+    deleteRecentUser(id);
+  };
+
+  const handleClearAllRecentUsers = () => {
+    const ids = recentViewedUsers.map((u) => u.id);
+    setRecentViewedUsers([]);
+    ids.forEach((id) => deleteRecentUser(id));
+  };
+
+  const handleRemoveRecentKeyword = (id: number) => {
+    setRecentSearches((prev) => prev.filter((s) => s.id !== id));
+    deleteRecentKeyword(id);
+  };
+
+  const handleClearAllRecentKeywords = () => {
+    const ids = recentSearches.map((s) => s.id);
+    setRecentSearches([]);
+    ids.forEach((id) => deleteRecentKeyword(id));
   };
 
   return (
@@ -86,17 +122,17 @@ const SearchHomePage = () => {
             <RelatedKeywordList keywords={relatedKeywords} onSelect={handleSubmit} />
           ) : (
             <>
-              <RecommendedKeywords keywords={recommendedKeywords} onSelect={handleSubmit} />
+              <RecommendedKeywords keywords={suggestions} onSelect={handleSubmit} />
               <RecentViewedUsers
                 users={recentViewedUsers}
-                onRemove={(id) => setRecentViewedUsers((prev) => prev.filter((u) => u.id !== id))}
-                onClearAll={() => setRecentViewedUsers([])}
+                onRemove={handleRemoveRecentUser}
+                onClearAll={handleClearAllRecentUsers}
               />
               <RecentSearches
                 searches={recentSearches}
                 onSelect={handleSubmit}
-                onRemove={(id) => setRecentSearches((prev) => prev.filter((s) => s.id !== id))}
-                onClearAll={() => setRecentSearches([])}
+                onRemove={handleRemoveRecentKeyword}
+                onClearAll={handleClearAllRecentKeywords}
               />
             </>
           )}
@@ -106,21 +142,21 @@ const SearchHomePage = () => {
           <CarouselSection
             title="방금 보신 OOTD와 유사한 게시물"
             subtitle="이런 스타일도 좋아할 수 있어요."
-            images={similarToRecentImages}
-            ootdId={RELATED_OOTD_ID}
+            items={home?.similarOotds.content ?? []}
+            moreHref="/search/similar-ootds"
           />
           <CarouselSection
             title="지금 인기 있는 스타일"
             subtitle="좋아요를 많이 받은 OOTD를 추천해요."
-            images={trendingStyleImages}
-            ootdId={RELATED_OOTD_ID}
+            items={home?.popularOotds.content ?? []}
+            moreHref="/search/popular-ootds"
           />
-          <PopularUsersSection users={popularUsers} />
+          <PopularUsersSection users={home?.popularUsers.content ?? []} />
           <CarouselSection
             title="새로 올라온 OOTD"
             subtitle="최근 올라온 게시물을 빠르게 둘러보세요."
-            images={newArrivalImages}
-            ootdId={RELATED_OOTD_ID}
+            items={home?.newOotds.content ?? []}
+            moreHref="/search/new-ootds"
           />
         </div>
       )}

@@ -1,4 +1,4 @@
-import type { FeedRatio } from '@/features/feed/model/types';
+import type { ApiGender, ApiItemStatus, ApiSortType } from '../api/types';
 
 export type SaleStatusFilter = 'all' | 'onSaleIncluded' | 'onSaleOnly';
 export type GenderFilter = 'all' | 'male' | 'female';
@@ -33,41 +33,39 @@ export const isFiltersActive = (filters: SearchFilters) =>
   filters.weightRange[0] !== WEIGHT_RANGE_LIMIT[0] ||
   filters.weightRange[1] !== WEIGHT_RANGE_LIMIT[1];
 
+const GENDER_TO_API: Record<GenderFilter, ApiGender | undefined> = {
+  all: undefined,
+  male: 'MALE',
+  female: 'FEMALE',
+};
+
+const SORT_TO_API: Record<SortOption, ApiSortType> = {
+  recommend: 'RECOMMEND',
+  latest: 'LATEST',
+  like: 'HEART',
+  view: 'VIEW',
+  save: 'SAVE',
+};
+
+// BE의 ItemStatus는 단일 값만 필터링 가능해 'onSaleIncluded'(판매중 포함)를 표현할 수 없음 -> 'all'과 동일하게 처리.
+// 관련 논의는 project-api-integration 메모리 및 대화 말미의 BE 요청 목록 참고.
+const SALE_STATUS_TO_API: Record<SaleStatusFilter, ApiItemStatus | undefined> = {
+  all: undefined,
+  onSaleIncluded: undefined,
+  onSaleOnly: 'ON_SALE',
+};
+
+export const toApiGender = (gender: GenderFilter) => GENDER_TO_API[gender];
+export const toApiSort = (sort: SortOption) => SORT_TO_API[sort];
+export const toApiItemStatus = (saleStatus: SaleStatusFilter) => SALE_STATUS_TO_API[saleStatus];
+
 export interface RecentViewedUser {
-  id: string;
+  id: number;
   name: string;
-  subtext: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
 }
 
 export interface RecentSearchItem {
-  id: string;
+  id: number;
   keyword: string;
-}
-
-export interface SearchResultItem {
-  id: string;
-  imageUrl: string;
-  ratio: FeedRatio;
-  liked: boolean;
-  bookmarked: boolean;
-  authorId: string;
-  category: string;
-  gender: 'male' | 'female' | 'unisex';
-  saleStatus: 'onSale' | 'unlisted';
-  authorHeight: number;
-  authorWeight: number;
-  likeCount: number;
-  viewCount: number;
-  saveCount: number;
-  createdAt: number;
-  keywords: string[];
-}
-
-export interface SearchAccount {
-  id: string;
-  name: string;
-  followerCount: number;
-  postCount: number;
-  following: boolean;
 }

@@ -1,10 +1,12 @@
 import { ArrowRight } from 'lucide-react';
-import type { PopularUser } from '../model/mocks';
+import profileDefault from '@/shared/assets/profileDefault.svg';
+import type { SearchHomePopularUserResponse } from '../api/types';
 
 export interface PopularUsersSectionProps {
-  users: PopularUser[];
+  users: SearchHomePopularUserResponse[];
 }
 
+// "더보기" 목적지는 BE가 SearchHomePopularUserResponse에 followerCount/ootdCount를 추가할 때까지 보류.
 const PopularUsersSection = ({ users }: PopularUsersSectionProps) => {
   return (
     <div className="border-border-secondary border-b px-4 py-6">
@@ -20,12 +22,12 @@ const PopularUsersSection = ({ users }: PopularUsersSectionProps) => {
         {users.map((user) => (
           <div key={user.id} className="flex w-15 shrink-0 flex-col items-center gap-1">
             <img
-              src={user.avatarUrl}
-              alt={user.name}
+              src={user.profileImageUrl || profileDefault}
+              alt={user.username}
               className="ring-border-secondary size-13 rounded-full object-cover ring-2 ring-offset-1"
             />
             <span className="text-body-4 text-text-secondary w-full truncate text-center font-medium">
-              {user.name}
+              {user.username}
             </span>
           </div>
         ))}

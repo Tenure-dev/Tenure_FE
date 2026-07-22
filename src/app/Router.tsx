@@ -13,6 +13,9 @@ import WithdrawPage from '@/pages/mypage/WithdrawPage';
 import ItemDetailPage from '@/pages/item/ItemDetailPage';
 import SearchHomePage from '@/pages/search/SearchHomePage';
 import SearchResultPage from '@/pages/search/SearchResultPage';
+import SearchSimilarOotdsPage from '@/pages/search/SearchSimilarOotdsPage';
+import SearchPopularOotdsPage from '@/pages/search/SearchPopularOotdsPage';
+import SearchNewOotdsPage from '@/pages/search/SearchNewOotdsPage';
 import LoginPage from '@/pages/onboarding/LoginPage';
 import SignupPage from '@/pages/onboarding/SignupPage';
 import TestPage from '@/pages/onboarding/Test';
@@ -36,6 +39,9 @@ export const router = createBrowserRouter([
       { path: 'feed', element: <FeedPage /> },
       { path: 'search', element: <SearchHomePage /> },
       { path: 'search/result', element: <SearchResultPage /> },
+      { path: 'search/similar-ootds', element: <SearchSimilarOotdsPage /> },
+      { path: 'search/popular-ootds', element: <SearchPopularOotdsPage /> },
+      { path: 'search/new-ootds', element: <SearchNewOotdsPage /> },
       { path: 'ootd/:id', element: <OotdDetailPage /> },
       { path: 'ootd/:id/report', element: <ReportPage /> },
       { path: 'ootd/:id/related', element: <RelatedOotdPage /> },

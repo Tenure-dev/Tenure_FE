@@ -6,11 +6,11 @@ import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import { Camera, ChevronLeft, Search } from 'lucide-react';
 import { Button, DoubleButton } from '@/shared/components';
-import { login, signup } from '@/features/auth/api/authApi';
+import { login, sendEmailVerification, signup, verifyEmailCode } from '@/features/auth/api/authApi';
 import { createAddress } from '@/features/auth/api/addressApi';
 import { getMyInfo } from '@/features/auth/api/userApi';
 import { toApiGender } from '@/features/auth/lib/gender';
-import { ACCESS_TOKEN_STORAGE_KEY, USER_ID_STORAGE_KEY } from '@/shared/lib/api';
+import { ACCESS_TOKEN_STORAGE_KEY, ApiError, USER_ID_STORAGE_KEY } from '@/shared/lib/api';
 import { useUserStore } from '@/store/userStore';
 
 const TOTAL_STEPS = 4;
@@ -22,9 +22,6 @@ const STEP_TITLES: Record<Step, string> = {
   3: '주소 등록',
   4: '프로필 작성',
 };
-
-const MOCK_EXISTING_EMAILS = ['test@example.com', 'user@tenure.com'];
-const MOCK_VALID_CODE = '123456';
 
 type EmailVerifyState = 'idle' | 'invalid' | 'exists' | 'sent' | 'wrong' | 'verified';
 
@@ -49,12 +46,14 @@ const TERMS: {
 ];
 
 const MOCK_ADDRESSES = [
-  '서울특별시 강남구 테헤란로 123',
-  '서울특별시 마포구 월드컵로 45',
-  '경기도 성남시 분당구 판교역로 235',
-  '서울특별시 종로구 종로 100',
-  '부산광역시 해운대구 센텀중앙로 55',
+  { addressLine1: '서울특별시 강남구 테헤란로 123', postalCode: '06134' },
+  { addressLine1: '서울특별시 마포구 월드컵로 45', postalCode: '03925' },
+  { addressLine1: '경기도 성남시 분당구 판교역로 235', postalCode: '13494' },
+  { addressLine1: '서울특별시 종로구 종로 100', postalCode: '03159' },
+  { addressLine1: '부산광역시 해운대구 센텀중앙로 55', postalCode: '48058' },
 ];
+
+const PHONE_PATTERN = /^010-\d{4}-\d{4}$/;
 
 const inputClassName =
   'h-[52px] w-full rounded-[8px] border border-[#E2E6E8] px-[16px] text-[15px] text-[#111111] outline-none focus:border-[#00AAFF] disabled:bg-[#F5F6F8]';
@@ -110,21 +109,36 @@ const SignupPage = () => {
 
   const isCodeEnabled = ['sent', 'wrong', 'verified'].includes(emailVerifyState);
 
+  const sendEmailMutation = useMutation({ mutationFn: sendEmailVerification });
+  const verifyEmailMutation = useMutation({ mutationFn: verifyEmailCode });
+
   const handleEmailVerify = () => {
     const parsed = z.string().email().safeParse(email);
     if (!parsed.success) {
       setEmailVerifyState('invalid');
       return;
     }
-    if (MOCK_EXISTING_EMAILS.includes(email)) {
-      setEmailVerifyState('exists');
-      return;
-    }
-    setEmailVerifyState('sent');
+    sendEmailMutation.mutate(
+      { email },
+      {
+        onSuccess: () => setEmailVerifyState('sent'),
+        onError: (error) => {
+          setEmailVerifyState(
+            error instanceof ApiError && error.code === 'AUTH_1001' ? 'exists' : 'invalid',
+          );
+        },
+      },
+    );
   };
 
   const handleCodeVerify = () => {
-    setEmailVerifyState(verificationCode === MOCK_VALID_CODE ? 'verified' : 'wrong');
+    verifyEmailMutation.mutate(
+      { email, code: verificationCode },
+      {
+        onSuccess: () => setEmailVerifyState('verified'),
+        onError: () => setEmailVerifyState('wrong'),
+      },
+    );
   };
 
   let emailMessage: { text: string; color: string } | null = null;
@@ -138,7 +152,10 @@ const SignupPage = () => {
 
   let codeMessage: { text: string; color: string } | null = null;
   if (emailVerifyState === 'wrong') {
-    codeMessage = { text: '인증번호가 일치하지 않습니다', color: 'text-[#FF3B30]' };
+    codeMessage = {
+      text: '인증번호가 올바르지 않거나 만료되었습니다',
+      color: 'text-[#FF3B30]',
+    };
   } else if (emailVerifyState === 'verified') {
     codeMessage = { text: '인증되었습니다', color: 'text-[#00AAFF]' };
   }
@@ -179,26 +196,29 @@ const SignupPage = () => {
   const canProceedStep2 = agreements.service && agreements.privacy;
 
   // Step 3 — 주소 등록
+  const [receiverName, setReceiverName] = useState('');
+  const [phone, setPhone] = useState('');
   const [addressQuery, setAddressQuery] = useState('');
   const [selectedAddress, setSelectedAddress] = useState('');
+  const [selectedPostalCode, setSelectedPostalCode] = useState('');
   const [addressDetail, setAddressDetail] = useState('');
   const filteredAddresses = addressQuery.trim()
-    ? MOCK_ADDRESSES.filter((addr) => addr.includes(addressQuery.trim()))
+    ? MOCK_ADDRESSES.filter((addr) => addr.addressLine1.includes(addressQuery.trim()))
     : MOCK_ADDRESSES;
-  const canProceedStep3 = selectedAddress.length > 0;
+  const isPhoneValid = PHONE_PATTERN.test(phone);
+  const canProceedStep3 =
+    receiverName.trim().length > 0 && isPhoneValid && selectedAddress.length > 0;
 
   const addressMutation = useMutation({ mutationFn: createAddress });
 
   const handleAddressNext = () => {
-    // 주소 검색 UI에 수취인/연락처/우편번호 입력이 없어 빈 값으로 전송하고,
-    // 선택 사항이므로 실패 여부와 무관하게 다음 단계로 진행한다.
     addressMutation.mutate(
       {
-        receiverName: '',
-        phone: '',
+        receiverName,
+        phone,
         addressLine1: selectedAddress,
         addressLine2: addressDetail,
-        postalCode: '',
+        postalCode: selectedPostalCode,
         requestNote: '',
         isDefault: true,
       },
@@ -297,7 +317,7 @@ const SignupPage = () => {
                 variant="ghost"
                 size="44"
                 onClick={handleEmailVerify}
-                disabled={!email}
+                disabled={!email || sendEmailMutation.isPending}
               >
                 인증하기
               </Button>
@@ -321,7 +341,7 @@ const SignupPage = () => {
                 variant="ghost"
                 size="44"
                 onClick={handleCodeVerify}
-                disabled={!isCodeEnabled || !verificationCode}
+                disabled={!isCodeEnabled || !verificationCode || verifyEmailMutation.isPending}
               >
                 인증하기
               </Button>
@@ -425,7 +445,35 @@ const SignupPage = () => {
 
       {step === 3 && (
         <div className="flex flex-1 flex-col px-[20px] py-[24px]">
-          <div className="relative">
+          <div className="flex flex-col gap-2">
+            <input
+              type="text"
+              value={receiverName}
+              onChange={(e) => setReceiverName(e.target.value)}
+              placeholder="받는 사람 이름을 입력해주세요"
+              className={inputClassName}
+            />
+            {receiverName.length === 0 && (
+              <p className="text-[13px] text-[#FF3B30]">받는 사람 이름을 입력해주세요</p>
+            )}
+          </div>
+
+          <div className="mt-3 flex flex-col gap-2">
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="연락처를 입력해주세요 (010-1234-5678)"
+              className={inputClassName}
+            />
+            {phone.length > 0 && !isPhoneValid && (
+              <p className="text-[13px] text-[#FF3B30]">
+                연락처 형식이 올바르지 않습니다 (010-0000-0000)
+              </p>
+            )}
+          </div>
+
+          <div className="relative mt-3">
             <Search
               size={18}
               className="absolute top-1/2 left-[14px] -translate-y-1/2 text-[#767676]"
@@ -441,15 +489,20 @@ const SignupPage = () => {
 
           <ul className="mt-3 flex flex-col">
             {filteredAddresses.map((addr) => (
-              <li key={addr}>
+              <li key={addr.addressLine1}>
                 <button
                   type="button"
-                  onClick={() => setSelectedAddress(addr)}
+                  onClick={() => {
+                    setSelectedAddress(addr.addressLine1);
+                    setSelectedPostalCode(addr.postalCode);
+                  }}
                   className={`flex h-[52px] w-full items-center border-b border-[#F0F0F0] px-[4px] text-left text-[14px] ${
-                    selectedAddress === addr ? 'font-semibold text-[#00AAFF]' : 'text-[#111111]'
+                    selectedAddress === addr.addressLine1
+                      ? 'font-semibold text-[#00AAFF]'
+                      : 'text-[#111111]'
                   }`}
                 >
-                  {addr}
+                  {addr.addressLine1}
                 </button>
               </li>
             ))}

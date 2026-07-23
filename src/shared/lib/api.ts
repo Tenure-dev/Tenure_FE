@@ -19,6 +19,17 @@ export const clearAuthStorage = () => {
   useUserStore.getState().clearUser();
 };
 
+// BaseResponse.code(예: AUTH_1001)를 보존해 호출부가 실패 사유를 분기할 수 있게 한다.
+export class ApiError extends Error {
+  code?: string;
+
+  constructor(message: string, code?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.code = code;
+  }
+}
+
 const instance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
@@ -38,7 +49,7 @@ instance.interceptors.response.use(
   (response) => {
     const body = response.data as BaseResponse<unknown>;
     if (!body.success) {
-      return Promise.reject(new Error(body.message));
+      return Promise.reject(new ApiError(body.message, body.code));
     }
     // 실제로는 언래핑된 data를 반환하지만, axios 타입과 맞추기 위해 AxiosResponse로 단언한다.
     return body.data as unknown as AxiosResponse;
@@ -59,10 +70,11 @@ instance.interceptors.response.use(
         window.location.href = LOGIN_PATH;
       }
     }
-    const message =
-      (axios.isAxiosError<BaseResponse<unknown>>(error) && error.response?.data?.message) ||
-      error.message;
-    return Promise.reject(new Error(message));
+    const responseBody = axios.isAxiosError<BaseResponse<unknown>>(error)
+      ? error.response?.data
+      : undefined;
+    const message = responseBody?.message || error.message;
+    return Promise.reject(new ApiError(message, responseBody?.code));
   },
 );
 

@@ -9,6 +9,7 @@ import ShippingInputPage from '@/pages/mypage/ShippingInputPage';
 import TradeDetailPage from '@/pages/mypage/TradeDetailPage';
 import SettingsPage from '@/pages/mypage/SettingsPage';
 import NotificationSettingsPage from '@/pages/mypage/NotificationSettingsPage';
+import AccountVisibilityPage from '@/pages/mypage/AccountVisibilityPage';
 import WithdrawPage from '@/pages/mypage/WithdrawPage';
 import ItemDetailPage from '@/pages/item/ItemDetailPage';
 import SearchHomePage from '@/pages/search/SearchHomePage';
@@ -55,6 +56,7 @@ export const router = createBrowserRouter([
       { path: 'item/:itemId', element: <ItemDetailPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'settings/notifications', element: <NotificationSettingsPage /> },
+      { path: 'settings/visibility', element: <AccountVisibilityPage /> },
       { path: 'settings/withdraw', element: <WithdrawPage /> },
       { path: 'test', element: <TestPage /> },
       { path: 'ootd/camera', element: <OotdCameraPage /> },

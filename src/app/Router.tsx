@@ -19,6 +19,10 @@ import ReportPage from '@/pages/ootd/ReportPage';
 import RelatedOotdPage from '@/pages/ootd/RelatedOotdPage';
 import ChatListPage from '@/pages/chat/ChatListPage';
 import ChatRoomPage from '@/pages/chat/ChatRoomPage';
+import PricePage from '@/pages/purchase/PricePage';
+import CheckoutPage from '@/pages/purchase/CheckoutPage';
+import ProcessingPage from '@/pages/purchase/ProcessingPage';
+import CompletePage from '@/pages/purchase/CompletePage';
 
 export const router = createBrowserRouter([
   {
@@ -47,6 +51,10 @@ export const router = createBrowserRouter([
       { path: 'trade/:tradeId', element: <TradeDetailPage /> },
       { path: 'trade/:tradeId/shipping', element: <ShippingInputPage /> },
       { path: 'item/:itemId', element: <ItemDetailPage /> },
+      { path: 'item/:itemId/purchase/price', element: <PricePage /> },
+      { path: 'item/:itemId/purchase/checkout', element: <CheckoutPage /> },
+      { path: 'item/:itemId/purchase/processing', element: <ProcessingPage /> },
+      { path: 'item/:itemId/purchase/complete', element: <CompletePage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'test', element: <TestPage /> },
 

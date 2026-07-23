@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '@/store/useAuthStore';
 import { MOCK_ITEM_DETAILS } from '@/features/item/model/mock';
 import type { ViewerRole } from '@/features/item/model/types';
@@ -24,6 +24,7 @@ const ItemDetailPage = () => {
 };
 
 const ItemDetailPageContent = ({ itemId }: { itemId: string }) => {
+  const navigate = useNavigate();
   const currentUserId = useAuthStore((state) => state.currentUserId);
   const item = MOCK_ITEM_DETAILS[itemId];
   const [wished, setWished] = useState(item?.isWished ?? false);
@@ -117,6 +118,7 @@ const ItemDetailPageContent = ({ itemId }: { itemId: string }) => {
         role={role}
         saleStatus={item.saleStatus}
         offerAvailable={item.offerAvailable}
+        onOffer={() => navigate(`/item/${itemId}/purchase/price`)}
       />
 
       {/* 더보기 버튼 바텀 시트 */}

@@ -14,20 +14,23 @@ const ShippingInputPage = () => {
   const [isCourierOpen, setIsCourierOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [trackingError, setTrackingError] = useState(false);
 
   const isFormValid = trackingNumber.trim() !== '' && courier !== '';
 
   const handleSubmit = () => {
     if (!isFormValid) return;
     setIsLoading(true);
+    setTrackingError(false);
 
     setTimeout(() => {
       setIsLoading(false);
       if (trackingNumber.trim() === '0000000000') {
+        setTrackingError(true);
         setShowErrorModal(true);
         return;
       }
-      navigate(`/trade/${tradeId}?role=seller`);
+      navigate(`/trade/${tradeId}?role=seller`, { state: { shippingConfirmed: true } });
     }, 1200);
   };
 
@@ -60,14 +63,22 @@ const ShippingInputPage = () => {
           <div className="relative">
             <input
               value={trackingNumber}
-              onChange={(event) => setTrackingNumber(event.target.value)}
+              onChange={(event) => {
+                setTrackingNumber(event.target.value);
+                if (trackingError) setTrackingError(false);
+              }}
               placeholder="운송장번호를 입력해주세요"
-              className="h-[52px] w-full rounded-[8px] border border-[#E2E6E8] px-[16px] pr-[40px] text-[14px] text-[#111111] outline-none focus:border-[#00AAFF]"
+              className={`h-[52px] w-full rounded-[8px] border px-[16px] pr-[40px] text-[14px] text-[#111111] outline-none focus:border-[#00AAFF] ${
+                trackingError ? 'border-[#FF3B30]' : 'border-[#E2E6E8]'
+              }`}
             />
             {trackingNumber && (
               <button
                 type="button"
-                onClick={() => setTrackingNumber('')}
+                onClick={() => {
+                  setTrackingNumber('');
+                  setTrackingError(false);
+                }}
                 className="absolute top-1/2 right-[12px] -translate-y-1/2 text-[#767676]"
                 aria-label="입력 지우기"
               >
@@ -75,6 +86,7 @@ const ShippingInputPage = () => {
               </button>
             )}
           </div>
+          {trackingError && <p className="text-[12px] text-[#FF3B30]">운송장번호를 확인해주세요</p>}
         </div>
 
         <div className="flex flex-col gap-[8px]">

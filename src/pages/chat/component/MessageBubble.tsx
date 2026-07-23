@@ -13,18 +13,18 @@ const MessageBubble = ({ message, avatar, name }: Props) => {
         </div>
         <div className="flex max-w-[70%] flex-col items-end gap-1">
           {message.text && (
-            <p className="bg-brand-pale text-body-2 rounded-2xl rounded-tr-sm px-3 py-2">
+            <p className="bg-brand-pale text-body-2 font-regular rounded-2xl rounded-tr-sm px-3 py-2">
               {message.text}
             </p>
           )}
           {message.images && (
-            <div className="grid grid-cols-3 gap-1">
+            <div className="flex flex-wrap justify-end gap-1">
               {message.images.map((img) => (
                 <img
                   key={img}
                   src={img}
                   alt="첨부 이미지"
-                  className="aspect-square w-full rounded-md object-cover"
+                  className="size-24 rounded-md object-cover"
                 />
               ))}
             </div>
@@ -41,7 +41,7 @@ const MessageBubble = ({ message, avatar, name }: Props) => {
       <div className="min-w-0">
         <p className="text-body-3 text-text-secondary mb-1">{name}</p>
         <div className="flex items-end gap-1.5">
-          <p className="bg-bg-white text-body-2 max-w-[70%] rounded-2xl rounded-tl-sm px-3 py-2">
+          <p className="bg-bg-white text-body-2 font-regular max-w-[70%] rounded-2xl rounded-tl-sm px-3 py-2">
             {message.text}
           </p>
           <span className="text-body-4 text-text-tertiary shrink-0">{message.time}</span>

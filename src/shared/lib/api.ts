@@ -44,7 +44,15 @@ instance.interceptors.response.use(
     return body.data as unknown as AxiosResponse;
   },
   (error) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
+    // 백엔드가 인증 실패 시 403 반환 확인됨(2026-07-23). 401로 통일되면 이 분기 제거 검토.
+    // TODO: 현재 401/403을 모두 인증 실패로 간주해 로그아웃 처리 중. 하지만 백엔드 스펙상
+    // /trades/{id}/status, /ootds/{id}/tags 등 일부 API는 403을 '정상 로그인 상태의 권한 없음'으로도
+    // 사용함(현재 미연동). 이 API들을 연동하는 시점에는 status 코드 대신 BaseResponse.code(예: USER_1004
+    // 등 접두사)로 인증 실패 여부를 구분하도록 리팩터링 필요.
+    if (
+      axios.isAxiosError(error) &&
+      (error.response?.status === 401 || error.response?.status === 403)
+    ) {
       clearAuthStorage();
       // 이미 로그인 페이지라면 리다이렉트하지 않아 무한 루프를 방지한다.
       if (window.location.pathname !== LOGIN_PATH) {

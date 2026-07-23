@@ -10,7 +10,7 @@ import logo from '@/shared/assets/logo.png';
 import googleLogo from '@/shared/assets/google.webp';
 import { login } from '@/features/auth/api/authApi';
 import { getMyInfo } from '@/features/auth/api/userApi';
-import { USER_ID_STORAGE_KEY } from '@/shared/lib/api';
+import { ACCESS_TOKEN_STORAGE_KEY, USER_ID_STORAGE_KEY } from '@/shared/lib/api';
 import { useUserStore } from '@/store/userStore';
 
 const loginSchema = z.object({
@@ -49,8 +49,9 @@ const LoginPage = () => {
   const onSubmit = (values: LoginFormValues) => {
     setLoginError(null);
     loginMutation.mutate(values, {
-      onSuccess: async ({ userId }) => {
+      onSuccess: async ({ userId, accessToken }) => {
         localStorage.setItem(USER_ID_STORAGE_KEY, String(userId));
+        localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
         try {
           setUser(await getMyInfo());
         } catch (error) {

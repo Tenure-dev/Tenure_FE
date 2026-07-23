@@ -1,6 +1,10 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios';
+import { useUserStore } from '@/store/userStore';
 
 export const USER_ID_STORAGE_KEY = 'userId';
+export const ACCESS_TOKEN_STORAGE_KEY = 'accessToken';
+
+const LOGIN_PATH = '/login';
 
 interface BaseResponse<T> {
   success: boolean;
@@ -8,6 +12,12 @@ interface BaseResponse<T> {
   message: string;
   data: T;
 }
+
+export const clearAuthStorage = () => {
+  localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+  localStorage.removeItem(USER_ID_STORAGE_KEY);
+  useUserStore.getState().clearUser();
+};
 
 const instance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -17,9 +27,9 @@ const instance = axios.create({
 });
 
 instance.interceptors.request.use((config) => {
-  const userId = localStorage.getItem(USER_ID_STORAGE_KEY);
-  if (userId) {
-    config.headers.set('X-USER-ID', userId);
+  const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  if (accessToken) {
+    config.headers.set('Authorization', `Bearer ${accessToken}`);
   }
   return config;
 });
@@ -34,6 +44,13 @@ instance.interceptors.response.use(
     return body.data as unknown as AxiosResponse;
   },
   (error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      clearAuthStorage();
+      // 이미 로그인 페이지라면 리다이렉트하지 않아 무한 루프를 방지한다.
+      if (window.location.pathname !== LOGIN_PATH) {
+        window.location.href = LOGIN_PATH;
+      }
+    }
     const message =
       (axios.isAxiosError<BaseResponse<unknown>>(error) && error.response?.data?.message) ||
       error.message;

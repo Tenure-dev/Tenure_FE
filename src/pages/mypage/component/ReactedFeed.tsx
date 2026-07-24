@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useReactedOotds } from '@/features/mypage/api/useMyFeed';
 import { useRemoveReaction } from '@/features/mypage/api/useRemoveReaction';
 import heartActive from '@/shared/assets/heart-active.svg';
@@ -35,21 +36,26 @@ const ReactedFeed = ({ tab }: Props) => {
     <div className="px-4 pb-6">
       <div className="mt-5 columns-[160px] gap-2">
         {data.content.map((it) => (
-          <div
+          <Link
             key={it.ootdId}
-            className="relative mb-2 break-inside-avoid overflow-hidden rounded-md"
+            to={`/ootd/${it.ootdId}`}
+            className="relative mb-2 block break-inside-avoid overflow-hidden rounded-md"
           >
             <img src={it.imageUrl} alt="" className="block h-auto w-full rounded-md" />
             <button
               type="button"
               aria-label={iconLabel}
               disabled={isRemoving}
-              onClick={() => remove(it.ootdId)}
+              onClick={(e) => {
+                // 아이콘 클릭은 상세 이동 막고 취소만 실행
+                e.preventDefault();
+                remove(it.ootdId);
+              }}
               className="absolute right-2 bottom-2 disabled:opacity-50"
             >
               <img src={icon} width={24} height={24} alt="" className="drop-shadow" />
             </button>
-          </div>
+          </Link>
         ))}
       </div>
     </div>

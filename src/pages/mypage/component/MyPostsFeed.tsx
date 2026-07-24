@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useMyPosts } from '@/features/mypage/api/useMyFeed';
 import type { MyPostItem } from '@/features/mypage/api/dto';
 import cn from '@/shared/lib/cn';
@@ -41,10 +42,11 @@ const MyPostsFeed = () => {
           <h2 className="text-title-2 mb-2 font-medium">{month}</h2>
           <div className="columns-[160px] gap-2">
             {items.map((it) => (
-              <div
+              <Link
                 key={it.ootdId}
+                to={`/ootd/${it.ootdId}`}
                 className={cn(
-                  'relative mb-2 break-inside-avoid overflow-hidden rounded-md',
+                  'relative mb-2 block break-inside-avoid overflow-hidden rounded-md',
                   it.archived && 'opacity-40', // 보관(ARCHIVED) 게시물은 흐리게
                 )}
               >
@@ -63,7 +65,7 @@ const MyPostsFeed = () => {
                   alt="좋아요"
                   className="absolute right-2 bottom-12 brightness-0 drop-shadow invert"
                 />
-              </div>
+              </Link>
             ))}
           </div>
         </section>

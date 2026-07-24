@@ -26,6 +26,11 @@ export default defineConfig({
         ws: true, // 웹소켓(SockJS /ws) 업그레이드도 중계
         rewrite: (path) => path.replace(/^\/api-proxy/, ''),
       },
+      // 업로드 이미지(/files/...) 중계 (rewrite 없이 경로 그대로)
+      '/files': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
     },
   },
 });

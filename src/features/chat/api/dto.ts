@@ -35,3 +35,14 @@ export interface ChatMessageResponse {
   contentImageUrl: string | null;
   createdAt: string;
 }
+
+export interface ChatMessageListResponse {
+  chatMessages: ChatMessageResponse[];
+  nextCursor: string | null;
+  nextCursorId: number | null;
+  hasNext: boolean;
+}
+
+export interface ChatImageUploadResponse {
+  imageUrl: string;
+}

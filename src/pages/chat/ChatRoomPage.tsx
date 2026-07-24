@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ChatRoomHeader from './component/ChatRoomHeader';
 import ChatProductBar from './component/ChatProductBar';
@@ -12,6 +12,8 @@ import type { ChatRole, SaleStatus, TradeStatus } from '@/features/chat/model/ty
 import { useParams } from 'react-router-dom';
 import { useChatSocket } from '@/features/chat/api/useChatSocket';
 import { toChatMessage } from '@/features/chat/api/chatMessage';
+import { useChatMessages } from '@/features/chat/api/useChatMessages';
+import { uploadChatImage } from '@/features/chat/api/messages';
 
 // role: 'buyer' | 'seller' (내 입장)
 // saleStatus: 'onSale' 판매중 / 'unlisted' 미판매
@@ -28,22 +30,39 @@ const ChatRoomPage = ({
   offerEnabled?: boolean;
 }) => {
   const { id } = useParams();
-
-  // 연결 확인용 임시 로그 (확인 후 제거)
-
   const navigate = useNavigate();
   const vvHeight = useVisualViewportHeight();
   const [menuOpen, setMenuOpen] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [toast, setToast] = useState<ReactNode>(null);
-  const { messages: socketMessages, sendMessage } = useChatSocket(Number(id));
-  const messages = socketMessages.map(toChatMessage);
+  const roomId = Number(id);
+  const { messages: socketMessages, sendMessage } = useChatSocket(roomId);
+  const { data: history } = useChatMessages(roomId);
 
-  // 이미지 첨부 → 내 이미지 메시지로 추가 (로컬)
-  const handleSendImages = (files: FileList) => {
-    console.warn('이미지 전송은 아직 미구현', files);
+  const messages = useMemo(() => {
+    const past = history ? [...history.chatMessages].reverse() : [];
+    const merged = [...past, ...socketMessages];
+    const seen = new Set<number>();
+    return merged
+      .filter((m) => {
+        if (seen.has(m.messageId)) return false;
+        seen.add(m.messageId);
+        return true;
+      })
+      .map(toChatMessage);
+  }, [history, socketMessages]);
+
+  // 이미지 첨부
+  const handleSendImages = async (files: FileList) => {
+    for (const file of Array.from(files)) {
+      try {
+        const { imageUrl } = await uploadChatImage(roomId, file);
+        sendMessage({ messageType: 'IMAGE', imageUrl });
+      } catch (e) {
+        console.error('이미지 업로드 실패', e);
+      }
+    }
   };
-
   // 텍스트 전송 → 내 메시지로 추가 (로컬)
   const handleSendText = (text: string) => {
     sendMessage({ messageType: 'TEXT', content: text });

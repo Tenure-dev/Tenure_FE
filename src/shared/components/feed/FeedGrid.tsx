@@ -1,16 +1,15 @@
-import type { FeedItem } from '@/features/feed/model/types';
+import type { FeedCard } from '@/features/feed/model/types';
 import useIsWideLayout from '@/shared/hooks/useIsWideLayout';
-import FeedCard from './FeedCard';
+import FeedCardComponent from './FeedCard';
 
 export interface FeedGridProps {
-  items: FeedItem[];
+  items: FeedCard[];
   onToggleLike?: (id: string) => void;
   onToggleBookmark?: (id: string) => void;
 }
 
-// 컬럼 수에 따라 아이템을 분할하는 함수
-const splitIntoColumns = (items: FeedItem[], columnCount: number) => {
-  const columns: FeedItem[][] = Array.from({ length: columnCount }, () => []);
+const splitIntoColumns = (items: FeedCard[], columnCount: number) => {
+  const columns: FeedCard[][] = Array.from({ length: columnCount }, () => []);
 
   items.forEach((item, index) => {
     columns[index % columnCount].push(item);
@@ -28,8 +27,8 @@ const FeedGrid = ({ items, onToggleLike, onToggleBookmark }: FeedGridProps) => {
       {columns.map((column, columnIndex) => (
         <div key={columnIndex} className="flex flex-col gap-2">
           {column.map((item) => (
-            <FeedCard
-              key={item.id}
+            <FeedCardComponent
+              key={item.ootdId}
               item={item}
               onToggleLike={onToggleLike}
               onToggleBookmark={onToggleBookmark}

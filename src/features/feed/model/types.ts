@@ -1,9 +1,6 @@
-export type FeedRatio = '4:5' | '1:1' | '3:4';
-
 export interface FeedItem {
   id: string;
   imageUrl: string;
-  ratio: FeedRatio;
   liked: boolean;
   bookmarked: boolean;
   authorId: string;
@@ -16,3 +13,31 @@ export interface FollowedUser {
 }
 
 export type FeedTab = '모두' | '팔로우';
+
+export interface FeedCard {
+  ootdId: number;
+  imageUrl: string;
+  createdAt: string;
+  userId: number;
+  username: string;
+  profileImageUrl: string;
+  heartCount: number;
+  saveCount: number;
+  hearted: boolean;
+  saved: boolean;
+}
+
+export interface FeedResponse {
+  content: FeedCard[];
+  nextCursorCreatedAt: string | null;
+  nextCursorId: number | null;
+  hasNext: boolean;
+}
+
+export interface FeedParams {
+  tab?: 'all' | 'following';
+  userId?: number;
+  cursorCreatedAt?: string;
+  cursorId?: number;
+  size?: number;
+}

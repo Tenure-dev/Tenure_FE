@@ -6,11 +6,11 @@ import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import { Camera, ChevronLeft, Search } from 'lucide-react';
 import { Button, DoubleButton } from '@/shared/components';
-import { signup } from '@/features/auth/api/authApi';
+import { login, signup } from '@/features/auth/api/authApi';
 import { createAddress } from '@/features/auth/api/addressApi';
 import { getMyInfo } from '@/features/auth/api/userApi';
 import { toApiGender } from '@/features/auth/lib/gender';
-import { USER_ID_STORAGE_KEY } from '@/shared/lib/api';
+import { ACCESS_TOKEN_STORAGE_KEY, USER_ID_STORAGE_KEY } from '@/shared/lib/api';
 import { useUserStore } from '@/store/userStore';
 
 const TOTAL_STEPS = 4;
@@ -238,6 +238,9 @@ const SignupPage = () => {
         onSuccess: async ({ userId }) => {
           localStorage.setItem(USER_ID_STORAGE_KEY, String(userId));
           try {
+            // 회원가입 응답에는 accessToken이 포함되지 않으므로, 동일 자격증명으로 로그인해 토큰을 발급받는다.
+            const { accessToken } = await login({ email, password });
+            localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
             setUser(await getMyInfo());
           } catch (error) {
             console.error(error);

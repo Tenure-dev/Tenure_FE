@@ -5,6 +5,10 @@ import { fileURLToPath, URL } from 'node:url';
 
 // https://vite.dev/config/
 export default defineConfig({
+  // sockjs-client가 Node 전역 global을 참조 → 브라우저엔 없어서 window로 매핑
+  define: {
+    global: 'window',
+  },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
@@ -19,6 +23,7 @@ export default defineConfig({
       '/api-proxy': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        ws: true, // 웹소켓(SockJS /ws) 업그레이드도 중계
         rewrite: (path) => path.replace(/^\/api-proxy/, ''),
       },
     },

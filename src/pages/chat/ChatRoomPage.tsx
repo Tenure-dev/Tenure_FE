@@ -7,16 +7,11 @@ import ChatInput from './component/ChatInput';
 import ChatMoreSheet from './component/ChatMoreSheet';
 import { Toast } from '@/shared/components';
 import { useVisualViewportHeight } from '@/shared/hooks/useVisualViewport';
-import { chatProduct, chatMessages, chatDate, partnerName, partnerAvatar } from './roomMock';
-import type { ChatMessage, ChatRole, SaleStatus, TradeStatus } from '@/features/chat/model/types';
-
-// 현재 시각을 '오전/오후 H:MM' 형식으로
-const nowTime = () => {
-  const d = new Date();
-  const ampm = d.getHours() < 12 ? '오전' : '오후';
-  const hh = d.getHours() % 12 === 0 ? 12 : d.getHours() % 12;
-  return `${ampm} ${hh}:${d.getMinutes().toString().padStart(2, '0')}`;
-};
+import { chatProduct, chatDate, partnerName, partnerAvatar } from './roomMock';
+import type { ChatRole, SaleStatus, TradeStatus } from '@/features/chat/model/types';
+import { useParams } from 'react-router-dom';
+import { useChatSocket } from '@/features/chat/api/useChatSocket';
+import { toChatMessage } from '@/features/chat/api/chatMessage';
 
 // role: 'buyer' | 'seller' (내 입장)
 // saleStatus: 'onSale' 판매중 / 'unlisted' 미판매
@@ -32,22 +27,26 @@ const ChatRoomPage = ({
   tradeStatus?: TradeStatus;
   offerEnabled?: boolean;
 }) => {
+  const { id } = useParams();
+
+  // 연결 확인용 임시 로그 (확인 후 제거)
+
   const navigate = useNavigate();
   const vvHeight = useVisualViewportHeight();
   const [menuOpen, setMenuOpen] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [toast, setToast] = useState<ReactNode>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>(chatMessages);
+  const { messages: socketMessages, sendMessage } = useChatSocket(Number(id));
+  const messages = socketMessages.map(toChatMessage);
 
   // 이미지 첨부 → 내 이미지 메시지로 추가 (로컬)
   const handleSendImages = (files: FileList) => {
-    const images = Array.from(files).map((file) => URL.createObjectURL(file));
-    setMessages((prev) => [...prev, { id: Date.now(), mine: true, images, time: nowTime() }]);
+    console.warn('이미지 전송은 아직 미구현', files);
   };
 
   // 텍스트 전송 → 내 메시지로 추가 (로컬)
   const handleSendText = (text: string) => {
-    setMessages((prev) => [...prev, { id: Date.now(), mine: true, text, time: nowTime() }]);
+    sendMessage({ messageType: 'TEXT', content: text });
   };
 
   const handleBlock = () => {

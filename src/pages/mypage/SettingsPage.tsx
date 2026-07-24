@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DoubleButton } from '@/shared/components';
+import { clearAuthStorage } from '@/shared/lib/api';
 
 interface SettingsRowItem {
   label: string;
@@ -39,6 +40,7 @@ const SettingsPage = () => {
 
   const handleLogout = () => {
     setShowLogoutModal(false);
+    clearAuthStorage();
     navigate('/login');
   };
 

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Toast } from '@/shared/components';
 import { useToast } from '@/shared/hooks/useToast';
+import { USER_ID_STORAGE_KEY } from '@/shared/lib/api';
 import { userProfile } from './mock';
 import UserProfileHeader from './component/UserProfileHeader';
 import UserProfileSection from './component/UserProfileSection';
@@ -25,6 +26,10 @@ const UserProfilePage = () => {
     }
   }, [location.pathname, navigate, showToast]);
 
+  // 내 프로필이면 팔로우 버튼을 숨긴다 (라우트 userId === 내 userId)
+  const { userId } = useParams();
+  const isMe = userId != null && userId === localStorage.getItem(USER_ID_STORAGE_KEY);
+
   // UI 단계: 팔로우·차단 상태는 로컬로만 토글 (API 연동은 다음 작업)
   const [following, setFollowing] = useState(userProfile.following);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -35,7 +40,9 @@ const UserProfilePage = () => {
       <UserProfileHeader onMoreClick={() => setShowMore(true)} />
       <UserProfileSection />
       <UserProfileStats />
-      <FollowButton following={following} onToggle={() => setFollowing((prev) => !prev)} />
+      {!isMe && (
+        <FollowButton following={following} onToggle={() => setFollowing((prev) => !prev)} />
+      )}
       <UserFeed />
 
       <UserMoreSheet

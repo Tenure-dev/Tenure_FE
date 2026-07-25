@@ -147,7 +147,6 @@ const OotdDetailPage = () => {
   }, [ootdId]);
 
   useEffect(() => {
-    // ootdId(URL 파라미터)가 바뀔 때마다 다시 불러와야 해서 mount-once 가드를 쓸 수 없다.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadPost();
   }, [loadPost]);
@@ -226,8 +225,6 @@ const OotdDetailPage = () => {
     return { x, y };
   };
 
-  // 새 태그는 사진 위를 드래그해서 영역(bbox)을 지정한다. 살짝 탭만 한 경우엔
-  // 탭 지점 중심의 기본 크기 박스를 대신 사용한다.
   const handleEditPhotoPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!post || post.taggedItems.length >= MAX_TAGGED_ITEMS) {
       showToast(`태그는 최대 ${MAX_TAGGED_ITEMS}개까지 가능해요.`);

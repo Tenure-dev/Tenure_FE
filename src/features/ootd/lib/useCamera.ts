@@ -2,8 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 type FacingMode = 'user' | 'environment';
 
-// 웹 카메라(getUserMedia) 제어 훅
-// - 스트림 시작/정리, 전/후면 전환, 3:4 비율 캡처(dataURL)
 export const useCamera = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -15,7 +13,6 @@ export const useCamera = () => {
     streamRef.current = null;
   }, []);
 
-  // facingMode 바뀔 때마다 스트림 재시작, 언마운트 시 정리
   useEffect(() => {
     let cancelled = false;
 
@@ -49,7 +46,6 @@ export const useCamera = () => {
     setFacingMode((mode) => (mode === 'user' ? 'environment' : 'user'));
   }, []);
 
-  // 현재 프레임을 지정 비율(가로/세로)로 중앙 크롭해 dataURL 반환
   const capture = useCallback(
     (targetRatio: number) => {
       const video = videoRef.current;
@@ -74,7 +70,6 @@ export const useCamera = () => {
       const ctx = canvas.getContext('2d');
       if (!ctx) return null;
 
-      // 전면 카메라는 미리보기가 좌우 반전이라 캡처도 동일하게 반전
       if (facingMode === 'user') {
         ctx.translate(canvas.width, 0);
         ctx.scale(-1, 1);

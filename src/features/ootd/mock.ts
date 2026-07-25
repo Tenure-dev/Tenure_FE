@@ -1,9 +1,7 @@
 import type { OotdItem } from './model/item';
 
-// 분석 결과로 찾은 유사 아이템 개수 (목업)
 export const SIMILAR_COUNT = 6;
 
-// 기존 아이템 목업
 export const existingItems: OotdItem[] = [
   {
     id: 'item-1',

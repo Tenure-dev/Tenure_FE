@@ -2,7 +2,7 @@ import type { RecentSearchItem, RecentViewedUser, SearchAccount, SearchResultIte
 import { CATEGORY_GROUPS } from './categoryData';
 import { mockOotdPost } from '@/features/ootd/model/mocks';
 
-export const RELATED_OOTD_ID = mockOotdPost.id;
+export const RELATED_OOTD_ID = String(mockOotdPost.id);
 
 export const recommendedKeywords: string[] = [
   '데님 팬츠',

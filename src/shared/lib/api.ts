@@ -26,6 +26,10 @@ instance.interceptors.request.use((config) => {
 
 instance.interceptors.response.use(
   (response) => {
+    // 하트/저장 토글 등 일부 엔드포인트는 204 No Content로 응답해 BaseResponse 포맷을 안 따른다.
+    if (response.status === 204 || !response.data) {
+      return undefined as unknown as AxiosResponse;
+    }
     const body = response.data as BaseResponse<unknown>;
     if (!body.success) {
       return Promise.reject(new Error(body.message));

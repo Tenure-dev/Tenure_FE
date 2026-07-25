@@ -1,4 +1,11 @@
-export type ItemStatus = '판매중' | '미판매';
+export type ItemStatus = '판매중' | '미판매_제안가능' | '미판매_제안불가' | '판매완료' | '삭제됨';
+
+export interface Bbox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 export interface TagPosition {
   x: number;
@@ -6,37 +13,38 @@ export interface TagPosition {
 }
 
 export interface TaggedItem {
-  id: string;
+  id: number;
+  itemId: number;
   brand: string;
   name: string;
   category: string;
   status: ItemStatus;
   price?: number;
-  canOffer?: boolean;
   imageUrl?: string;
   position: TagPosition;
-  closetItemId?: string;
+  bbox: Bbox;
 }
 
 export interface ClosetItem {
-  id: string;
+  id: number;
   brand: string;
   name: string;
-  category: string;
-  imageUrl: string;
-  lastWornDaysAgo: number;
+  imageUrl: string | null;
+  lastWornDaysAgo: number | null;
   verifiedCount: number;
+  purchaseOfferEnabled: boolean;
 }
 
 export interface OotdAuthor {
-  id: string;
+  id: number;
   name: string;
+  avatarUrl: string | null;
   followerCount: number;
   feedCount: number;
 }
 
 export interface OotdPost {
-  id: string;
+  id: number;
   imageUrl: string;
   author: OotdAuthor;
   likeCount: number;
@@ -45,18 +53,17 @@ export interface OotdPost {
   bookmarked: boolean;
   isOwner: boolean;
   isFollowing: boolean;
+  // 차단 API가 아직 없어(BE 요청 목록 참고) 로컬 상태로만 토글된다.
   isBlocked: boolean;
   taggedItems: TaggedItem[];
 }
 
 export const MAX_TAGGED_ITEMS = 5;
 
-export const NEW_ITEM_ID = '__new_item__';
-
 export const REPORT_REASONS = [
   '사람이 직접 착용한 OOTD가 아님',
   '부적절하거나 유해한 이미지',
-  '도용한 사진 또는 관리 정책',
+  '도용한 사진 또는 권리 침해',
   '광고 또는 반복 게시물',
   '개인정보 노출',
   '서비스와 관련 없는 게시물',

@@ -25,9 +25,11 @@ export const useRemoveReaction = (tab: '좋아요' | '저장') => {
       if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
     },
 
-    // 성공/실패 무관하게 서버 기준으로 최종 동기화
+    // 성공/실패 무관하게 서버 기준으로 최종 동기화.
+    // 게시물 탭(hearted/saved 플래그)도 무효화해 탭 간 상태를 일치시킨다.
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ['ootds', 'me'] });
     },
   });
 };

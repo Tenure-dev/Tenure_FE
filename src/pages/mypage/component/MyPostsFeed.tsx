@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMyPosts } from '@/features/mypage/api/useMyFeed';
 import { useToggleHeart, useToggleSave } from '@/features/mypage/api/useToggleReaction';
@@ -21,28 +20,22 @@ const groupByMonth = (items: MyPostItem[]) => {
   return groups;
 };
 
-// 게시물 그리드 카드. 서버에 hearted/saved 플래그가 없어 현재는 로컬 상태로만 토글한다(임시).
+// 게시물 그리드 카드. hearted/saved는 서버 캐시(item)를 직접 반영 → 탭 간 상태 일치.
+// 토글은 훅에서 캐시를 낙관적으로 갱신(즉시 반영)한다.
 const PostGridItem = ({ item }: { item: MyPostItem }) => {
-  const [hearted, setHearted] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const hearted = item.hearted;
+  const saved = item.saved;
   const heartMutation = useToggleHeart();
   const saveMutation = useToggleSave();
 
   const toggleHeart = (e: React.MouseEvent) => {
     e.preventDefault(); // 상세 이동 막기
-    const next = !hearted;
-    setHearted(next);
-    heartMutation.mutate(
-      { ootdId: item.ootdId, active: next },
-      { onError: () => setHearted(!next) }, // 실패 시 되돌리기
-    );
+    heartMutation.mutate({ ootdId: item.ootdId, active: !hearted });
   };
 
   const toggleSave = (e: React.MouseEvent) => {
     e.preventDefault();
-    const next = !saved;
-    setSaved(next);
-    saveMutation.mutate({ ootdId: item.ootdId, active: next }, { onError: () => setSaved(!next) });
+    saveMutation.mutate({ ootdId: item.ootdId, active: !saved });
   };
 
   return (

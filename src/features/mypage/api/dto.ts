@@ -36,6 +36,8 @@ export interface MyPostItem {
   archivedAt: string | null;
   heartCount: number;
   saveCount: number;
+  hearted: boolean; // 내가 하트 눌렀는지
+  saved: boolean; // 내가 저장했는지
   createdAt: string;
 }
 

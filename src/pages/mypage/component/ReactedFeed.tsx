@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 import { useReactedOotds } from '@/features/mypage/api/useMyFeed';
 import { useRemoveReaction } from '@/features/mypage/api/useRemoveReaction';
 import heartActive from '@/shared/assets/heart-active.svg';
@@ -41,7 +42,11 @@ const ReactedFeed = ({ tab }: Props) => {
             to={`/ootd/${it.ootdId}`}
             className="relative mb-2 block break-inside-avoid overflow-hidden rounded-md"
           >
-            <img src={it.imageUrl} alt="" className="block h-auto w-full rounded-md" />
+            <img
+              src={resolveFileUrl(it.imageUrl)}
+              alt=""
+              className="block h-auto w-full rounded-md"
+            />
             <button
               type="button"
               aria-label={iconLabel}

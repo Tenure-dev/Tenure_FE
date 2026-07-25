@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Toast } from '@/shared/components';
 import { useToast } from '@/shared/hooks/useToast';
 import { useMyPage } from '@/features/mypage/api/useMyPage';
+import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 import type { FeedTab } from '@/features/mypage/api/useMyFeed';
 import { useProfileStore } from '@/store/useProfileStore';
 import MyPageFeed from './component/MyPageFeed';
@@ -37,7 +38,7 @@ const MyPage = () => {
     // 서버가 null을 준 값은 덮어쓰지 않는다 (기존 값 유지)
     setProfile({
       name: myPage.username,
-      photoUrl: myPage.profileImageUrl,
+      photoUrl: myPage.profileImageUrl ? resolveFileUrl(myPage.profileImageUrl) : null,
       ...(myPage.heightCm != null && { height: myPage.heightCm }),
       ...(myPage.weightKg != null && { weight: myPage.weightKg }),
     });

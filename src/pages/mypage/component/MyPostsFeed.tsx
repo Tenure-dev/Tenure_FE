@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 import { useMyPosts } from '@/features/mypage/api/useMyFeed';
 import { useToggleHeart, useToggleSave } from '@/features/mypage/api/useToggleReaction';
 import type { MyPostItem } from '@/features/mypage/api/dto';
@@ -46,7 +47,7 @@ const PostGridItem = ({ item }: { item: MyPostItem }) => {
         item.archived && 'opacity-40', // 보관(ARCHIVED) 게시물은 흐리게
       )}
     >
-      <img src={item.imageUrl} alt="" className="block h-auto w-full rounded-md" />
+      <img src={resolveFileUrl(item.imageUrl)} alt="" className="block h-auto w-full rounded-md" />
       <button
         type="button"
         aria-label={saved ? '저장 취소' : '저장'}

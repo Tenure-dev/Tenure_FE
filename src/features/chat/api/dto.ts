@@ -46,3 +46,22 @@ export interface ChatMessageListResponse {
 export interface ChatImageUploadResponse {
   imageUrl: string;
 }
+
+export type ProductStatus = 'ON_SALE' | 'TRADING' | 'SOLD' | 'HIDDEN';
+
+// GET /chats/{chatRoomId} 응답 (프로덕트 바용)
+// 주의: 백엔드 boolean 필드 isBuyer → JSON은 buyer 로 옴
+export interface ChatRoomDetailResponse {
+  chatRoomId: number;
+  opponentUsername: string;
+  opponentProfileImage: string | null;
+  itemImageUrl: string | null;
+  brandName: string;
+  itemName: string;
+  productStatus: ProductStatus;
+  price: number;
+  lastWornAt: string | null;
+  tradeId: number | null;
+  productId: number;
+  buyer: boolean;
+}

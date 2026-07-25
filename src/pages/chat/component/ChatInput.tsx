@@ -33,8 +33,9 @@ const ChatInput = ({ onSendImages, onSendText }: Props) => {
   };
 
   return (
-    <div className="flex items-center px-4 py-3">
-      <div className="border-border-secondary flex flex-1 items-center gap-2.5 self-stretch rounded-full border-[1.5px] bg-white px-3 py-4">
+    // 하단에 떠 있는 오버레이. 주변은 투명(pointer-events 통과), 입력 pill만 상호작용
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center px-4 py-3">
+      <div className="border-border-secondary pointer-events-auto flex flex-1 items-center gap-2.5 self-stretch rounded-full border-[1.5px] bg-white px-3 py-4 shadow-lg">
         <button
           type="button"
           aria-label="이미지 첨부"

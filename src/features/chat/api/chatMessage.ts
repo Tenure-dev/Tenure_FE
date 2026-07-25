@@ -1,4 +1,5 @@
 import { USER_ID_STORAGE_KEY } from '@/shared/lib/api';
+import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 import type { ChatMessageResponse } from './dto';
 import type { ChatMessage } from '../model/types';
 
@@ -15,7 +16,7 @@ export const toChatMessage = (res: ChatMessageResponse): ChatMessage => {
     id: res.messageId,
     mine: String(res.senderId) === myUserId,
     text: res.content ?? undefined,
-    images: res.contentImageUrl ? [res.contentImageUrl] : undefined,
+    images: res.contentImageUrl ? [resolveFileUrl(res.contentImageUrl)] : undefined,
     time: formatTime(res.createdAt),
   };
 };

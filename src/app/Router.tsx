@@ -95,6 +95,18 @@ export const router = createBrowserRouter([
         path: 'chat/unlisted-seller',
         element: <ChatRoomPage role="seller" saleStatus="unlisted" tradeStatus="waiting" />,
       },
+      {
+        // 미판매 + 구매제안X (판매자) → '제안 확인' 비활성
+        path: 'chat/unlisted-no-offer',
+        element: (
+          <ChatRoomPage
+            role="seller"
+            saleStatus="unlisted"
+            tradeStatus="none"
+            offerEnabled={false}
+          />
+        ),
+      },
     ],
   },
 ]);

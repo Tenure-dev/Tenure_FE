@@ -39,8 +39,7 @@ const TaggedItemRow = ({ item }: TaggedItemRowProps) => {
   const [swipePx, setSwipePx] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; startSwipe: number } | null>(null);
-  // 태그 응답에 위시 여부가 없어(BE 요청 목록 참고) 항상 false에서 시작하는 로컬 토글이다.
-  const [wished, setWished] = useState(false);
+  const [wished, setWished] = useState(item.wished);
 
   const goToItem = () => navigate(`/item/${item.itemId}`);
 

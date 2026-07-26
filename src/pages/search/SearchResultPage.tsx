@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SegmentedControl } from '@/shared/components';
 import FeedGrid from '@/shared/components/feed/FeedGrid';
-import type { FeedItem } from '@/features/feed/model/types';
+import type { FeedGridItem } from '@/features/feed/model/types';
 import SearchTopBar from '@/features/search/ui/SearchTopBar';
 import AppliedFilterChips from '@/features/search/ui/AppliedFilterChips';
 import SortDropdown from '@/features/search/ui/SortDropdown';
@@ -40,13 +40,11 @@ const KEY_TO_TAB: Record<ResultTab, (typeof RESULT_TABS)[number]> = {
   account: '계정',
 };
 
-const toFeedItem = (item: SearchResultItem): FeedItem => ({
-  id: item.id,
+const toFeedItem = (item: SearchResultItem): FeedGridItem => ({
+  ootdId: item.id,
   imageUrl: item.imageUrl,
-  ratio: item.ratio,
-  liked: item.liked,
-  bookmarked: item.bookmarked,
-  authorId: item.authorId,
+  hearted: item.liked,
+  saved: item.bookmarked,
 });
 
 interface LocationState {

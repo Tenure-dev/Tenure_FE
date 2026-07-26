@@ -17,6 +17,8 @@ export const toTaggedItem = (tag: TagInfoResponse): TaggedItem => ({
   category: tag.item.categorySmall,
   status: toItemStatus(tag),
   price: tag.price ?? undefined,
+  imageUrl: resolveImageUrl(tag.item.representativeImageUrl) ?? undefined,
+  wished: tag.wished,
   position: {
     x: (tag.bboxX + tag.bboxWidth / 2) * 100,
     y: (tag.bboxY + tag.bboxHeight / 2) * 100,

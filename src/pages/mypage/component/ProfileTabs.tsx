@@ -1,19 +1,20 @@
-import { useState } from 'react';
+import { FEED_TABS, type FeedTab } from '@/features/mypage/api/useMyFeed';
 
-const tabs = ['게시물', '좋아요', '저장'];
+type Props = {
+  active: FeedTab;
+  onChange: (tab: FeedTab) => void;
+};
 
-// 마이페이지 전용 탭 (공용 SegmentedControl과 달리 검정 밑줄 + 전체 폭)
-const ProfileTabs = () => {
-  const [active, setActive] = useState(tabs[0]);
+const ProfileTabs = ({ active, onChange }: Props) => {
   return (
     <div className="mt-2 flex h-[42px] w-full px-4">
-      {tabs.map((tab) => {
+      {FEED_TABS.map((tab) => {
         const isActive = tab === active;
         return (
           <button
             key={tab}
             type="button"
-            onClick={() => setActive(tab)}
+            onClick={() => onChange(tab)}
             className={`text-body-1 relative flex flex-1 items-center justify-center font-semibold ${
               isActive ? 'text-text-primary' : 'text-text-tertiary'
             }`}

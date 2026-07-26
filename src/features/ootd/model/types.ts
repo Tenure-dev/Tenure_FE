@@ -21,6 +21,7 @@ export interface TaggedItem {
   status: ItemStatus;
   price?: number;
   imageUrl?: string;
+  wished: boolean;
   position: TagPosition;
   bbox: Bbox;
 }

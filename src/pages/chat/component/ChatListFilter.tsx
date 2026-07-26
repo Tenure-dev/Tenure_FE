@@ -1,15 +1,15 @@
-import { chatListFilters } from '../mock';
 import cn from '@/shared/lib/cn';
 
 type Props = {
+  filters: readonly string[];
   active: string;
   onChange: (filter: string) => void;
 };
 
-const ChatListFilter = ({ active, onChange }: Props) => {
+const ChatListFilter = ({ filters, active, onChange }: Props) => {
   return (
     <div className="flex [scrollbar-width:none] gap-1 overflow-x-auto px-5 py-4 [-ms-overflow-style:none] md:px-6 [&::-webkit-scrollbar]:hidden">
-      {chatListFilters.map((filter) => {
+      {filters.map((filter) => {
         const isActive = filter === active;
         return (
           <button

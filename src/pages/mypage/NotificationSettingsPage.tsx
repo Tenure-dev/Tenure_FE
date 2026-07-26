@@ -11,6 +11,35 @@ interface NotificationItem {
   defaultValue: boolean;
 }
 
+interface RequiredNotificationItem {
+  key: string;
+  label: string;
+  description: string;
+}
+
+const REQUIRED_ITEMS: RequiredNotificationItem[] = [
+  {
+    key: 'tradeRequest',
+    label: '거래 요청',
+    description: '상대방에게 거래 요청이 오면 알림을 받아요.',
+  },
+  {
+    key: 'requestStatus',
+    label: '요청 상태',
+    description: '보낸 거래 요청의 수락/거절 상태를 알려드려요.',
+  },
+  {
+    key: 'requestAutoCancel',
+    label: '요청 자동 취소',
+    description: '거래 요청이 자동으로 취소되면 알려드려요.',
+  },
+  {
+    key: 'tradeStatus',
+    label: '거래 상태',
+    description: '진행 중인 거래의 상태가 바뀌면 알려드려요.',
+  },
+];
+
 const ACTIVITY_ITEMS: NotificationItem[] = [
   {
     key: 'chat',
@@ -47,16 +76,27 @@ const SERVICE_ITEMS: NotificationItem[] = [
   },
 ];
 
-const Toggle = ({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) => (
+const Toggle = ({
+  on,
+  onToggle,
+  label,
+  disabled = false,
+}: {
+  on: boolean;
+  onToggle: () => void;
+  label: string;
+  disabled?: boolean;
+}) => (
   <button
     type="button"
     role="switch"
     aria-checked={on}
     aria-label={label}
-    onClick={onToggle}
+    aria-disabled={disabled}
+    onClick={disabled ? undefined : onToggle}
     className={`relative h-[24px] w-[42px] shrink-0 rounded-full transition-colors ${
       on ? 'bg-[#00AAFF]' : 'bg-[#E2E6E8]'
-    }`}
+    } ${disabled ? 'opacity-40' : ''}`}
   >
     <span
       className={`absolute top-1/2 size-[20px] -translate-y-1/2 rounded-full bg-white transition-transform ${
@@ -71,18 +111,20 @@ const NotificationRow = ({
   description,
   on,
   onToggle,
+  disabled = false,
 }: {
   label: string;
   description: string;
   on: boolean;
   onToggle: () => void;
+  disabled?: boolean;
 }) => (
   <div className="flex items-center justify-between gap-3 border-b border-[#F0F0F0] p-[16px]">
     <div className="flex flex-col gap-1">
       <p className="text-[14px] font-semibold text-[#111111]">{label}</p>
       <p className="text-[12px] leading-[1.5] text-[#767676]">{description}</p>
     </div>
-    <Toggle on={on} onToggle={onToggle} label={label} />
+    <Toggle on={on} onToggle={onToggle} label={label} disabled={disabled} />
   </div>
 );
 
@@ -107,6 +149,18 @@ const NotificationSettingsPage = () => {
         </button>
         <h1 className="ml-2 text-[15px] font-semibold text-[#111111]">알림 설정</h1>
       </header>
+
+      <p className="px-[16px] pt-[24px] pb-[8px] text-[12px] text-[#767676]">필수</p>
+      {REQUIRED_ITEMS.map((item) => (
+        <NotificationRow
+          key={item.key}
+          label={item.label}
+          description={item.description}
+          on
+          onToggle={() => {}}
+          disabled
+        />
+      ))}
 
       <p className="px-[16px] pt-[24px] pb-[8px] text-[12px] text-[#767676]">활동 알림</p>
       {ACTIVITY_ITEMS.map((item) => (

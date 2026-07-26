@@ -20,6 +20,7 @@ export interface ItemInfoResponse {
   itemName: string;
   categoryLarge: string;
   categorySmall: string;
+  representativeImageUrl: string | null;
 }
 
 export type ApiProductStatus = 'ON_SALE' | 'SOLD' | 'TRANSFERRED';
@@ -38,6 +39,7 @@ export interface TagInfoResponse {
   purchaseOfferEnabled: boolean;
   itemStatus: ApiItemStatus;
   productStatus: ApiProductStatus | null;
+  wished: boolean;
 }
 
 export interface FollowResponse {

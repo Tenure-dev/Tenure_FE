@@ -9,6 +9,9 @@ import PurchaseHistoryPage from '@/pages/mypage/PurchaseHistoryPage';
 import SalesHistoryPage from '@/pages/mypage/SalesHistoryPage';
 import ShippingInputPage from '@/pages/mypage/ShippingInputPage';
 import TradeDetailPage from '@/pages/mypage/TradeDetailPage';
+import RegisteredItemsPage from '@/pages/mypage/RegisteredItemsPage';
+import RegisteredItemDetailPage from '@/pages/mypage/RegisteredItemDetailPage';
+import SaleConversionPage from '@/pages/mypage/SaleConversionPage';
 import SettingsPage from '@/pages/mypage/SettingsPage';
 import NotificationSettingsPage from '@/pages/mypage/NotificationSettingsPage';
 import WithdrawPage from '@/pages/mypage/WithdrawPage';
@@ -57,6 +60,9 @@ export const router = createBrowserRouter([
       { path: 'mypage', element: <MyPage /> },
       { path: 'wishlist', element: <WishListPage /> },
       { path: 'mypage/edit', element: <ProfileEditPage /> },
+      { path: 'mypage/items', element: <RegisteredItemsPage /> },
+      { path: 'mypage/items/:itemId', element: <RegisteredItemDetailPage /> },
+      { path: 'mypage/items/:itemId/sell', element: <SaleConversionPage /> },
       { path: 'users/:userId', element: <UserProfilePage /> },
       { path: 'purchase-history', element: <PurchaseHistoryPage /> },
       { path: 'sales-history', element: <SalesHistoryPage /> },

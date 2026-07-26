@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DoubleButton } from '@/shared/components';
+import { clearAuthStorage } from '@/shared/lib/api';
 
 interface SettingsRowItem {
   label: string;
@@ -39,6 +40,7 @@ const SettingsPage = () => {
 
   const handleLogout = () => {
     setShowLogoutModal(false);
+    clearAuthStorage();
     navigate('/login');
   };
 
@@ -46,7 +48,7 @@ const SettingsPage = () => {
     {
       items: [
         { label: '프로필 수정', onClick: () => navigate('/mypage/edit') },
-        { label: '계정 공개 범위', onClick: () => {} },
+        { label: '계정 공개 범위', onClick: () => navigate('/settings/visibility') },
         { label: '로그인 정보', onClick: () => {} },
         { label: '알림', onClick: () => navigate('/settings/notifications') },
         { label: '로그아웃', onClick: () => setShowLogoutModal(true) },

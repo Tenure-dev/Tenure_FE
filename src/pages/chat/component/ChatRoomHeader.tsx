@@ -1,5 +1,5 @@
 import chevronLeft from '@/shared/assets/chevron-left.svg';
-import more from '@/shared/assets/more.svg';
+import more from '@/shared/assets/more-userprofile.svg';
 
 const ChatRoomHeader = ({
   name,

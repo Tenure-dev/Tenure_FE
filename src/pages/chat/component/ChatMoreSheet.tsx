@@ -17,9 +17,9 @@ const ChatMoreSheet = ({ blocked, onBlock, onUnblock, onLeave, onClose }: Props)
       className="animate-slide-up bg-bg-white rounded-t-2xl px-4 pt-2 pb-6"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="bg-bg-300 mx-auto mb-4 h-1 w-10 rounded-full" />
+      <div className="bg-bg-primary mx-auto mb-4 h-1 w-10 rounded-full" />
 
-      <div className="bg-bg-100 overflow-hidden rounded-xl">
+      <div className="bg-bg-tertiary overflow-hidden rounded-xl">
         <button
           type="button"
           onClick={blocked ? onUnblock : onBlock}
@@ -36,7 +36,7 @@ const ChatMoreSheet = ({ blocked, onBlock, onUnblock, onLeave, onClose }: Props)
           onClick={onLeave}
           className="text-body-1 text-error flex w-full items-center gap-3 p-4"
         >
-          <svg width="22" height="22" viewBox="0 0  24" fill="none" className="text-error">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-error">
             <path
               d="M4 7h16M9 7V5h6v2M6 7l1 12h10l1-12"
               stroke="currentColor"

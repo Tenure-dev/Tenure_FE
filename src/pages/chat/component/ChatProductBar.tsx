@@ -7,31 +7,33 @@ const ChatActions = ({
   role,
   saleStatus,
   tradeStatus,
+  offerEnabled = true,
 }: {
   role: ChatRole;
   saleStatus: SaleStatus;
   tradeStatus: TradeStatus;
+  offerEnabled?: boolean;
 }) => {
   // 거래 생성 이후(생성~완료): 3번째 버튼 '거래 상세', 판매 전환 비활성
   const tradeStarted = tradeStatus === 'created' || tradeStatus === 'done';
 
   // 판매자
   if (role === 'seller') {
+    const isUnlisted = saleStatus === 'unlisted';
+    // 미판매 + 구매제안X → '제안 확인' 비활성 (확인할 제안이 없음)
+    const proposalDisabled = isUnlisted && !offerEnabled && !tradeStarted;
     return (
       <div className="flex gap-2">
-        <Button variant="solid" size="36" className="text-body-2 w-full! flex-1">
-          상품 관리
+        <Button variant="solid" size="36" className="text-body-2 font-regular w-full! flex-1">
+          {isUnlisted ? '아이템 관리' : '상품 관리'}
         </Button>
         <Button
           variant="solid"
           size="36"
-          disabled={tradeStarted}
-          className="text-body-2 w-full! flex-1"
+          className="text-body-2 font-regular w-full! flex-1"
+          disabled={proposalDisabled}
         >
-          판매 전환
-        </Button>
-        <Button variant="solid" size="36" className="text-body-2 w-full! flex-1">
-          {tradeStarted ? '거래 상세' : '제안 확인'}
+          {tradeStarted ? '거래 상세' : isUnlisted ? '제안 확인' : '요청 확인'}
         </Button>
       </div>
     );
@@ -51,13 +53,13 @@ const ChatActions = ({
 
   return (
     <div className="flex gap-2">
-      <Button variant="solid" size="36" className="text-body-2 w-full! flex-1">
+      <Button variant="solid" size="36" className="text-body-2 font-regular w-full! flex-1">
         상품 상세
       </Button>
       <Button
         variant={right.filled ? 'filled' : 'solid'}
         size="36"
-        className="text-body-2 w-full! flex-1"
+        className="text-body-2 font-regular w-full! flex-1"
       >
         {right.label}
       </Button>
@@ -70,11 +72,13 @@ const ChatProductBar = ({
   role,
   saleStatus = 'onSale',
   tradeStatus = 'none',
+  offerEnabled = true,
 }: {
   product: ChatProduct;
   role: ChatRole;
   saleStatus?: SaleStatus;
   tradeStatus?: TradeStatus;
+  offerEnabled?: boolean;
 }) => (
   <div className="border-border-secondary flex flex-col gap-4 border-b px-5 py-2">
     <div className="flex items-center gap-2">
@@ -101,7 +105,12 @@ const ChatProductBar = ({
         )}
       </div>
     </div>
-    <ChatActions role={role} saleStatus={saleStatus} tradeStatus={tradeStatus} />
+    <ChatActions
+      role={role}
+      saleStatus={saleStatus}
+      tradeStatus={tradeStatus}
+      offerEnabled={offerEnabled}
+    />
   </div>
 );
 

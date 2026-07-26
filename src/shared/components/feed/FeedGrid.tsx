@@ -1,15 +1,15 @@
-import type { FeedCard } from '@/features/feed/model/types';
+import type { FeedGridItem } from '@/features/feed/model/types';
 import useIsWideLayout from '@/shared/hooks/useIsWideLayout';
 import FeedCardComponent from './FeedCard';
 
 export interface FeedGridProps {
-  items: FeedCard[];
+  items: FeedGridItem[];
   onToggleLike?: (id: string) => void;
   onToggleBookmark?: (id: string) => void;
 }
 
-const splitIntoColumns = (items: FeedCard[], columnCount: number) => {
-  const columns: FeedCard[][] = Array.from({ length: columnCount }, () => []);
+const splitIntoColumns = (items: FeedGridItem[], columnCount: number) => {
+  const columns: FeedGridItem[][] = Array.from({ length: columnCount }, () => []);
 
   items.forEach((item, index) => {
     columns[index % columnCount].push(item);

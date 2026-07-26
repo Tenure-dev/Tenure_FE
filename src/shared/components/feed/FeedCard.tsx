@@ -1,9 +1,9 @@
 import { Bookmark, Heart } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import type { FeedCard as FeedCardModel } from '@/features/feed/model/types';
+import type { FeedGridItem } from '@/features/feed/model/types';
 
 export interface FeedCardProps {
-  item: FeedCardModel;
+  item: FeedGridItem;
   onToggleLike?: (id: string) => void;
   onToggleBookmark?: (id: string) => void;
   className?: string;

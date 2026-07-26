@@ -1,5 +1,3 @@
-import type { FeedRatio } from '@/features/feed/model/types';
-
 export type SaleStatusFilter = 'all' | 'onSaleIncluded' | 'onSaleOnly';
 export type GenderFilter = 'all' | 'male' | 'female';
 export type SortOption = 'recommend' | 'latest' | 'like' | 'view' | 'save';
@@ -48,7 +46,6 @@ export interface RecentSearchItem {
 export interface SearchResultItem {
   id: string;
   imageUrl: string;
-  ratio: FeedRatio;
   liked: boolean;
   bookmarked: boolean;
   authorId: string;

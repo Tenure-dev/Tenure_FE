@@ -1,11 +1,3 @@
-export interface FeedItem {
-  id: string;
-  imageUrl: string;
-  liked: boolean;
-  bookmarked: boolean;
-  authorId: string;
-}
-
 export interface FollowedUser {
   id: string;
   name: string;
@@ -23,6 +15,13 @@ export interface FeedCard {
   profileImageUrl: string;
   heartCount: number;
   saveCount: number;
+  hearted: boolean;
+  saved: boolean;
+}
+
+export interface FeedGridItem {
+  ootdId: string | number;
+  imageUrl: string;
   hearted: boolean;
   saved: boolean;
 }

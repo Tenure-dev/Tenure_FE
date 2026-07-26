@@ -78,7 +78,6 @@ export const mockSearchAccounts: SearchAccount[] = [
   { id: 'acc-8', name: '가죽자켓매니아', followerCount: 1200, postCount: 33, following: false },
 ];
 
-const RATIOS: SearchResultItem['ratio'][] = ['3:4', '4:5', '1:1'];
 const GENDERS: SearchResultItem['gender'][] = ['male', 'female', 'unisex'];
 const SALE_STATUSES: SearchResultItem['saleStatus'][] = ['onSale', 'unlisted'];
 
@@ -93,7 +92,6 @@ export const mockSearchResultItems: SearchResultItem[] = Array.from({ length: 48
   return {
     id: `search-item-${i}`,
     imageUrl: `https://picsum.photos/seed/search-result-${i}/600/800`,
-    ratio: RATIOS[i % RATIOS.length],
     liked: false,
     bookmarked: false,
     authorId: `search-author-${i % 8}`,

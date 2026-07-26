@@ -14,9 +14,14 @@ const HIDE_NAV_PREFIXES = [
   '/users/',
 ];
 
+// 동적 경로라 prefix로 판단 (타인 프로필 /users/:userId)
+const HIDE_NAV_PREFIXES = ['/users/'];
+
 const RootLayout = () => {
   const { pathname } = useLocation();
-  const hideNav = HIDE_NAV_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const hideNav =
+    HIDE_NAV_PATHS.includes(pathname) ||
+    HIDE_NAV_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
   return (
     <div className="bg-bg-white flex min-h-screen justify-center">

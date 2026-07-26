@@ -14,6 +14,7 @@ import RegisteredItemDetailPage from '@/pages/mypage/RegisteredItemDetailPage';
 import SaleConversionPage from '@/pages/mypage/SaleConversionPage';
 import SettingsPage from '@/pages/mypage/SettingsPage';
 import NotificationSettingsPage from '@/pages/mypage/NotificationSettingsPage';
+import AccountVisibilityPage from '@/pages/mypage/AccountVisibilityPage';
 import WithdrawPage from '@/pages/mypage/WithdrawPage';
 import ItemDetailPage from '@/pages/item/ItemDetailPage';
 import SearchHomePage from '@/pages/search/SearchHomePage';
@@ -75,6 +76,7 @@ export const router = createBrowserRouter([
       { path: 'item/:itemId/purchase/complete', element: <CompletePage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'settings/notifications', element: <NotificationSettingsPage /> },
+      { path: 'settings/visibility', element: <AccountVisibilityPage /> },
       { path: 'settings/withdraw', element: <WithdrawPage /> },
       { path: 'test', element: <TestPage /> },
       { path: 'ootd/camera', element: <OotdCameraPage /> },

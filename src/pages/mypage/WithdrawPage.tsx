@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronLeft } from 'lucide-react';
-import { DoubleButton } from '@/shared/components';
+import { DoubleButton, Toast } from '@/shared/components';
+import { useToast } from '@/shared/hooks/useToast';
 
 const WITHDRAW_REASONS = [
   '사용 빈도가 낮아요.',
@@ -14,6 +15,7 @@ const WithdrawPage = () => {
   const navigate = useNavigate();
   const [reason, setReason] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const { message: toastMessage, show: showToast, hide: hideToast } = useToast();
 
   const canWithdraw = reason !== '';
 
@@ -70,10 +72,12 @@ const WithdrawPage = () => {
           onLeftClick={() => navigate(-1)}
           onRightClick={() => {
             if (!canWithdraw) return;
-            navigate('/login');
+            showToast('준비 중인 기능입니다');
           }}
         />
       </div>
+
+      <Toast message={toastMessage} onClose={hideToast} />
     </div>
   );
 };

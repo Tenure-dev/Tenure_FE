@@ -48,7 +48,7 @@ const SettingsPage = () => {
     {
       items: [
         { label: '프로필 수정', onClick: () => navigate('/mypage/edit') },
-        { label: '계정 공개 범위', onClick: () => {} },
+        { label: '계정 공개 범위', onClick: () => navigate('/settings/visibility') },
         { label: '로그인 정보', onClick: () => {} },
         { label: '알림', onClick: () => navigate('/settings/notifications') },
         { label: '로그아웃', onClick: () => setShowLogoutModal(true) },

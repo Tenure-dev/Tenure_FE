@@ -14,6 +14,15 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface EmailSendRequest {
+  email: string;
+}
+
+export interface EmailVerifyRequest {
+  email: string;
+  code: string;
+}
+
 export interface AuthResult {
   userId: number;
   accessToken: string;

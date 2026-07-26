@@ -37,6 +37,11 @@ instance.interceptors.request.use((config) => {
 instance.interceptors.response.use(
   (response) => {
     const body = response.data as BaseResponse<unknown>;
+
+    console.log(
+      `[API] ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`,
+    );
+
     if (!body.success) {
       return Promise.reject(new Error(body.message));
     }
@@ -62,6 +67,14 @@ instance.interceptors.response.use(
     const message =
       (axios.isAxiosError<BaseResponse<unknown>>(error) && error.response?.data?.message) ||
       error.message;
+
+    if (axios.isAxiosError(error)) {
+      console.error(
+        `[API Error] ${error.response?.status ?? 'NETWORK'} ${error.config?.method?.toUpperCase()} ${error.config?.url}`,
+        message,
+      );
+    }
+
     return Promise.reject(new Error(message));
   },
 );

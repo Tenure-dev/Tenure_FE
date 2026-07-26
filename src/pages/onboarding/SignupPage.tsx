@@ -3,8 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useMutation } from '@tanstack/react-query';
 import { Camera, ChevronLeft, Search } from 'lucide-react';
-import { Button } from '@/shared/components';
+import { Button, DoubleButton } from '@/shared/components';
+import { login, signup } from '@/features/auth/api/authApi';
+import { createAddress } from '@/features/auth/api/addressApi';
+import { getMyInfo } from '@/features/auth/api/userApi';
+import { toApiGender } from '@/features/auth/lib/gender';
+import { ACCESS_TOKEN_STORAGE_KEY, USER_ID_STORAGE_KEY } from '@/shared/lib/api';
+import { useUserStore } from '@/store/userStore';
 
 const TOTAL_STEPS = 4;
 type Step = 1 | 2 | 3 | 4;
@@ -180,6 +187,26 @@ const SignupPage = () => {
     : MOCK_ADDRESSES;
   const canProceedStep3 = selectedAddress.length > 0;
 
+  const addressMutation = useMutation({ mutationFn: createAddress });
+
+  const handleAddressNext = () => {
+    // 주소 검색 UI에 수취인/연락처/우편번호 입력이 없어 빈 값으로 전송하고,
+    // 선택 사항이므로 실패 여부와 무관하게 다음 단계로 진행한다.
+    addressMutation.mutate(
+      {
+        receiverName: '',
+        phone: '',
+        addressLine1: selectedAddress,
+        addressLine2: addressDetail,
+        postalCode: '',
+        requestNote: '',
+        isDefault: true,
+      },
+      { onError: (error) => console.error(error) },
+    );
+    setStep(4);
+  };
+
   // Step 4 — 프로필 작성
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -187,13 +214,60 @@ const SignupPage = () => {
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [height, setHeight] = useState(170);
   const [weight, setWeight] = useState(60);
+  const [signupError, setSignupError] = useState<string | null>(null);
   const canComplete = nickname.trim().length > 0;
+
+  const [isPhotoSheetOpen, setIsPhotoSheetOpen] = useState(false);
+  const [pendingPhotoPreview, setPendingPhotoPreview] = useState<string | null>(null);
+
+  const setUser = useUserStore((state) => state.setUser);
+  const signupMutation = useMutation({ mutationFn: signup });
+
+  const handleSignupComplete = () => {
+    setSignupError(null);
+    signupMutation.mutate(
+      {
+        email,
+        password,
+        nickname,
+        gender: toApiGender(gender),
+        height,
+        weight,
+      },
+      {
+        onSuccess: async ({ userId }) => {
+          localStorage.setItem(USER_ID_STORAGE_KEY, String(userId));
+          try {
+            // 회원가입 응답에는 accessToken이 포함되지 않으므로, 동일 자격증명으로 로그인해 토큰을 발급받는다.
+            const { accessToken } = await login({ email, password });
+            localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
+            setUser(await getMyInfo());
+          } catch (error) {
+            console.error(error);
+          }
+          navigate('/feed');
+        },
+        onError: (error) => {
+          console.error(error);
+          setSignupError('회원가입에 실패했습니다. 다시 시도해주세요.');
+        },
+      },
+    );
+  };
 
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setPhotoPreview(URL.createObjectURL(file));
+      setPendingPhotoPreview(URL.createObjectURL(file));
     }
+    e.target.value = '';
+  };
+
+  const handleCancelPendingPhoto = () => setPendingPhotoPreview(null);
+
+  const handleConfirmPendingPhoto = () => {
+    setPhotoPreview(pendingPhotoPreview);
+    setPendingPhotoPreview(null);
   };
 
   const handleBack = () => {
@@ -399,7 +473,7 @@ const SignupPage = () => {
               size="54"
               className="!w-full"
               disabled={!canProceedStep3}
-              onClick={() => setStep(4)}
+              onClick={handleAddressNext}
             >
               다음
             </Button>
@@ -412,7 +486,7 @@ const SignupPage = () => {
           <div className="flex justify-center">
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => setIsPhotoSheetOpen(true)}
               className="relative flex size-[96px] items-center justify-center overflow-hidden rounded-full bg-[#EAEDF0]"
             >
               {photoPreview ? (
@@ -492,17 +566,89 @@ const SignupPage = () => {
             />
           </div>
 
+          {signupError && <p className="mt-3 text-[13px] text-[#FF3B30]">{signupError}</p>}
+
           <div className="mt-auto pt-6">
             <Button
               type="button"
               variant="filled"
               size="54"
               className="!w-full"
-              disabled={!canComplete}
-              onClick={() => {}}
+              disabled={!canComplete || signupMutation.isPending}
+              onClick={handleSignupComplete}
             >
               완료
             </Button>
+          </div>
+        </div>
+      )}
+
+      {isPhotoSheetOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+          onClick={() => setIsPhotoSheetOpen(false)}
+        >
+          <div
+            className="w-full max-w-[390px] rounded-t-[16px] bg-white"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setIsPhotoSheetOpen(false);
+                fileInputRef.current?.click();
+              }}
+              className="flex h-[52px] w-full items-center justify-center border-b border-[#F0F0F0] text-[15px] text-[#111111]"
+            >
+              앨범에서 선택하기
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPhotoPreview(null);
+                setIsPhotoSheetOpen(false);
+              }}
+              className="flex h-[52px] w-full items-center justify-center border-b border-[#F0F0F0] text-[15px] text-[#111111]"
+            >
+              기본 이미지로 변경
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsPhotoSheetOpen(false)}
+              className="flex h-[52px] w-full items-center justify-center border-b border-[#F0F0F0] text-[15px] text-[#111111]"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {pendingPhotoPreview && (
+        <div className="fixed inset-0 z-50 mx-auto flex w-full max-w-[390px] flex-col bg-[#FFFFFF]">
+          <header className="flex h-[52px] items-center justify-between px-[16px]">
+            <button type="button" onClick={handleCancelPendingPhoto} aria-label="닫기">
+              <ChevronLeft size={24} className="text-[#111111]" />
+            </button>
+            <h1 className="text-[15px] font-semibold text-[#111111]">사진 확인</h1>
+            <div className="size-[24px]" />
+          </header>
+          <div className="flex flex-1 items-center justify-center">
+            <div className="size-[200px] overflow-hidden rounded-full">
+              <img
+                src={pendingPhotoPreview}
+                alt="선택한 프로필 사진 미리보기"
+                className="size-full object-cover"
+              />
+            </div>
+          </div>
+          <div className="px-[20px] pb-[24px]">
+            <DoubleButton
+              layout="half"
+              leftLabel="취소하기"
+              rightLabel="완료하기"
+              onLeftClick={handleCancelPendingPhoto}
+              onRightClick={handleConfirmPendingPhoto}
+            />
           </div>
         </div>
       )}

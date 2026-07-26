@@ -1,12 +1,17 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useMutation } from '@tanstack/react-query';
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/shared/components';
 import logo from '@/shared/assets/logo.png';
 import googleLogo from '@/shared/assets/google.webp';
+import { login } from '@/features/auth/api/authApi';
+import { getMyInfo } from '@/features/auth/api/userApi';
+import { ACCESS_TOKEN_STORAGE_KEY, USER_ID_STORAGE_KEY } from '@/shared/lib/api';
+import { useUserStore } from '@/store/userStore';
 
 const loginSchema = z.object({
   email: z.string().email('올바른 이메일 형식이 아닙니다'),
@@ -19,8 +24,12 @@ const inputClassName =
   'h-[52px] w-full rounded-[8px] border border-[#E2E6E8] px-[16px] text-[15px] text-[#111111] outline-none focus:border-[#00AAFF]';
 
 const LoginPage = () => {
+  const navigate = useNavigate();
+  const setUser = useUserStore((state) => state.setUser);
   const [showPassword, setShowPassword] = useState(false);
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const loginMutation = useMutation({ mutationFn: login });
 
   const {
     register,
@@ -38,7 +47,23 @@ const LoginPage = () => {
   const canSubmit = Boolean(email) && Boolean(password) && isValid;
 
   const onSubmit = (values: LoginFormValues) => {
-    console.log(values, keepLoggedIn);
+    setLoginError(null);
+    loginMutation.mutate(values, {
+      onSuccess: async ({ userId, accessToken }) => {
+        localStorage.setItem(USER_ID_STORAGE_KEY, String(userId));
+        localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
+        try {
+          setUser(await getMyInfo());
+        } catch (error) {
+          console.error(error);
+        }
+        navigate('/feed');
+      },
+      onError: (error) => {
+        console.error(error);
+        setLoginError('이메일 또는 비밀번호를 확인해주세요');
+      },
+    });
   };
 
   return (
@@ -87,11 +112,13 @@ const LoginPage = () => {
           </button>
         </div>
 
+        {loginError && <p className="px-[2px] text-[13px] text-[#FF3B30]">{loginError}</p>}
+
         <Button
           type="submit"
           variant="filled"
           size="54"
-          disabled={!canSubmit}
+          disabled={!canSubmit || loginMutation.isPending}
           className="mt-2 !w-full"
         >
           로그인

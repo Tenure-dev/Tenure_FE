@@ -1,7 +1,9 @@
 import { createBrowserRouter } from 'react-router-dom';
 import RootLayout from './RootLayout';
 import FeedPage from '@/pages/feed/FeedPage';
+import NotificationPage from '@/pages/feed/NotificationPage';
 import MyPage from '@/pages/mypage/MyPage';
+import WishListPage from '@/pages/mypage/WishListPage';
 import ProfileEditPage from '@/pages/mypage/ProfileEditPage';
 import PurchaseHistoryPage from '@/pages/mypage/PurchaseHistoryPage';
 import SalesHistoryPage from '@/pages/mypage/SalesHistoryPage';
@@ -11,6 +13,8 @@ import RegisteredItemsPage from '@/pages/mypage/RegisteredItemsPage';
 import RegisteredItemDetailPage from '@/pages/mypage/RegisteredItemDetailPage';
 import SaleConversionPage from '@/pages/mypage/SaleConversionPage';
 import SettingsPage from '@/pages/mypage/SettingsPage';
+import NotificationSettingsPage from '@/pages/mypage/NotificationSettingsPage';
+import WithdrawPage from '@/pages/mypage/WithdrawPage';
 import ItemDetailPage from '@/pages/item/ItemDetailPage';
 import SearchHomePage from '@/pages/search/SearchHomePage';
 import SearchResultPage from '@/pages/search/SearchResultPage';
@@ -22,6 +26,15 @@ import ReportPage from '@/pages/ootd/ReportPage';
 import RelatedOotdPage from '@/pages/ootd/RelatedOotdPage';
 import ChatListPage from '@/pages/chat/ChatListPage';
 import ChatRoomPage from '@/pages/chat/ChatRoomPage';
+import PricePage from '@/pages/purchase/PricePage';
+import CheckoutPage from '@/pages/purchase/CheckoutPage';
+import ProcessingPage from '@/pages/purchase/ProcessingPage';
+import CompletePage from '@/pages/purchase/CompletePage';
+import OotdTagPage from '@/pages/camera/OotdTagPage';
+import OotdCreatePage from '@/pages/camera/OotdCreatePage';
+import OotdCameraPage from '@/pages/camera/OotdCameraPage';
+import OotdPreviewPage from '@/pages/camera/OotdPreviewPage';
+import UserProfilePage from '@/pages/user/UserProfilePage';
 
 export const router = createBrowserRouter([
   {
@@ -31,6 +44,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <FeedPage /> },
       { path: 'feed', element: <FeedPage /> },
+      { path: 'notifications', element: <NotificationPage /> },
       { path: 'search', element: <SearchHomePage /> },
       { path: 'search/result', element: <SearchResultPage /> },
       { path: 'ootd/:id', element: <OotdDetailPage /> },
@@ -44,17 +58,29 @@ export const router = createBrowserRouter([
       // ]},
       // 로그인 필요 (ProtectedLayout)
       { path: 'mypage', element: <MyPage /> },
+      { path: 'wishlist', element: <WishListPage /> },
       { path: 'mypage/edit', element: <ProfileEditPage /> },
       { path: 'mypage/items', element: <RegisteredItemsPage /> },
       { path: 'mypage/items/:itemId', element: <RegisteredItemDetailPage /> },
       { path: 'mypage/items/:itemId/sell', element: <SaleConversionPage /> },
+      { path: 'users/:userId', element: <UserProfilePage /> },
       { path: 'purchase-history', element: <PurchaseHistoryPage /> },
       { path: 'sales-history', element: <SalesHistoryPage /> },
       { path: 'trade/:tradeId', element: <TradeDetailPage /> },
       { path: 'trade/:tradeId/shipping', element: <ShippingInputPage /> },
       { path: 'item/:itemId', element: <ItemDetailPage /> },
+      { path: 'item/:itemId/purchase/price', element: <PricePage /> },
+      { path: 'item/:itemId/purchase/checkout', element: <CheckoutPage /> },
+      { path: 'item/:itemId/purchase/processing', element: <ProcessingPage /> },
+      { path: 'item/:itemId/purchase/complete', element: <CompletePage /> },
       { path: 'settings', element: <SettingsPage /> },
+      { path: 'settings/notifications', element: <NotificationSettingsPage /> },
+      { path: 'settings/withdraw', element: <WithdrawPage /> },
       { path: 'test', element: <TestPage /> },
+      { path: 'ootd/camera', element: <OotdCameraPage /> },
+      { path: 'ootd/create', element: <OotdCreatePage /> },
+      { path: 'ootd/tag', element: <OotdTagPage /> },
+      { path: 'ootd/preview', element: <OotdPreviewPage /> },
 
       { path: 'chat', element: <ChatListPage /> },
       { path: 'chat/:id', element: <ChatRoomPage /> },

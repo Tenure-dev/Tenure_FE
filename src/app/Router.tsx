@@ -27,6 +27,7 @@ import OotdTagPage from '@/pages/camera/OotdTagPage';
 import OotdCreatePage from '@/pages/camera/OotdCreatePage';
 import OotdCameraPage from '@/pages/camera/OotdCameraPage';
 import OotdPreviewPage from '@/pages/camera/OotdPreviewPage';
+import UserProfilePage from '@/pages/user/UserProfilePage';
 
 export const router = createBrowserRouter([
   {
@@ -52,6 +53,7 @@ export const router = createBrowserRouter([
       { path: 'mypage', element: <MyPage /> },
       { path: 'wishlist', element: <WishListPage /> },
       { path: 'mypage/edit', element: <ProfileEditPage /> },
+      { path: 'users/:userId', element: <UserProfilePage /> },
       { path: 'purchase-history', element: <PurchaseHistoryPage /> },
       { path: 'sales-history', element: <SalesHistoryPage /> },
       { path: 'trade/:tradeId', element: <TradeDetailPage /> },

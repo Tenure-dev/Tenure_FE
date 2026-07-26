@@ -22,7 +22,7 @@ const ChatMessages = ({ messages, date, avatar, name, scrollTrigger }: Props) =>
   return (
     <div
       ref={scrollRef}
-      className="bg-bg-50 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4"
+      className="bg-bg-quaternary flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4"
     >
       <p className="text-regular text-body-2 text-text-tertiary text-center">{date}</p>
       {messages.map((message) => (

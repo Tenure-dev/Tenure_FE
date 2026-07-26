@@ -1,70 +1,42 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchTopBar from '@/features/search/ui/SearchTopBar';
-import RecommendedKeywords from '@/features/search/ui/RecommendedKeywords';
-import RecentViewedUsers from '@/features/search/ui/RecentViewedUsers';
-import RecentSearches from '@/features/search/ui/RecentSearches';
-import RelatedKeywordList from '@/features/search/ui/RelatedKeywordList';
+import SearchSuggestionsOverlay from '@/features/search/ui/SearchSuggestionsOverlay';
 import CarouselSection from '@/features/search/ui/CarouselSection';
 import PopularUsersSection from '@/features/search/ui/PopularUsersSection';
 import FilterBottomSheet from '@/features/search/ui/FilterBottomSheet';
-import {
-  deleteRecentUser,
-  deleteRecentKeyword,
-  getSearchHome,
-  getSearchRecent,
-} from '@/features/search/api/searchApi';
+import { getSearchHome } from '@/features/search/api/searchApi';
 import type { SearchHomeData } from '@/features/search/api/types';
-import type { RecentSearchItem, RecentViewedUser } from '@/features/search/model/types';
+import { getCurrentUserId } from '@/features/search/lib/currentUser';
+import { useRecentSearchData } from '@/features/search/lib/useRecentSearchData';
+import { useScrollToTop } from '@/features/search/lib/useScrollToTop';
 import {
   DEFAULT_SEARCH_FILTERS,
   isFiltersActive,
   type SearchFilters,
 } from '@/features/search/model/types';
 
-const buildRelatedKeywords = (query: string, suggestions: string[]) => {
-  const trimmed = query.trim();
-  if (!trimmed) return [];
-  const matches = suggestions.filter((k) => k.includes(trimmed) && k !== trimmed);
-  return [trimmed, ...matches].slice(0, 8);
-};
-
 const SearchHomePage = () => {
+  useScrollToTop();
   const navigate = useNavigate();
   const [active, setActive] = useState(false);
   const [query, setQuery] = useState('');
-  const [recentViewedUsers, setRecentViewedUsers] = useState<RecentViewedUser[]>([]);
-  const [recentSearches, setRecentSearches] = useState<RecentSearchItem[]>([]);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [home, setHome] = useState<SearchHomeData | null>(null);
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const recentData = useRecentSearchData();
 
   useEffect(() => {
-    getSearchRecent().then((data) => {
-      setRecentViewedUsers(
-        data.recentUsers.map((u) => ({
-          id: u.userId,
-          name: u.username,
-          avatarUrl: u.profileImageUrl,
-        })),
-      );
-      setRecentSearches(data.recentKeywords.map((k) => ({ id: k.id, keyword: k.keyword })));
-      setSuggestions(data.suggestions);
-    });
     getSearchHome().then(setHome);
   }, []);
 
-  const relatedKeywords = useMemo(
-    () => buildRelatedKeywords(query, suggestions),
-    [query, suggestions],
-  );
-
   const goToResult = (keyword: string, nextFilters: SearchFilters) => {
     const trimmed = keyword.trim();
-    if (!trimmed) return;
+    // BE는 keyword 또는 categoryIds 중 하나가 있으면 검색 가능 — 카테고리만 골랐다면
+    // 키워드 없이 엔터를 쳐도 결과 화면으로 넘어가야 한다.
+    if (!trimmed && nextFilters.categoryIds.length === 0) return;
 
-    setRecentSearches((prev) => prev.filter((item) => item.keyword !== trimmed));
+    if (trimmed) recentData.consumeKeyword(trimmed);
     navigate('/search/result', { state: { keyword: trimmed, filters: nextFilters } });
   };
 
@@ -75,32 +47,9 @@ const SearchHomePage = () => {
     setQuery('');
   };
 
+  // 필터는 적용만 하고 저장해둔다 — 결과 화면으로의 이동은 검색어를 입력(엔터)했을 때만 일어난다.
   const handleFilterApply = (nextFilters: SearchFilters) => {
     setFilters(nextFilters);
-    setActive(false);
-    setQuery('');
-  };
-
-  const handleRemoveRecentUser = (id: number) => {
-    setRecentViewedUsers((prev) => prev.filter((u) => u.id !== id));
-    deleteRecentUser(id);
-  };
-
-  const handleClearAllRecentUsers = () => {
-    const ids = recentViewedUsers.map((u) => u.id);
-    setRecentViewedUsers([]);
-    ids.forEach((id) => deleteRecentUser(id));
-  };
-
-  const handleRemoveRecentKeyword = (id: number) => {
-    setRecentSearches((prev) => prev.filter((s) => s.id !== id));
-    deleteRecentKeyword(id);
-  };
-
-  const handleClearAllRecentKeywords = () => {
-    const ids = recentSearches.map((s) => s.id);
-    setRecentSearches([]);
-    ids.forEach((id) => deleteRecentKeyword(id));
   };
 
   return (
@@ -108,7 +57,10 @@ const SearchHomePage = () => {
       <SearchTopBar
         value={query}
         onChange={setQuery}
-        onFocus={() => setActive(true)}
+        onFocus={() => {
+          setActive(true);
+          recentData.refresh();
+        }}
         onBack={active ? handleBack : undefined}
         onSubmit={handleSubmit}
         onFilterClick={() => setFilterSheetOpen(true)}
@@ -117,26 +69,17 @@ const SearchHomePage = () => {
       />
 
       {active ? (
-        <div className="flex-1 pb-10">
-          {relatedKeywords.length > 0 ? (
-            <RelatedKeywordList keywords={relatedKeywords} onSelect={handleSubmit} />
-          ) : (
-            <>
-              <RecommendedKeywords keywords={suggestions} onSelect={handleSubmit} />
-              <RecentViewedUsers
-                users={recentViewedUsers}
-                onRemove={handleRemoveRecentUser}
-                onClearAll={handleClearAllRecentUsers}
-              />
-              <RecentSearches
-                searches={recentSearches}
-                onSelect={handleSubmit}
-                onRemove={handleRemoveRecentKeyword}
-                onClearAll={handleClearAllRecentKeywords}
-              />
-            </>
-          )}
-        </div>
+        <SearchSuggestionsOverlay
+          query={query}
+          suggestions={recentData.suggestions}
+          recentViewedUsers={recentData.recentViewedUsers}
+          recentSearches={recentData.recentSearches}
+          onSelectKeyword={handleSubmit}
+          onRemoveRecentUser={recentData.removeRecentUser}
+          onClearAllRecentUsers={recentData.clearAllRecentUsers}
+          onRemoveRecentKeyword={recentData.removeRecentKeyword}
+          onClearAllRecentKeywords={recentData.clearAllRecentKeywords}
+        />
       ) : (
         <div className="flex-1 pb-10">
           <CarouselSection
@@ -151,7 +94,9 @@ const SearchHomePage = () => {
             items={home?.popularOotds.content ?? []}
             moreHref="/search/popular-ootds"
           />
-          <PopularUsersSection users={home?.popularUsers.content ?? []} />
+          <PopularUsersSection
+            users={(home?.popularUsers.content ?? []).filter((u) => u.id !== getCurrentUserId())}
+          />
           <CarouselSection
             title="새로 올라온 OOTD"
             subtitle="최근 올라온 게시물을 빠르게 둘러보세요."

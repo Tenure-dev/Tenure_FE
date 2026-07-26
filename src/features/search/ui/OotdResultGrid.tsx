@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
+import { saveRecentOotd } from '../api/searchApi';
 import type { SearchOotdResponse } from '../api/types';
 import { useInfiniteScrollSentinel } from '../lib/useInfiniteScrollSentinel';
 
@@ -20,10 +22,18 @@ const OotdResultGrid = ({ items, hasNext, loading, onLoadMore }: OotdResultGridP
           <button
             key={item.id}
             type="button"
-            onClick={() => navigate(`/ootd/${item.id}`)}
+            onClick={() => {
+              saveRecentOotd(item.id);
+              navigate(`/ootd/${item.id}`);
+            }}
             className="bg-gray-bg aspect-[3/4] overflow-hidden rounded-lg"
           >
-            <img src={item.imageUrl} alt="" loading="lazy" className="size-full object-cover" />
+            <img
+              src={resolveImageUrl(item.imageUrl)}
+              alt=""
+              loading="lazy"
+              className="size-full object-cover"
+            />
           </button>
         ))}
       </div>

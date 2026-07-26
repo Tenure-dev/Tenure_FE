@@ -1,4 +1,11 @@
-import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import { searchOotds } from '../api/searchApi';
 import type {
   OotdSearchCursor,
@@ -14,7 +21,7 @@ import SortDropdown from './SortDropdown';
 
 // BE는 keyword와 categoryIds가 모두 비어있으면 400을 반환하므로, 유효하지 않으면 호출하지 않는다.
 const isSearchable = (params: OotdSearchParams) =>
-  params.keyword.trim() !== '' || (params.categoryIds?.length ?? 0) > 0;
+  (params.keyword?.trim() ?? '') !== '' || (params.categoryIds?.length ?? 0) > 0;
 
 const EMPTY_PAGE: OotdSearchPage = { content: [], hasNext: false, nextCursor: {}, count: 0 };
 
@@ -43,6 +50,25 @@ const SearchOotdResultsSection = ({
 
   const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
+  // 서버가 내려준 초기 hearted/saved 값은 아이템당 한 번만 반영하고, 이후 로컬 토글을 덮어쓰지 않는다.
+  const seededIdsRef = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    const newLiked: number[] = [];
+    const newBookmarked: number[] = [];
+    items.forEach((item) => {
+      if (seededIdsRef.current.has(item.id)) return;
+      seededIdsRef.current.add(item.id);
+      if (item.hearted) newLiked.push(item.id);
+      if (item.saved) newBookmarked.push(item.id);
+    });
+    if (newLiked.length > 0) {
+      setLikedIds((prev) => new Set([...prev, ...newLiked]));
+    }
+    if (newBookmarked.length > 0) {
+      setBookmarkedIds((prev) => new Set([...prev, ...newBookmarked]));
+    }
+  }, [items]);
 
   const toggleId = (setter: Dispatch<SetStateAction<Set<number>>>) => (id: number) =>
     setter((prev) => {

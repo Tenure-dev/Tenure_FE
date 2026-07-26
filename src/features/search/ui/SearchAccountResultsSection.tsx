@@ -1,6 +1,8 @@
 import { useCallback } from 'react';
+import { followUser, unfollowUser } from '../api/followApi';
 import { searchUsers } from '../api/searchApi';
 import type { UserSearchCursor, UserSearchPage } from '../api/types';
+import { getCurrentUserId } from '../lib/currentUser';
 import { useCursorList } from '../lib/useCursorList';
 import { useInfiniteScrollSentinel } from '../lib/useInfiniteScrollSentinel';
 import AccountResultRow from './AccountResultRow';
@@ -24,18 +26,35 @@ const SearchAccountResultsSection = ({ keyword }: SearchAccountResultsSectionPro
   const { items, setItems, hasNext, loading, loadMore } = useCursorList(fetchPage);
   const sentinelRef = useInfiniteScrollSentinel(hasNext, loadMore);
 
-  // 팔로우/언팔로우 API가 아직 없어(BE 요청 목록 참고) 화면상으로만 토글된다.
-  const toggleFollowLocal = (id: number) => {
+  const toggleFollow = async (id: number, currentlyFollowing: boolean) => {
     setItems((prev) =>
-      prev.map((user) => (user.id === id ? { ...user, following: !user.following } : user)),
+      prev.map((user) => (user.id === id ? { ...user, following: !currentlyFollowing } : user)),
     );
+    try {
+      const response = currentlyFollowing ? await unfollowUser(id) : await followUser(id);
+      setItems((prev) =>
+        prev.map((user) => (user.id === id ? { ...user, following: response.following } : user)),
+      );
+    } catch {
+      // 실패 시 낙관적 업데이트를 되돌린다.
+      setItems((prev) =>
+        prev.map((user) => (user.id === id ? { ...user, following: currentlyFollowing } : user)),
+      );
+    }
   };
 
-  if (items.length > 0) {
+  const currentUserId = getCurrentUserId();
+  const visibleItems = items.filter((account) => account.id !== currentUserId);
+
+  if (visibleItems.length > 0) {
     return (
       <div className="divide-border-secondary divide-y">
-        {items.map((account) => (
-          <AccountResultRow key={account.id} account={account} onToggleFollow={toggleFollowLocal} />
+        {visibleItems.map((account) => (
+          <AccountResultRow
+            key={account.id}
+            account={account}
+            onToggleFollow={(id) => toggleFollow(id, account.following)}
+          />
         ))}
         {hasNext && <div ref={sentinelRef} className="h-10" />}
         {loading && (

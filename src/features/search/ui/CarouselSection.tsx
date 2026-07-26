@@ -1,5 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
+import { saveRecentOotd } from '../api/searchApi';
 import type { SearchOotdResponse } from '../api/types';
 
 export interface CarouselSectionProps {
@@ -31,11 +33,14 @@ const CarouselSection = ({ title, subtitle, items, moreHref }: CarouselSectionPr
           <button
             key={item.id}
             type="button"
-            onClick={() => navigate(`/ootd/${item.id}`)}
+            onClick={() => {
+              saveRecentOotd(item.id);
+              navigate(`/ootd/${item.id}`);
+            }}
             className="shrink-0"
           >
             <img
-              src={item.imageUrl}
+              src={resolveImageUrl(item.imageUrl)}
               alt=""
               className="bg-gray-bg h-[140px] w-[110px] rounded-lg object-cover"
             />

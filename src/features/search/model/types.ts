@@ -1,4 +1,4 @@
-import type { ApiGender, ApiItemStatus, ApiSortType } from '../api/types';
+import type { ApiGender, ApiItemStatusFilter, ApiSortType } from '../api/types';
 
 export type SaleStatusFilter = 'all' | 'onSaleIncluded' | 'onSaleOnly';
 export type GenderFilter = 'all' | 'male' | 'female';
@@ -8,7 +8,7 @@ export type ResultTab = 'post' | 'account';
 export interface SearchFilters {
   saleStatus: SaleStatusFilter;
   gender: GenderFilter;
-  categories: string[];
+  categoryIds: number[];
   heightRange: [number, number];
   weightRange: [number, number];
 }
@@ -19,7 +19,7 @@ export const WEIGHT_RANGE_LIMIT: [number, number] = [0, 150];
 export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   saleStatus: 'all',
   gender: 'all',
-  categories: [],
+  categoryIds: [],
   heightRange: HEIGHT_RANGE_LIMIT,
   weightRange: WEIGHT_RANGE_LIMIT,
 };
@@ -27,7 +27,7 @@ export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
 export const isFiltersActive = (filters: SearchFilters) =>
   filters.saleStatus !== 'all' ||
   filters.gender !== 'all' ||
-  filters.categories.length > 0 ||
+  filters.categoryIds.length > 0 ||
   filters.heightRange[0] !== HEIGHT_RANGE_LIMIT[0] ||
   filters.heightRange[1] !== HEIGHT_RANGE_LIMIT[1] ||
   filters.weightRange[0] !== WEIGHT_RANGE_LIMIT[0] ||
@@ -47,17 +47,17 @@ const SORT_TO_API: Record<SortOption, ApiSortType> = {
   save: 'SAVE',
 };
 
-// BE의 ItemStatus는 단일 값만 필터링 가능해 'onSaleIncluded'(판매중 포함)를 표현할 수 없음 -> 'all'과 동일하게 처리.
-// 관련 논의는 project-api-integration 메모리 및 대화 말미의 BE 요청 목록 참고.
-const SALE_STATUS_TO_API: Record<SaleStatusFilter, ApiItemStatus | undefined> = {
+// BE의 ItemStatusFilter(ALL/ON_SALE_INCLUDED/ON_SALE_ONLY)에 맞춘 매핑.
+const SALE_STATUS_TO_API: Record<SaleStatusFilter, ApiItemStatusFilter | undefined> = {
   all: undefined,
-  onSaleIncluded: undefined,
-  onSaleOnly: 'ON_SALE',
+  onSaleIncluded: 'ON_SALE_INCLUDED',
+  onSaleOnly: 'ON_SALE_ONLY',
 };
 
 export const toApiGender = (gender: GenderFilter) => GENDER_TO_API[gender];
 export const toApiSort = (sort: SortOption) => SORT_TO_API[sort];
-export const toApiItemStatus = (saleStatus: SaleStatusFilter) => SALE_STATUS_TO_API[saleStatus];
+export const toApiItemStatusFilter = (saleStatus: SaleStatusFilter) =>
+  SALE_STATUS_TO_API[saleStatus];
 
 export interface RecentViewedUser {
   id: number;

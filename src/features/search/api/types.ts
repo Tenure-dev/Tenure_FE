@@ -1,6 +1,9 @@
 export interface SearchOotdResponse {
   id: number;
   imageUrl: string;
+  // /search/ootds(키워드/카테고리 검색) 응답에만 내려온다. 홈 캐러셀(유사/인기/신규) 응답에는 없다.
+  hearted?: boolean;
+  saved?: boolean;
 }
 
 export interface OotdCursorPage<TCursor> {
@@ -34,6 +37,14 @@ export interface SearchHomePopularUserResponse {
   id: number;
   username: string;
   profileImageUrl: string | null;
+  followerCount: number;
+  ootdCount: number;
+}
+
+export interface CategoryResponse {
+  id: number;
+  name: string;
+  parentId: number | null;
 }
 
 export interface UserCursorPage<TUser, TCursor> {
@@ -88,18 +99,19 @@ export interface UserSearchPage {
 }
 
 export type ApiGender = 'MALE' | 'FEMALE';
-export type ApiItemStatus = 'OWNED' | 'ON_SALE' | 'SOLD' | 'TRANSFERRED' | 'ARCHIVED';
+export type ApiItemStatusFilter = 'ALL' | 'ON_SALE_INCLUDED' | 'ON_SALE_ONLY';
 export type ApiSortType = 'LATEST' | 'HEART' | 'SAVE' | 'VIEW' | 'RECOMMEND';
 
 export interface OotdSearchParams {
-  keyword: string;
+  // BE는 keyword 또는 categoryIds 중 하나가 있으면 됨(둘 다 없으면 400).
+  keyword?: string;
   gender?: ApiGender;
   heightMin?: number;
   heightMax?: number;
   weightMin?: number;
   weightMax?: number;
   categoryIds?: number[];
-  itemStatus?: ApiItemStatus;
+  itemStatusFilter?: ApiItemStatusFilter;
   sort: ApiSortType;
 }
 

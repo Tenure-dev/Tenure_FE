@@ -1,4 +1,5 @@
 import { Bookmark, Heart } from 'lucide-react';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 import type { SearchOotdResponse } from '../api/types';
 
 export interface SearchOotdCardProps {
@@ -10,8 +11,8 @@ export interface SearchOotdCardProps {
   onToggleBookmark: () => void;
 }
 
-// BE의 SearchOotdResponse가 아직 liked/bookmarked를 내려주지 않아, 좋아요/북마크는
-// 화면(로컬) 상태로만 토글된다 — Feed 탭의 기존 좋아요/북마크와 동일한 수준의 미구현 상태.
+// 초기 liked/bookmarked는 BE의 hearted/saved로 채워지지만, 토글 자체는 좋아요/저장 API가
+// 아직 없어 화면(로컬) 상태로만 반영된다 — Feed 탭·OOTD 상세의 기존 좋아요/북마크와 동일한 수준.
 const SearchOotdCard = ({
   item,
   liked,
@@ -23,7 +24,12 @@ const SearchOotdCard = ({
   return (
     <div className="bg-gray-bg relative w-full overflow-hidden rounded-md">
       <button type="button" onClick={onClick} className="block w-full">
-        <img src={item.imageUrl} alt="" loading="lazy" className="w-full object-cover" />
+        <img
+          src={resolveImageUrl(item.imageUrl)}
+          alt=""
+          loading="lazy"
+          className="w-full object-cover"
+        />
       </button>
       <div className="absolute right-2 bottom-2 flex flex-col items-center gap-1.5">
         <button

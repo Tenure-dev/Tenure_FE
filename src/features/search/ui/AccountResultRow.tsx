@@ -1,5 +1,6 @@
 import { FollowButton } from '@/shared/components';
 import profileDefault from '@/shared/assets/profileDefault.svg';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 import type { SearchUserResponse } from '../api/types';
 
 export interface AccountResultRowProps {
@@ -19,7 +20,7 @@ const AccountResultRow = ({ account, onToggleFollow }: AccountResultRowProps) =>
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <img
-        src={account.profileImageUrl || profileDefault}
+        src={resolveImageUrl(account.profileImageUrl) || profileDefault}
         alt=""
         className="size-11 shrink-0 rounded-full object-cover"
       />

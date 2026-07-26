@@ -140,8 +140,19 @@ export const getSearchRecent = (): Promise<SearchRecentResponse> => api.get('/se
 export const deleteRecentKeyword = (keywordId: number): Promise<void> =>
   api.delete(`/search/recent-keywords/${keywordId}`);
 
+export const deleteAllRecentKeywords = (): Promise<void> => api.delete('/search/recent-keywords');
+
 export const deleteRecentUser = (userId: number): Promise<void> =>
   api.delete(`/search/recent-users/${userId}`);
+
+export const deleteAllRecentUsers = (): Promise<void> => api.delete('/search/recent-users');
+
+// 검색 결과에서 OOTD/유저를 클릭했을 때 "최근 본" 목록에 기록한다.
+export const saveRecentOotd = (ootdId: number): Promise<void> =>
+  api.post(`/search/recent-ootds/${ootdId}`);
+
+export const saveRecentUser = (userId: number): Promise<void> =>
+  api.post(`/search/recent-users/${userId}`);
 
 const SEARCH_OOTDS_SIZE = 20;
 
@@ -166,13 +177,16 @@ export const searchOotds = async (
       weightMin: params.weightMin,
       weightMax: params.weightMax,
       categoryIds: params.categoryIds,
-      itemStatus: params.itemStatus,
+      itemStatusFilter: params.itemStatusFilter,
       sort: params.sort,
       cursor: cursor?.cursor,
       cursorId: cursor?.cursorId,
       cursorValue: cursor?.cursorValue,
       size,
     },
+    // BE(@RequestParam List<Long>)는 categoryIds=1&categoryIds=2 형태를 기대하는데,
+    // axios 기본 직렬화는 categoryIds[]=1 형태라 바인딩이 안 된다. indexes: null로 대괄호를 뺀다.
+    paramsSerializer: { indexes: null },
   });
 
   return {

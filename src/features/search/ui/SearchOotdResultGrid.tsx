@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { saveRecentOotd } from '../api/searchApi';
 import type { SearchOotdResponse } from '../api/types';
 import { useInfiniteScrollSentinel } from '../lib/useInfiniteScrollSentinel';
 import SearchOotdCard from './SearchOotdCard';
@@ -38,6 +39,11 @@ const SearchOotdResultGrid = ({
   const sentinelRef = useInfiniteScrollSentinel(hasNext, onLoadMore);
   const columns = splitIntoColumns(items, COLUMN_COUNT);
 
+  const handleClick = (id: number) => {
+    saveRecentOotd(id);
+    navigate(`/ootd/${id}`);
+  };
+
   return (
     <>
       <div className="grid grid-cols-2 gap-2">
@@ -49,7 +55,7 @@ const SearchOotdResultGrid = ({
                 item={item}
                 liked={likedIds.has(item.id)}
                 bookmarked={bookmarkedIds.has(item.id)}
-                onClick={() => navigate(`/ootd/${item.id}`)}
+                onClick={() => handleClick(item.id)}
                 onToggleLike={() => onToggleLike(item.id)}
                 onToggleBookmark={() => onToggleBookmark(item.id)}
               />

@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import profileDefault from '@/shared/assets/profileDefault.svg';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 import type { RecentViewedUser } from '../model/types';
 
 export interface RecentViewedUsersProps {
@@ -24,7 +25,7 @@ const RecentViewedUsers = ({ users, onRemove, onClearAll }: RecentViewedUsersPro
         {users.map((user) => (
           <div key={user.id} className="flex items-center gap-3 py-3">
             <img
-              src={user.avatarUrl || profileDefault}
+              src={resolveImageUrl(user.avatarUrl) || profileDefault}
               alt=""
               className="size-11 shrink-0 rounded-full object-cover"
             />

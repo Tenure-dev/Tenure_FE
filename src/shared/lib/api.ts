@@ -48,6 +48,11 @@ instance.interceptors.request.use((config) => {
 instance.interceptors.response.use(
   (response) => {
     const body = response.data as BaseResponse<unknown>;
+
+    console.log(
+      `[API] ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`,
+    );
+
     if (!body.success) {
       return Promise.reject(new ApiError(body.message, body.code));
     }
@@ -70,10 +75,17 @@ instance.interceptors.response.use(
         window.location.href = LOGIN_PATH;
       }
     }
-    const responseBody = axios.isAxiosError<BaseResponse<unknown>>(error)
-      ? error.response?.data
-      : undefined;
+    const isAxios = axios.isAxiosError<BaseResponse<unknown>>(error);
+    const responseBody = isAxios ? error.response?.data : undefined;
     const message = responseBody?.message || error.message;
+
+    if (isAxios) {
+      console.error(
+        `[API Error] ${error.response?.status ?? 'NETWORK'} ${error.config?.method?.toUpperCase()} ${error.config?.url}`,
+        message,
+      );
+    }
+
     return Promise.reject(new ApiError(message, responseBody?.code));
   },
 );

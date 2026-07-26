@@ -1,0 +1,43 @@
+// 로딩 스피너: Figma 그라데이션 링 (#CCFFE6 → #00AAFF), 회전
+// title/subtitle 주면 스피너 아래 문구 표시 (미지정 시 스피너만)
+type Props = { title?: string; subtitle?: string };
+
+const TagLoading = ({ title, subtitle }: Props) => {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center pb-32">
+      <svg
+        width="60"
+        height="58"
+        viewBox="0 0 80 77"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="animate-spin"
+        role="status"
+        aria-label="로딩 중"
+      >
+        <path
+          d="M27.0286 2.26211C26.3188 0.401379 24.2258 -0.546201 22.4365 0.328234C15.947 3.49974 10.4154 8.38112 6.45615 14.476C1.83997 21.5821 -0.400177 29.9707 0.0587177 38.4322C0.517612 46.8937 3.65182 54.9908 9.00945 61.5561C14.3671 68.1213 21.6713 72.8155 29.8689 74.9618C38.0665 77.1081 46.7339 76.5955 54.6214 73.498C62.5089 70.4005 69.2089 64.8781 73.7554 57.7271C78.3018 50.5762 80.4598 42.1661 79.9182 33.7095C79.4537 26.4564 77.0239 19.4906 72.9211 13.5459C71.7899 11.9068 69.5011 11.7072 67.9705 12.9813C66.4399 14.2555 66.2509 16.5198 67.3494 18.181C70.4923 22.9338 72.3542 28.4428 72.721 34.1704C73.165 41.1023 71.3961 47.9961 67.6693 53.8577C63.9426 59.7194 58.4505 64.2461 51.9852 66.7851C45.5198 69.3241 38.4151 69.7443 31.6955 67.985C24.9759 66.2257 18.9887 62.3779 14.597 56.9963C10.2054 51.6147 7.63624 44.9775 7.26009 38.0416C6.88393 31.1058 8.72019 24.2296 12.5041 18.4047C15.6306 13.5917 19.9533 9.70189 25.022 7.09903C26.7936 6.18928 27.7385 4.12285 27.0286 2.26211Z"
+          fill="url(#paint0_linear_2791_33197)"
+        />
+        <defs>
+          <linearGradient
+            id="paint0_linear_2791_33197"
+            x1="66"
+            y1="15.2661"
+            x2="23.5"
+            y2="0.266116"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stopColor="#CCFFE6" stopOpacity="0.3" />
+            <stop offset="1" stopColor="#00AAFF" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      {title && <p className="text-title-2 mt-8 font-semibold">{title}</p>}
+      {subtitle && <p className="text-body-2 text-text-secondary mt-2">{subtitle}</p>}
+    </div>
+  );
+};
+
+export default TagLoading;

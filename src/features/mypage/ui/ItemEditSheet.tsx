@@ -2,45 +2,11 @@ import { useState } from 'react';
 import { chevon, close } from '@/shared/assets';
 import { BottomSheet, DoubleButton, Input } from '@/shared/components';
 import cn from '@/shared/lib/cn';
-import { CATEGORY_GROUPS } from '@/features/search/model/categoryData';
+import { CATEGORY_GROUPS, CATEGORY_SIZES, getSizeSystem } from '../lib/itemSizeData';
 import { WEARING_TARGET_LABEL } from '../lib/wearingTargetLabel';
 import type { ItemUpdateRequest, RegisteredItemDetail, WearingTarget } from '../model/items';
 
 const CATEGORIES = CATEGORY_GROUPS.map((g) => g.name);
-
-const SIZES = [
-  'XS',
-  'S',
-  'M',
-  'L',
-  'XL',
-  '2XL',
-  '3XL',
-  '85',
-  '90',
-  '95',
-  '100',
-  '105',
-  '110',
-  '115',
-  '36',
-  '38',
-  '40',
-  '42',
-  '44',
-  '46',
-  '48',
-  '50',
-  '0',
-  '1',
-  '2',
-  '3',
-  '4',
-  '5',
-  '6',
-  'Free',
-];
-
 const WEARING_TARGETS: WearingTarget[] = ['MENSWEAR', 'WOMENSWEAR', 'UNISEX'];
 
 type SectionKey = 'category' | 'subCategory' | 'size' | 'wearingTarget';
@@ -138,6 +104,7 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
   };
 
   const subCategories = CATEGORY_GROUPS.find((g) => g.name === form.categoryLarge)?.items ?? [];
+  const sizeOptions = CATEGORY_SIZES[form.categoryLarge] ?? [];
 
   return (
     <BottomSheet
@@ -192,7 +159,12 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
                   label={cat}
                   selected={form.categoryLarge === cat}
                   onClick={() =>
-                    setForm((prev) => ({ ...prev, categoryLarge: cat, categorySmall: '' }))
+                    setForm((prev) => ({
+                      ...prev,
+                      categoryLarge: cat,
+                      categorySmall: '',
+                      sizeValue: '',
+                    }))
                   }
                 />
               ))}
@@ -228,12 +200,12 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
           />
           {openSections.has('size') && (
             <div className="flex flex-wrap gap-2 pb-4">
-              {SIZES.map((size) => (
+              {sizeOptions.map(({ value }) => (
                 <SelectChip
-                  key={size}
-                  label={size}
-                  selected={form.sizeValue === size}
-                  onClick={() => setForm((prev) => ({ ...prev, sizeValue: size }))}
+                  key={value}
+                  label={value}
+                  selected={form.sizeValue === value}
+                  onClick={() => setForm((prev) => ({ ...prev, sizeValue: value }))}
                 />
               ))}
             </div>
@@ -279,11 +251,10 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
           leftLabel="초기화"
           rightLabel="적용하기"
           onLeftClick={() => setForm(toForm())}
-          // 시트에서 편집할 수 없는 필드는 조회해온 기존 값으로 실어 보낸다
           onRightClick={() => {
             onApply({
               ...form,
-              sizeSystem: item.sizeSystem,
+              sizeSystem: getSizeSystem(form.categoryLarge, form.sizeValue),
               representativeImageUrl: item.representativeImageUrl,
             });
             onClose();

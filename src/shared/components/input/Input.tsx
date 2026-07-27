@@ -82,7 +82,7 @@ const Input = ({
     resolvedState === 'focus' || resolvedState === 'active' || resolvedState === 'error';
 
   const isPassword = type === 'password';
-  const wantToggle = showPasswordToggle ?? (isPassword || showTrailing);
+  const wantToggle = showPasswordToggle ?? isPassword;
 
   const iconSize = size === 44 ? 18 : 20;
   const leading =

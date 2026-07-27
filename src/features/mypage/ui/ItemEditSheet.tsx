@@ -52,6 +52,7 @@ interface ItemEditForm {
   categorySmall: string;
   sizeValue: string;
   wearingTarget: WearingTarget;
+  firstOwnedAt: string;
 }
 
 const SectionHeader = ({
@@ -113,6 +114,7 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
     categorySmall: item.categorySmall,
     sizeValue: item.sizeValue,
     wearingTarget: item.wearingTarget,
+    firstOwnedAt: item.firstOwnedAt.slice(0, 10),
   });
 
   const [form, setForm] = useState<ItemEditForm>(toForm);
@@ -257,6 +259,18 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
             </div>
           )}
         </div>
+
+        <div className="border-border-secondary border-t py-4">
+          <p className="text-body-2 text-text-secondary mb-1">최초 보유 날짜</p>
+          <Input
+            size={48}
+            type="date"
+            showPasswordToggle={false}
+            value={form.firstOwnedAt}
+            onChange={(e) => setForm((prev) => ({ ...prev, firstOwnedAt: e.target.value }))}
+            onClear={() => setForm((prev) => ({ ...prev, firstOwnedAt: '' }))}
+          />
+        </div>
       </div>
 
       <div className="border-border-secondary flex border-t p-4">
@@ -265,12 +279,11 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
           leftLabel="초기화"
           rightLabel="적용하기"
           onLeftClick={() => setForm(toForm())}
+          // 시트에서 편집할 수 없는 필드는 조회해온 기존 값으로 실어 보낸다
           onRightClick={() => {
-            // 시트에서 편집할 수 없는 필드는 조회해온 기존 값을 그대로 실어 보낸다.
             onApply({
               ...form,
               sizeSystem: item.sizeSystem,
-              firstOwnedAt: item.firstOwnedAt,
               representativeImageUrl: item.representativeImageUrl,
             });
             onClose();

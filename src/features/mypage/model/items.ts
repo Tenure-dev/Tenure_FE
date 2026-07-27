@@ -27,15 +27,24 @@ export type RegisteredItemListParams = {
   size?: number;
 };
 
-export type ItemHistoryEntry = {
-  userId: string;
-  username: string;
-  profileImageUrl: string;
-  dateFrom: string;
-  dateTo: string | null;
-  ootdCount: number;
-  isFirstOwner: boolean;
-  ootdImages: string[];
+export type ItemHistoryApiEntry = {
+  historyId: number;
+  itemId: number;
+  ownerUserId: number;
+  acquisitionType: 'FIRST_REGISTERED' | 'TENURE_TRADE';
+  endReason: 'TENURE_TRADE' | 'EXTERNAL_SALE' | null;
+  startedAt: string;
+  endedAt: string | null;
+  tradeId: number | null;
+};
+
+export type ItemHistoryListResponse = {
+  content: ItemHistoryApiEntry[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
 };
 
 export type WearingTarget = 'MENSWEAR' | 'WOMENSWEAR' | 'UNISEX';
@@ -61,7 +70,6 @@ export type RegisteredItemDetailResponse = {
 
 export type RegisteredItemDetail = RegisteredItemDetailResponse & {
   frequentlyWornWith: string[];
-  history: ItemHistoryEntry[];
 };
 
 export type ItemUpdateRequest = {
@@ -80,4 +88,13 @@ export type ItemUpdateResponse = ItemUpdateRequest & {
   itemId: number;
   ownerUserId: number;
   itemStatus: ItemStatus;
+};
+
+export type OfferSettingRequest = {
+  purchaseOfferEnabled: boolean;
+};
+
+export type OfferSettingResponse = {
+  itemId: number;
+  purchaseOfferEnabled: boolean;
 };

@@ -5,6 +5,9 @@ import type {
   RegisteredItemDetailResponse,
   ItemUpdateRequest,
   ItemUpdateResponse,
+  OfferSettingRequest,
+  OfferSettingResponse,
+  ItemHistoryListResponse,
 } from '../model/items';
 
 export const getItems = (params?: RegisteredItemListParams) =>
@@ -15,3 +18,9 @@ export const getItemDetail = (itemId: number) =>
 
 export const updateItem = (itemId: number, body: ItemUpdateRequest) =>
   api.patch<ItemUpdateResponse>(`/items/${itemId}`, body);
+
+export const updateOfferSetting = (itemId: number, body: OfferSettingRequest) =>
+  api.patch<OfferSettingResponse>(`/items/${itemId}/offer-setting`, body);
+
+export const getItemHistories = (itemId: number, params?: { page?: number; size?: number }) =>
+  api.get<ItemHistoryListResponse>(`/items/${itemId}/histories`, { params });

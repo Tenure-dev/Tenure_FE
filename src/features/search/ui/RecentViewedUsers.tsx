@@ -1,10 +1,11 @@
 import { X } from 'lucide-react';
 import profileDefault from '@/shared/assets/profileDefault.svg';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 import type { RecentViewedUser } from '../model/types';
 
 export interface RecentViewedUsersProps {
   users: RecentViewedUser[];
-  onRemove: (id: string) => void;
+  onRemove: (id: number) => void;
   onClearAll: () => void;
 }
 
@@ -24,14 +25,13 @@ const RecentViewedUsers = ({ users, onRemove, onClearAll }: RecentViewedUsersPro
         {users.map((user) => (
           <div key={user.id} className="flex items-center gap-3 py-3">
             <img
-              src={user.avatarUrl || profileDefault}
+              src={resolveImageUrl(user.avatarUrl) || profileDefault}
               alt=""
               className="size-11 shrink-0 rounded-full object-cover"
             />
-            <div className="min-w-0 flex-1">
-              <p className="text-body-2 text-text-primary truncate font-semibold">{user.name}</p>
-              <p className="text-body-4 text-text-tertiary truncate">{user.subtext}</p>
-            </div>
+            <p className="text-body-2 text-text-primary min-w-0 flex-1 truncate font-semibold">
+              {user.name}
+            </p>
             <button
               type="button"
               onClick={() => onRemove(user.id)}

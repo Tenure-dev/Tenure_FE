@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { BackHeader, DoubleButton, Input, Toast } from '@/shared/components';
-import { useProfileStore, type Gender } from '@/store/useProfileStore';
+import { useProfileStore } from '@/store/useProfileStore';
 import { useUserStore } from '@/store/userStore';
 import { useToast } from '@/shared/hooks/useToast';
 import { updateMyInfo } from '@/features/auth/api/userApi';
+import { useMyInfo } from '@/features/auth/model/useMyInfo';
+import type { UserProfile } from '@/features/auth/api/types';
 import { fromApiGender, toApiGender } from '@/features/auth/lib/gender';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 import ProfileImagePreview from './component/ProfileImagePreview';
 import GenderToggle from './component/GenderToggle';
 import ProfilePhotoPicker from './component/ProfilePhotoPicker';
@@ -16,16 +19,31 @@ const HEIGHT_RANGE = { min: 140, max: 200 };
 const WEIGHT_RANGE = { min: 30, max: 150 };
 
 const ProfileEditPage = () => {
+  const { data: myInfo, isLoading } = useMyInfo();
+
+  if (isLoading || !myInfo) {
+    return (
+      <div className="bg-bg-white text-text-primary mx-auto min-h-screen max-w-md pb-8">
+        <BackHeader title="프로필 수정" />
+      </div>
+    );
+  }
+
+  return <ProfileEditForm myInfo={myInfo} />;
+};
+
+// myInfo가 로드된 뒤에만 마운트되므로, 폼 상태를 mock 기본값이 아닌 실제 값으로 바로 초기화할 수 있다.
+const ProfileEditForm = ({ myInfo }: { myInfo: UserProfile }) => {
   const navigate = useNavigate();
   const storedProfile = useProfileStore();
   const setUser = useUserStore((state) => state.setUser);
   const { message: errorToast, show: showErrorToast, hide: hideErrorToast } = useToast();
 
-  const [nickname, setNickname] = useState(storedProfile.name);
-  const [gender, setGender] = useState<Gender>(storedProfile.gender);
-  const [height, setHeight] = useState(storedProfile.height);
-  const [weight, setWeight] = useState(storedProfile.weight);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(storedProfile.photoUrl);
+  const [nickname, setNickname] = useState(myInfo.username);
+  const [gender, setGender] = useState(fromApiGender(myInfo.gender));
+  const [height, setHeight] = useState(myInfo.heightCm);
+  const [weight, setWeight] = useState(myInfo.weightKg);
+  const [photoUrl, setPhotoUrl] = useState(resolveImageUrl(myInfo.profileImageUrl));
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
 
   const updateProfileMutation = useMutation({ mutationFn: updateMyInfo });
@@ -46,15 +64,16 @@ const ProfileEditPage = () => {
   };
 
   const handleSave = () => {
+    // 프로필 이미지 업로드 API가 아직 없어(BE 요청 목록 참고) profileImageUrl은 전송하지 않는다.
     updateProfileMutation.mutate(
-      { nickname, gender: toApiGender(gender), height, weight },
+      { username: nickname, gender: toApiGender(gender), heightCm: height, weightKg: weight },
       {
         onSuccess: (data) => {
           storedProfile.setProfile({
-            name: data.nickname,
+            name: data.username,
             gender: fromApiGender(data.gender),
-            height: data.height,
-            weight: data.weight,
+            height: data.heightCm,
+            weight: data.weightKg,
             photoUrl,
           });
           setUser(data);

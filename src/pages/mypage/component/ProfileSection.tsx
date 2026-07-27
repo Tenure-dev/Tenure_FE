@@ -2,11 +2,14 @@ import { useNavigate } from 'react-router-dom';
 import edit from '@/shared/assets/edit.svg';
 import profileDefault from '@/shared/assets/profileDefault.svg';
 import { useProfileStore } from '@/store/useProfileStore';
-import { profile } from '../mock';
+import { useMyPage } from '@/features/mypage/api/useMyPage';
+import { USER_GRADE_LABEL } from '@/features/mypage/api/dto';
 
 const ProfileSection = () => {
   const navigate = useNavigate();
   const { name, height, weight, photoUrl } = useProfileStore();
+  const { data: myPage } = useMyPage();
+  const gradeLabel = myPage ? USER_GRADE_LABEL[myPage.grade] : '';
 
   return (
     <div className="flex items-center gap-4 px-4 py-6">
@@ -28,7 +31,7 @@ const ProfileSection = () => {
       <div>
         <p className="text-title-1">{name}</p>
         <p className="text-body-2 text-text-secondary">
-          {profile.grade} | {height}cm · {weight}kg
+          {gradeLabel} | {height}cm · {weight}kg
         </p>
       </div>
     </div>

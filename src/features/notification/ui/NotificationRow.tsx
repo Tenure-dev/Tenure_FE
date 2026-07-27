@@ -5,15 +5,38 @@ import type { NotificationItem } from '../model/types';
 
 export interface NotificationRowProps {
   item: NotificationItem;
+  onRead: (id: number) => void;
 }
 
-const NotificationRow = ({ item }: NotificationRowProps) => {
+// PURCHASE_INTENT/PURCHASE_OFFER는 이동할 화면이 불명확해 BE 확인 전까지 매핑하지 않는다.
+const TARGET_PATH: Partial<Record<NotificationItem['targetType'], (id: number) => string>> = {
+  ITEM: (id) => `/item/${id}`,
+  PRODUCT: (id) => `/item/${id}`,
+  OOTD: (id) => `/ootd/${id}`,
+  TRADE: (id) => `/trade/${id}`,
+  CHAT: (id) => `/chat/${id}`,
+  USER: (id) => `/users/${id}`,
+  FOLLOW: (id) => `/users/${id}`,
+};
+
+const NotificationRow = ({ item, onRead }: NotificationRowProps) => {
   const navigate = useNavigate();
+
+  const handleClick = () => {
+    onRead(item.id);
+    const path = TARGET_PATH[item.targetType]?.(item.targetId);
+    if (path) navigate(path);
+  };
+
+  const title =
+    item.brandName && item.itemName
+      ? `${item.brandName} / ${item.itemName}`
+      : (item.senderUsername ?? '');
 
   return (
     <button
       type="button"
-      onClick={() => navigate(`/item/${item.itemId}`)}
+      onClick={handleClick}
       className="flex w-full items-start gap-3 px-4 py-3 text-left"
     >
       <div className="relative shrink-0">
@@ -27,9 +50,7 @@ const NotificationRow = ({ item }: NotificationRowProps) => {
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-body-1 text-text-primary truncate font-semibold">
-            {item.brand} / {item.name}
-          </p>
+          <p className="text-body-1 text-text-primary truncate font-semibold">{title}</p>
           <span className="text-body-3 text-text-tertiary shrink-0">
             {formatNotificationTime(item.createdAt)}
           </span>

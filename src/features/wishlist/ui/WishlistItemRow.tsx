@@ -5,25 +5,20 @@ import type { WishlistItem } from '../model/types';
 
 export interface WishlistItemRowProps {
   item: WishlistItem;
-  onToggleNotify: (id: string) => void;
+  onToggleNotify: (wishId: number) => void;
 }
 
 const formatPrice = (price: number) => `${price.toLocaleString()}원`;
 
-const getBadge = (item: WishlistItem) => {
-  if (item.tradeStatus === 'waiting' || item.tradeStatus === 'created') {
-    return { label: '거래중', className: 'text-brand border-brand' };
-  }
-  if (item.saleStatus === 'onSale') {
-    return { label: '판매중', className: 'text-error border-error' };
-  }
+const getBadge = (saleStatus: WishlistItem['saleStatus']) => {
+  if (saleStatus === 'TRADING') return { label: '거래중', className: 'text-brand border-brand' };
+  if (saleStatus === 'ON_SALE') return { label: '판매중', className: 'text-error border-error' };
   return { label: '미판매', className: 'text-text-tertiary border-border-secondary' };
 };
 
 const WishlistItemRow = ({ item, onToggleNotify }: WishlistItemRowProps) => {
   const navigate = useNavigate();
-  const badge = getBadge(item);
-  const canOffer = item.saleStatus === 'unlisted' && item.tradeStatus === 'none';
+  const badge = getBadge(item.saleStatus);
 
   return (
     <div className="flex items-center gap-3 px-4 py-3">
@@ -49,21 +44,18 @@ const WishlistItemRow = ({ item, onToggleNotify }: WishlistItemRowProps) => {
           <p className="text-body-1 text-text-primary truncate font-semibold">
             {item.brand} / {item.name}
           </p>
-          {item.saleStatus === 'onSale' ? (
+          {item.saleStatus === 'ON_SALE' && item.price != null ? (
             <p className="text-body-1 text-text-primary font-semibold">{formatPrice(item.price)}</p>
-          ) : canOffer ? (
+          ) : item.purchaseOfferEnabled ? (
             <span className="text-body-2 text-text-primary w-fit underline">구매 제안</span>
           ) : null}
-          <p className="text-body-3 text-text-tertiary">
-            {item.sellerName} · {item.updatedAt}
-          </p>
         </div>
       </button>
 
       <button
         type="button"
         aria-label={item.notifyEnabled ? '알림 끄기' : '알림 켜기'}
-        onClick={() => onToggleNotify(item.id)}
+        onClick={() => onToggleNotify(item.wishId)}
         className="flex size-9 shrink-0 items-center justify-center"
       >
         {item.notifyEnabled ? (

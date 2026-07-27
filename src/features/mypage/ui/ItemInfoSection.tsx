@@ -1,5 +1,3 @@
-import cn from '@/shared/lib/cn';
-import { Toggle } from '@/shared/components';
 import { formatDate } from '../lib/formatDate';
 import { WEARING_TARGET_LABEL } from '../lib/wearingTargetLabel';
 import type { RegisteredItemDetail } from '../model/items';
@@ -7,10 +5,9 @@ import type { RegisteredItemDetail } from '../model/items';
 interface ItemInfoSectionProps {
   item: RegisteredItemDetail;
   allowProposal: boolean;
-  onToggleProposal: (v: boolean) => void;
 }
 
-const ItemInfoSection = ({ item, allowProposal, onToggleProposal }: ItemInfoSectionProps) => {
+const ItemInfoSection = ({ item, allowProposal }: ItemInfoSectionProps) => {
   const isForSale = item.itemStatus === 'ON_SALE';
 
   return (
@@ -43,19 +40,9 @@ const ItemInfoSection = ({ item, allowProposal, onToggleProposal }: ItemInfoSect
         {isForSale ? (
           <span className="text-body-1 text-info font-semibold">판매 중</span>
         ) : (
-          <div className="flex items-center gap-2">
-            <span className="text-body-1 text-info font-semibold">미판매</span>
-            <span className="text-body-1 text-text-secondary">·</span>
-            <span
-              className={cn(
-                'text-body-1 font-semibold',
-                allowProposal ? 'text-info' : 'text-text-tertiary',
-              )}
-            >
-              구매 제안 받기
-            </span>
-            <Toggle checked={allowProposal} onChange={onToggleProposal} />
-          </div>
+          <p className="text-body-1 text-info font-semibold">
+            미판매 · 구매 제안 {allowProposal ? 'O' : 'X'}
+          </p>
         )}
       </div>
     </div>

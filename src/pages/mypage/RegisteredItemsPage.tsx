@@ -17,7 +17,7 @@ const RegisteredItemsPage = () => {
   });
   const items = data?.pages.flatMap((page) => page.content) ?? [];
 
-  const sentinelRef = useInfiniteScroll(fetchNextPage, !!hasNextPage);
+  const sentinelRef = useInfiniteScroll({ hasMore: !!hasNextPage, onLoadMore: fetchNextPage });
 
   return (
     <div className="bg-bg-white text-text-primary mx-auto min-h-screen max-w-md">

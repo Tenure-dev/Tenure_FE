@@ -41,6 +41,9 @@ const TagPin = ({ item, selected = false, onClick }: TagPinProps) => {
   return (
     <button
       type="button"
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerMove={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
       onClick={(e) => {
         e.stopPropagation();
         onClick();

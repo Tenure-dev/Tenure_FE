@@ -2,13 +2,13 @@ import { Plus, Search } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import type { ClosetItem } from '@/features/ootd/model/types';
 
-export type EditTagTarget = { type: 'edit'; tagId: string } | { type: 'add' } | null;
+export type EditTagTarget = { type: 'edit'; tagId: number } | { type: 'add' } | null;
 
 export interface EditTagSheetProps {
   target: EditTagTarget;
   isAnalyzing?: boolean;
   closetItems: ClosetItem[];
-  selectedClosetItemId: string | null;
+  selectedClosetItemId: number | null;
   onSelectClosetItem: (item: ClosetItem) => void;
   onRegisterNewItem: () => void;
   onSubmit: () => void;
@@ -81,17 +81,20 @@ const EditTagSheet = ({
                       selected ? 'border-brand' : 'border-transparent',
                     )}
                   >
-                    <img
-                      src={item.imageUrl}
-                      alt=""
-                      className="bg-gray-bg size-11 shrink-0 rounded-full object-cover"
-                    />
+                    <div className="bg-gray-bg size-11 shrink-0 overflow-hidden rounded-full">
+                      {item.imageUrl && (
+                        <img src={item.imageUrl} alt="" className="size-full object-cover" />
+                      )}
+                    </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-body-2 text-text-primary truncate font-semibold">
                         {item.brand} / {item.name}
                       </p>
                       <p className="text-body-4 text-text-tertiary">
-                        최근 착용 {item.lastWornDaysAgo}일 전 · OOTD 인증 {item.verifiedCount}회
+                        {item.lastWornDaysAgo !== null
+                          ? `최근 착용 ${item.lastWornDaysAgo}일 전 · `
+                          : ''}
+                        OOTD 인증 {item.verifiedCount}회
                       </p>
                     </div>
                   </button>

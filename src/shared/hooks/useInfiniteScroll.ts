@@ -1,21 +1,34 @@
 import { useEffect, useRef } from 'react';
 
-export const useInfiniteScroll = (onIntersect: () => void, enabled = true) => {
-  const targetRef = useRef<HTMLDivElement>(null);
+export interface UseInfiniteScrollOptions {
+  hasMore: boolean;
+  onLoadMore: () => void;
+  rootMargin?: string;
+}
+
+export const useInfiniteScroll = ({
+  hasMore,
+  onLoadMore,
+  rootMargin = '200px',
+}: UseInfiniteScrollOptions) => {
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!enabled) return;
+    const el = sentinelRef.current;
+    if (!el || !hasMore) return;
 
-    const target = targetRef.current;
-    if (!target) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) onLoadMore();
+      },
+      { rootMargin },
+    );
 
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) onIntersect();
-    });
-    observer.observe(target);
-
+    observer.observe(el);
     return () => observer.disconnect();
-  }, [onIntersect, enabled]);
+  }, [hasMore, onLoadMore, rootMargin]);
 
-  return targetRef;
+  return sentinelRef;
 };
+
+export default useInfiniteScroll;

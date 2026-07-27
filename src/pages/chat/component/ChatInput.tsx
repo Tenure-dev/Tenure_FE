@@ -33,8 +33,8 @@ const ChatInput = ({ onSendImages, onSendText }: Props) => {
   };
 
   return (
-    <div className="border-border-secondary flex items-center border-t px-4 py-3">
-      <div className="bg-bg-100 flex flex-1 items-center gap-2 rounded-full px-4 py-2.5">
+    <div className="flex items-center px-4 py-3">
+      <div className="border-border-secondary flex flex-1 items-center gap-2.5 self-stretch rounded-full border-[1.5px] bg-white px-3 py-4">
         <button
           type="button"
           aria-label="이미지 첨부"

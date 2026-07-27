@@ -25,10 +25,12 @@ const ChatRoomPage = ({
   role = 'buyer',
   saleStatus = 'onSale',
   tradeStatus = 'none',
+  offerEnabled = true,
 }: {
   role?: ChatRole;
   saleStatus?: SaleStatus;
   tradeStatus?: TradeStatus;
+  offerEnabled?: boolean;
 }) => {
   const navigate = useNavigate();
   const vvHeight = useVisualViewportHeight();
@@ -85,6 +87,7 @@ const ChatRoomPage = ({
         role={role}
         saleStatus={saleStatus}
         tradeStatus={tradeStatus}
+        offerEnabled={offerEnabled}
       />
       <ChatMessages
         messages={messages}
@@ -95,11 +98,7 @@ const ChatRoomPage = ({
       />
       <ChatInput onSendImages={handleSendImages} onSendText={handleSendText} />
 
-      {toast && (
-        <div className="absolute inset-x-0 bottom-3 flex justify-center px-4">
-          <Toast message={toast} onClose={() => setToast(null)} />
-        </div>
-      )}
+      <Toast message={toast} onClose={() => setToast(null)} />
 
       {menuOpen && (
         <ChatMoreSheet

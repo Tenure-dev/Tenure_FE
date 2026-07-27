@@ -3,8 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useMutation } from '@tanstack/react-query';
 import { Camera, ChevronLeft, Search } from 'lucide-react';
-import { Button } from '@/shared/components';
+import { Button, DoubleButton } from '@/shared/components';
+import { login, sendEmailVerification, signup, verifyEmailCode } from '@/features/auth/api/authApi';
+import { createAddress } from '@/features/auth/api/addressApi';
+import { getMyInfo } from '@/features/auth/api/userApi';
+import { toApiGender } from '@/features/auth/lib/gender';
+import { ACCESS_TOKEN_STORAGE_KEY, ApiError, USER_ID_STORAGE_KEY } from '@/shared/lib/api';
+import { useUserStore } from '@/store/userStore';
 
 const TOTAL_STEPS = 4;
 type Step = 1 | 2 | 3 | 4;
@@ -15,9 +22,6 @@ const STEP_TITLES: Record<Step, string> = {
   3: '주소 등록',
   4: '프로필 작성',
 };
-
-const MOCK_EXISTING_EMAILS = ['test@example.com', 'user@tenure.com'];
-const MOCK_VALID_CODE = '123456';
 
 type EmailVerifyState = 'idle' | 'invalid' | 'exists' | 'sent' | 'wrong' | 'verified';
 
@@ -42,12 +46,14 @@ const TERMS: {
 ];
 
 const MOCK_ADDRESSES = [
-  '서울특별시 강남구 테헤란로 123',
-  '서울특별시 마포구 월드컵로 45',
-  '경기도 성남시 분당구 판교역로 235',
-  '서울특별시 종로구 종로 100',
-  '부산광역시 해운대구 센텀중앙로 55',
+  { addressLine1: '서울특별시 강남구 테헤란로 123', postalCode: '06134' },
+  { addressLine1: '서울특별시 마포구 월드컵로 45', postalCode: '03925' },
+  { addressLine1: '경기도 성남시 분당구 판교역로 235', postalCode: '13494' },
+  { addressLine1: '서울특별시 종로구 종로 100', postalCode: '03159' },
+  { addressLine1: '부산광역시 해운대구 센텀중앙로 55', postalCode: '48058' },
 ];
+
+const PHONE_PATTERN = /^010-\d{4}-\d{4}$/;
 
 const inputClassName =
   'h-[52px] w-full rounded-[8px] border border-[#E2E6E8] px-[16px] text-[15px] text-[#111111] outline-none focus:border-[#00AAFF] disabled:bg-[#F5F6F8]';
@@ -103,21 +109,36 @@ const SignupPage = () => {
 
   const isCodeEnabled = ['sent', 'wrong', 'verified'].includes(emailVerifyState);
 
+  const sendEmailMutation = useMutation({ mutationFn: sendEmailVerification });
+  const verifyEmailMutation = useMutation({ mutationFn: verifyEmailCode });
+
   const handleEmailVerify = () => {
     const parsed = z.string().email().safeParse(email);
     if (!parsed.success) {
       setEmailVerifyState('invalid');
       return;
     }
-    if (MOCK_EXISTING_EMAILS.includes(email)) {
-      setEmailVerifyState('exists');
-      return;
-    }
-    setEmailVerifyState('sent');
+    sendEmailMutation.mutate(
+      { email },
+      {
+        onSuccess: () => setEmailVerifyState('sent'),
+        onError: (error) => {
+          setEmailVerifyState(
+            error instanceof ApiError && error.code === 'AUTH_1001' ? 'exists' : 'invalid',
+          );
+        },
+      },
+    );
   };
 
   const handleCodeVerify = () => {
-    setEmailVerifyState(verificationCode === MOCK_VALID_CODE ? 'verified' : 'wrong');
+    verifyEmailMutation.mutate(
+      { email, code: verificationCode },
+      {
+        onSuccess: () => setEmailVerifyState('verified'),
+        onError: () => setEmailVerifyState('wrong'),
+      },
+    );
   };
 
   let emailMessage: { text: string; color: string } | null = null;
@@ -131,7 +152,10 @@ const SignupPage = () => {
 
   let codeMessage: { text: string; color: string } | null = null;
   if (emailVerifyState === 'wrong') {
-    codeMessage = { text: '인증번호가 일치하지 않습니다', color: 'text-[#FF3B30]' };
+    codeMessage = {
+      text: '인증번호가 올바르지 않거나 만료되었습니다',
+      color: 'text-[#FF3B30]',
+    };
   } else if (emailVerifyState === 'verified') {
     codeMessage = { text: '인증되었습니다', color: 'text-[#00AAFF]' };
   }
@@ -172,13 +196,36 @@ const SignupPage = () => {
   const canProceedStep2 = agreements.service && agreements.privacy;
 
   // Step 3 — 주소 등록
+  const [receiverName, setReceiverName] = useState('');
+  const [phone, setPhone] = useState('');
   const [addressQuery, setAddressQuery] = useState('');
   const [selectedAddress, setSelectedAddress] = useState('');
+  const [selectedPostalCode, setSelectedPostalCode] = useState('');
   const [addressDetail, setAddressDetail] = useState('');
   const filteredAddresses = addressQuery.trim()
-    ? MOCK_ADDRESSES.filter((addr) => addr.includes(addressQuery.trim()))
+    ? MOCK_ADDRESSES.filter((addr) => addr.addressLine1.includes(addressQuery.trim()))
     : MOCK_ADDRESSES;
-  const canProceedStep3 = selectedAddress.length > 0;
+  const isPhoneValid = PHONE_PATTERN.test(phone);
+  const canProceedStep3 =
+    receiverName.trim().length > 0 && isPhoneValid && selectedAddress.length > 0;
+
+  const addressMutation = useMutation({ mutationFn: createAddress });
+
+  const handleAddressNext = () => {
+    addressMutation.mutate(
+      {
+        receiverName,
+        phone,
+        addressLine1: selectedAddress,
+        addressLine2: addressDetail,
+        postalCode: selectedPostalCode,
+        requestNote: '',
+        isDefault: true,
+      },
+      { onError: (error) => console.error(error) },
+    );
+    setStep(4);
+  };
 
   // Step 4 — 프로필 작성
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -187,13 +234,60 @@ const SignupPage = () => {
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [height, setHeight] = useState(170);
   const [weight, setWeight] = useState(60);
+  const [signupError, setSignupError] = useState<string | null>(null);
   const canComplete = nickname.trim().length > 0;
+
+  const [isPhotoSheetOpen, setIsPhotoSheetOpen] = useState(false);
+  const [pendingPhotoPreview, setPendingPhotoPreview] = useState<string | null>(null);
+
+  const setUser = useUserStore((state) => state.setUser);
+  const signupMutation = useMutation({ mutationFn: signup });
+
+  const handleSignupComplete = () => {
+    setSignupError(null);
+    signupMutation.mutate(
+      {
+        email,
+        password,
+        nickname,
+        gender: toApiGender(gender),
+        height,
+        weight,
+      },
+      {
+        onSuccess: async ({ userId }) => {
+          localStorage.setItem(USER_ID_STORAGE_KEY, String(userId));
+          try {
+            // 회원가입 응답에는 accessToken이 포함되지 않으므로, 동일 자격증명으로 로그인해 토큰을 발급받는다.
+            const { accessToken } = await login({ email, password });
+            localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
+            setUser(await getMyInfo());
+          } catch (error) {
+            console.error(error);
+          }
+          navigate('/feed');
+        },
+        onError: (error) => {
+          console.error(error);
+          setSignupError('회원가입에 실패했습니다. 다시 시도해주세요.');
+        },
+      },
+    );
+  };
 
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setPhotoPreview(URL.createObjectURL(file));
+      setPendingPhotoPreview(URL.createObjectURL(file));
     }
+    e.target.value = '';
+  };
+
+  const handleCancelPendingPhoto = () => setPendingPhotoPreview(null);
+
+  const handleConfirmPendingPhoto = () => {
+    setPhotoPreview(pendingPhotoPreview);
+    setPendingPhotoPreview(null);
   };
 
   const handleBack = () => {
@@ -223,7 +317,7 @@ const SignupPage = () => {
                 variant="ghost"
                 size="44"
                 onClick={handleEmailVerify}
-                disabled={!email}
+                disabled={!email || sendEmailMutation.isPending}
               >
                 인증하기
               </Button>
@@ -247,7 +341,7 @@ const SignupPage = () => {
                 variant="ghost"
                 size="44"
                 onClick={handleCodeVerify}
-                disabled={!isCodeEnabled || !verificationCode}
+                disabled={!isCodeEnabled || !verificationCode || verifyEmailMutation.isPending}
               >
                 인증하기
               </Button>
@@ -351,7 +445,35 @@ const SignupPage = () => {
 
       {step === 3 && (
         <div className="flex flex-1 flex-col px-[20px] py-[24px]">
-          <div className="relative">
+          <div className="flex flex-col gap-2">
+            <input
+              type="text"
+              value={receiverName}
+              onChange={(e) => setReceiverName(e.target.value)}
+              placeholder="받는 사람 이름을 입력해주세요"
+              className={inputClassName}
+            />
+            {receiverName.length === 0 && (
+              <p className="text-[13px] text-[#FF3B30]">받는 사람 이름을 입력해주세요</p>
+            )}
+          </div>
+
+          <div className="mt-3 flex flex-col gap-2">
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="연락처를 입력해주세요 (010-1234-5678)"
+              className={inputClassName}
+            />
+            {phone.length > 0 && !isPhoneValid && (
+              <p className="text-[13px] text-[#FF3B30]">
+                연락처 형식이 올바르지 않습니다 (010-0000-0000)
+              </p>
+            )}
+          </div>
+
+          <div className="relative mt-3">
             <Search
               size={18}
               className="absolute top-1/2 left-[14px] -translate-y-1/2 text-[#767676]"
@@ -367,15 +489,20 @@ const SignupPage = () => {
 
           <ul className="mt-3 flex flex-col">
             {filteredAddresses.map((addr) => (
-              <li key={addr}>
+              <li key={addr.addressLine1}>
                 <button
                   type="button"
-                  onClick={() => setSelectedAddress(addr)}
+                  onClick={() => {
+                    setSelectedAddress(addr.addressLine1);
+                    setSelectedPostalCode(addr.postalCode);
+                  }}
                   className={`flex h-[52px] w-full items-center border-b border-[#F0F0F0] px-[4px] text-left text-[14px] ${
-                    selectedAddress === addr ? 'font-semibold text-[#00AAFF]' : 'text-[#111111]'
+                    selectedAddress === addr.addressLine1
+                      ? 'font-semibold text-[#00AAFF]'
+                      : 'text-[#111111]'
                   }`}
                 >
-                  {addr}
+                  {addr.addressLine1}
                 </button>
               </li>
             ))}
@@ -399,7 +526,7 @@ const SignupPage = () => {
               size="54"
               className="!w-full"
               disabled={!canProceedStep3}
-              onClick={() => setStep(4)}
+              onClick={handleAddressNext}
             >
               다음
             </Button>
@@ -412,7 +539,7 @@ const SignupPage = () => {
           <div className="flex justify-center">
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => setIsPhotoSheetOpen(true)}
               className="relative flex size-[96px] items-center justify-center overflow-hidden rounded-full bg-[#EAEDF0]"
             >
               {photoPreview ? (
@@ -492,17 +619,89 @@ const SignupPage = () => {
             />
           </div>
 
+          {signupError && <p className="mt-3 text-[13px] text-[#FF3B30]">{signupError}</p>}
+
           <div className="mt-auto pt-6">
             <Button
               type="button"
               variant="filled"
               size="54"
               className="!w-full"
-              disabled={!canComplete}
-              onClick={() => {}}
+              disabled={!canComplete || signupMutation.isPending}
+              onClick={handleSignupComplete}
             >
               완료
             </Button>
+          </div>
+        </div>
+      )}
+
+      {isPhotoSheetOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+          onClick={() => setIsPhotoSheetOpen(false)}
+        >
+          <div
+            className="w-full max-w-[390px] rounded-t-[16px] bg-white"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setIsPhotoSheetOpen(false);
+                fileInputRef.current?.click();
+              }}
+              className="flex h-[52px] w-full items-center justify-center border-b border-[#F0F0F0] text-[15px] text-[#111111]"
+            >
+              앨범에서 선택하기
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPhotoPreview(null);
+                setIsPhotoSheetOpen(false);
+              }}
+              className="flex h-[52px] w-full items-center justify-center border-b border-[#F0F0F0] text-[15px] text-[#111111]"
+            >
+              기본 이미지로 변경
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsPhotoSheetOpen(false)}
+              className="flex h-[52px] w-full items-center justify-center border-b border-[#F0F0F0] text-[15px] text-[#111111]"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {pendingPhotoPreview && (
+        <div className="fixed inset-0 z-50 mx-auto flex w-full max-w-[390px] flex-col bg-[#FFFFFF]">
+          <header className="flex h-[52px] items-center justify-between px-[16px]">
+            <button type="button" onClick={handleCancelPendingPhoto} aria-label="닫기">
+              <ChevronLeft size={24} className="text-[#111111]" />
+            </button>
+            <h1 className="text-[15px] font-semibold text-[#111111]">사진 확인</h1>
+            <div className="size-[24px]" />
+          </header>
+          <div className="flex flex-1 items-center justify-center">
+            <div className="size-[200px] overflow-hidden rounded-full">
+              <img
+                src={pendingPhotoPreview}
+                alt="선택한 프로필 사진 미리보기"
+                className="size-full object-cover"
+              />
+            </div>
+          </div>
+          <div className="px-[20px] pb-[24px]">
+            <DoubleButton
+              layout="half"
+              leftLabel="취소하기"
+              rightLabel="완료하기"
+              onLeftClick={handleCancelPendingPhoto}
+              onRightClick={handleConfirmPendingPhoto}
+            />
           </div>
         </div>
       )}

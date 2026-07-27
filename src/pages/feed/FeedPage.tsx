@@ -2,20 +2,24 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SegmentedControl, Toast } from '@/shared/components';
 import FeedGrid from '@/shared/components/feed/FeedGrid';
-import FollowAvatarRow from '@/features/feed/ui/FollowAvatarRow';
 import { useToast } from '@/shared/hooks/useToast';
 import FeedHeader from './components/FeedHeader';
 import FeedIntro from './components/FeedIntro';
-import { mockFeedItems, mockFollowedUsers } from '@/features/feed/model/mocks';
-import type { FeedItem, FeedTab } from '@/features/feed/model/types';
+
+import FollowAvatarRow from '@/features/feed/ui/FollowAvatarRow';
+import { mockFollowedUsers } from '@/features/feed/model/mocks';
+import type { FeedCard, FeedTab } from '@/features/feed/model/types';
+import { useFeedQuery } from '@/features/feed/model/useFeedQuery';
 
 const TABS: FeedTab[] = ['모두', '팔로우'];
 
 const FeedPage = () => {
   const userName = '테뉴어';
   const [activeTab, setActiveTab] = useState<FeedTab>('모두');
-  const [items, setItems] = useState<FeedItem[]>(mockFeedItems);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [overrides, setOverrides] = useState<
+    Record<string, { hearted?: boolean; saved?: boolean }>
+  >({});
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,44 +35,49 @@ const FeedPage = () => {
     }
   }, [location.pathname, navigate, showToast]);
 
-  const toggleLike = (id: string) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, liked: !item.liked } : item)),
+  const { data } = useFeedQuery({
+    tab: activeTab === '팔로우' ? 'following' : 'all',
+  });
+
+  const items = useMemo<FeedCard[]>(() => {
+    return (data?.pages ?? []).flatMap((page) =>
+      page.content.map((card) => ({
+        ...card,
+        hearted: overrides[card.ootdId]?.hearted ?? card.hearted,
+        saved: overrides[card.ootdId]?.saved ?? card.saved,
+      })),
     );
+  }, [data, overrides]);
+
+  const toggleLike = (id: string) => {
+    setOverrides((prev) => {
+      const card = data?.pages.flatMap((p) => p.content).find((c) => String(c.ootdId) === id);
+      const current = prev[id]?.hearted ?? card?.hearted ?? false;
+      return { ...prev, [id]: { ...prev[id], hearted: !current } };
+    });
   };
 
   const toggleBookmark = (id: string) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, bookmarked: !item.bookmarked } : item)),
-    );
+    setOverrides((prev) => {
+      const card = data?.pages.flatMap((p) => p.content).find((c) => String(c.ootdId) === id);
+      const current = prev[id]?.saved ?? card?.saved ?? false;
+      return { ...prev, [id]: { ...prev[id], saved: !current } };
+    });
   };
 
   const handleTabChange = (tab: FeedTab) => {
     setActiveTab(tab);
     setSelectedUserId(null);
+    setOverrides({});
   };
 
   const handleSelectUser = (userId: string) => {
     setSelectedUserId((prev) => (prev === userId ? null : userId));
   };
 
-  const followedUserIds = useMemo(() => new Set(mockFollowedUsers.map((user) => user.id)), []);
-
-  const visibleItems = useMemo(() => {
-    if (activeTab === '모두') {
-      return items;
-    }
-
-    if (selectedUserId) {
-      return items.filter((item) => item.authorId === selectedUserId);
-    }
-
-    return items.filter((item) => followedUserIds.has(item.authorId));
-  }, [items, activeTab, selectedUserId, followedUserIds]);
-
   return (
     <div className="bg-bg-white flex min-h-screen flex-col">
-      <FeedHeader userName={userName} />
+      <FeedHeader userName={userName} onNotificationClick={() => navigate('/notifications')} />
 
       <FeedIntro />
 
@@ -89,11 +98,7 @@ const FeedPage = () => {
       )}
 
       <div className="bg-bg-tertiary flex-1 px-4 pt-4 pb-6 md:px-6">
-        <FeedGrid
-          items={visibleItems}
-          onToggleLike={toggleLike}
-          onToggleBookmark={toggleBookmark}
-        />
+        <FeedGrid items={items} onToggleLike={toggleLike} onToggleBookmark={toggleBookmark} />
       </div>
 
       <Toast message={toastMessage} onClose={hideToast} />

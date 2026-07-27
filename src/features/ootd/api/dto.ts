@@ -11,3 +11,12 @@ export interface OotdCreateResponse {
   publicationStatus: OotdPublicationStatus;
   createdAt: string;
 }
+
+export interface SimilarItemResponse {
+  itemId: number;
+  brandName: string;
+  itemName: string;
+  representativeImageUrl: string | null;
+  categoryId: number;
+  categoryName: string;
+}

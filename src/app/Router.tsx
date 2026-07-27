@@ -11,6 +11,7 @@ import ShippingInputPage from '@/pages/mypage/ShippingInputPage';
 import TradeDetailPage from '@/pages/mypage/TradeDetailPage';
 import RegisteredItemsPage from '@/pages/mypage/RegisteredItemsPage';
 import RegisteredItemDetailPage from '@/pages/mypage/RegisteredItemDetailPage';
+import ItemAddPage from '@/pages/mypage/ItemAddPage';
 import SaleConversionPage from '@/pages/mypage/SaleConversionPage';
 import SettingsPage from '@/pages/mypage/SettingsPage';
 import NotificationSettingsPage from '@/pages/mypage/NotificationSettingsPage';
@@ -70,6 +71,7 @@ export const router = createBrowserRouter([
       { path: 'wishlist', element: <WishListPage /> },
       { path: 'mypage/edit', element: <ProfileEditPage /> },
       { path: 'mypage/items', element: <RegisteredItemsPage /> },
+      { path: 'mypage/items/new', element: <ItemAddPage /> },
       { path: 'mypage/items/:itemId', element: <RegisteredItemDetailPage /> },
       { path: 'mypage/items/:itemId/sell', element: <SaleConversionPage /> },
       { path: 'users/:userId', element: <UserProfilePage /> },

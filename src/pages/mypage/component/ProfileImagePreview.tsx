@@ -4,7 +4,7 @@ import { DoubleButton } from '@/shared/components';
 export interface ProfileImagePreviewProps {
   imageUrl: string;
   onCancel: () => void;
-  onConfirm: (croppedImageUrl: string) => void;
+  onConfirm: (croppedImage: Blob) => void;
 }
 
 const CIRCLE_SIZE = 256;
@@ -63,15 +63,11 @@ const ProfileImagePreview = ({ imageUrl, onCancel, onConfirm }: ProfileImagePrev
 
   const handleConfirm = () => {
     const img = imgRef.current;
-    const scale = img ? imgSize.width / img.naturalWidth : 1;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
+    if (!img || !ctx) return;
 
-    if (!img || !ctx) {
-      onConfirm(imageUrl);
-      return;
-    }
-
+    const scale = imgSize.width / img.naturalWidth;
     const sourceSize = CIRCLE_SIZE / scale;
     const sourceLeft = (imgSize.width / 2 - CIRCLE_SIZE / 2 - offset.x) / scale;
     const sourceTop = (imgSize.height / 2 - CIRCLE_SIZE / 2 - offset.y) / scale;
@@ -89,7 +85,7 @@ const ProfileImagePreview = ({ imageUrl, onCancel, onConfirm }: ProfileImagePrev
       OUTPUT_SIZE,
       OUTPUT_SIZE,
     );
-    onConfirm(canvas.toDataURL('image/jpeg', 0.92));
+    canvas.toBlob((blob) => blob && onConfirm(blob), 'image/jpeg', 0.92);
   };
 
   return (

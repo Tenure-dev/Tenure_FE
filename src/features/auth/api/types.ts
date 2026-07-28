@@ -61,3 +61,10 @@ export type UpdateProfileRequest = Partial<
 export interface ProfileImageUploadResponse {
   imageUrl: string;
 }
+
+export type WithdrawalReason =
+  'LOW_USAGE' | 'HARD_TO_FIND_ITEMS' | 'USING_OTHER_SERVICE' | 'UNSATISFIED_TRADE';
+
+export interface WithdrawalRequest {
+  reason: WithdrawalReason;
+}

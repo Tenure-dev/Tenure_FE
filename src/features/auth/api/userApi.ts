@@ -1,5 +1,10 @@
 import { api } from '@/shared/lib/api';
-import type { ProfileImageUploadResponse, UpdateProfileRequest, UserProfile } from './types';
+import type {
+  ProfileImageUploadResponse,
+  UpdateProfileRequest,
+  UserProfile,
+  WithdrawalRequest,
+} from './types';
 
 export const getMyInfo = () => api.get<UserProfile>('/users/me');
 
@@ -13,3 +18,6 @@ export const uploadProfileImage = (file: File) => {
   formData.append('image', file);
   return api.post<ProfileImageUploadResponse>('/images/profile', formData);
 };
+
+export const withdrawUser = (payload: WithdrawalRequest) =>
+  api.delete<void>('/users/me', { data: payload });

@@ -2,55 +2,23 @@ import { useState } from 'react';
 import { chevon, close } from '@/shared/assets';
 import { BottomSheet, DoubleButton, Input } from '@/shared/components';
 import cn from '@/shared/lib/cn';
-import { CATEGORY_GROUPS } from '@/features/search/model/categoryData';
-import type { RegisteredItemDetail } from '../model/items';
+import { CATEGORY_GROUPS, CATEGORY_SIZES, getSizeSystem } from '../lib/itemSizeData';
+import { WEARING_TARGET_LABEL } from '../lib/wearingTargetLabel';
+import type { ItemUpdateRequest, RegisteredItemDetail, WearingTarget } from '../model/items';
 
 const CATEGORIES = CATEGORY_GROUPS.map((g) => g.name);
+const WEARING_TARGETS: WearingTarget[] = ['MENSWEAR', 'WOMENSWEAR', 'UNISEX'];
 
-const SIZES = [
-  'XS',
-  'S',
-  'M',
-  'L',
-  'XL',
-  '2XL',
-  '3XL',
-  '85',
-  '90',
-  '95',
-  '100',
-  '105',
-  '110',
-  '115',
-  '36',
-  '38',
-  '40',
-  '42',
-  '44',
-  '46',
-  '48',
-  '50',
-  '0',
-  '1',
-  '2',
-  '3',
-  '4',
-  '5',
-  '6',
-  'Free',
-];
-
-const GENDERS = ['남성복', '여성복', '공용'];
-
-type SectionKey = 'category' | 'subCategory' | 'size' | 'gender';
+type SectionKey = 'category' | 'subCategory' | 'size' | 'wearingTarget';
 
 interface ItemEditForm {
-  brand: string;
-  name: string;
-  category: string;
-  subCategory: string;
-  size: string;
-  gender: string;
+  brandName: string;
+  itemName: string;
+  categoryLarge: string;
+  categorySmall: string;
+  sizeValue: string;
+  wearingTarget: WearingTarget;
+  firstOwnedAt: string;
 }
 
 const SectionHeader = ({
@@ -101,22 +69,23 @@ export interface ItemEditSheetProps {
   open: boolean;
   item: RegisteredItemDetail;
   onClose: () => void;
-  onApply: (form: ItemEditForm) => void;
+  onApply: (body: ItemUpdateRequest) => void;
 }
 
 const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => {
   const toForm = (): ItemEditForm => ({
-    brand: item.brand,
-    name: item.name,
-    category: item.category,
-    subCategory: item.subCategory,
-    size: item.size,
-    gender: item.gender,
+    brandName: item.brandName,
+    itemName: item.itemName,
+    categoryLarge: item.categoryLarge,
+    categorySmall: item.categorySmall,
+    sizeValue: item.sizeValue,
+    wearingTarget: item.wearingTarget,
+    firstOwnedAt: item.firstOwnedAt.slice(0, 10),
   });
 
   const [form, setForm] = useState<ItemEditForm>(toForm);
   const [openSections, setOpenSections] = useState<Set<SectionKey>>(
-    new Set<SectionKey>(['category', 'subCategory', 'size', 'gender']),
+    new Set<SectionKey>(['category', 'subCategory', 'size', 'wearingTarget']),
   );
   const [prevOpen, setPrevOpen] = useState(open);
 
@@ -134,7 +103,8 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
     });
   };
 
-  const subCategories = CATEGORY_GROUPS.find((g) => g.name === form.category)?.items ?? [];
+  const subCategories = CATEGORY_GROUPS.find((g) => g.name === form.categoryLarge)?.items ?? [];
+  const sizeOptions = CATEGORY_SIZES[form.categoryLarge] ?? [];
 
   return (
     <BottomSheet
@@ -155,10 +125,10 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
           <p className="text-body-2 text-text-secondary mb-1">브랜드명</p>
           <Input
             size={48}
-            value={form.brand}
+            value={form.brandName}
             showPasswordToggle={false}
-            onChange={(e) => setForm((prev) => ({ ...prev, brand: e.target.value }))}
-            onClear={() => setForm((prev) => ({ ...prev, brand: '' }))}
+            onChange={(e) => setForm((prev) => ({ ...prev, brandName: e.target.value }))}
+            onClear={() => setForm((prev) => ({ ...prev, brandName: '' }))}
             placeholder="브랜드명"
           />
         </div>
@@ -168,9 +138,9 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
           <Input
             size={48}
             showPasswordToggle={false}
-            value={form.name}
-            onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-            onClear={() => setForm((prev) => ({ ...prev, name: '' }))}
+            value={form.itemName}
+            onChange={(e) => setForm((prev) => ({ ...prev, itemName: e.target.value }))}
+            onClear={() => setForm((prev) => ({ ...prev, itemName: '' }))}
             placeholder="아이템명"
           />
         </div>
@@ -187,8 +157,15 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
                 <SelectChip
                   key={cat}
                   label={cat}
-                  selected={form.category === cat}
-                  onClick={() => setForm((prev) => ({ ...prev, category: cat, subCategory: '' }))}
+                  selected={form.categoryLarge === cat}
+                  onClick={() =>
+                    setForm((prev) => ({
+                      ...prev,
+                      categoryLarge: cat,
+                      categorySmall: '',
+                      sizeValue: '',
+                    }))
+                  }
                 />
               ))}
             </div>
@@ -207,8 +184,8 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
                 <SelectChip
                   key={sub}
                   label={sub}
-                  selected={form.subCategory === sub}
-                  onClick={() => setForm((prev) => ({ ...prev, subCategory: sub }))}
+                  selected={form.categorySmall === sub}
+                  onClick={() => setForm((prev) => ({ ...prev, categorySmall: sub }))}
                 />
               ))}
             </div>
@@ -223,12 +200,12 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
           />
           {openSections.has('size') && (
             <div className="flex flex-wrap gap-2 pb-4">
-              {SIZES.map((size) => (
+              {sizeOptions.map(({ value }) => (
                 <SelectChip
-                  key={size}
-                  label={size}
-                  selected={form.size === size}
-                  onClick={() => setForm((prev) => ({ ...prev, size }))}
+                  key={value}
+                  label={value}
+                  selected={form.sizeValue === value}
+                  onClick={() => setForm((prev) => ({ ...prev, sizeValue: value }))}
                 />
               ))}
             </div>
@@ -238,21 +215,33 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
         <div className="border-border-secondary border-t">
           <SectionHeader
             label="착용 대상"
-            open={openSections.has('gender')}
-            onToggle={() => toggleSection('gender')}
+            open={openSections.has('wearingTarget')}
+            onToggle={() => toggleSection('wearingTarget')}
           />
-          {openSections.has('gender') && (
+          {openSections.has('wearingTarget') && (
             <div className="flex flex-wrap gap-2 pb-4">
-              {GENDERS.map((g) => (
+              {WEARING_TARGETS.map((target) => (
                 <SelectChip
-                  key={g}
-                  label={g}
-                  selected={form.gender === g}
-                  onClick={() => setForm((prev) => ({ ...prev, gender: g }))}
+                  key={target}
+                  label={WEARING_TARGET_LABEL[target]}
+                  selected={form.wearingTarget === target}
+                  onClick={() => setForm((prev) => ({ ...prev, wearingTarget: target }))}
                 />
               ))}
             </div>
           )}
+        </div>
+
+        <div className="border-border-secondary border-t py-4">
+          <p className="text-body-2 text-text-secondary mb-1">최초 보유 날짜</p>
+          <Input
+            size={48}
+            type="date"
+            showPasswordToggle={false}
+            value={form.firstOwnedAt}
+            onChange={(e) => setForm((prev) => ({ ...prev, firstOwnedAt: e.target.value }))}
+            onClear={() => setForm((prev) => ({ ...prev, firstOwnedAt: '' }))}
+          />
         </div>
       </div>
 
@@ -263,7 +252,11 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
           rightLabel="적용하기"
           onLeftClick={() => setForm(toForm())}
           onRightClick={() => {
-            onApply(form);
+            onApply({
+              ...form,
+              sizeSystem: getSizeSystem(form.categoryLarge, form.sizeValue),
+              representativeImageUrl: item.representativeImageUrl,
+            });
             onClose();
           }}
         />

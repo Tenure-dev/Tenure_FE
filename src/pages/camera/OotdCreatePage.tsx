@@ -1,24 +1,29 @@
-import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import chevon from '@/shared/assets/chevron-left.svg';
 import TagLoading from './component/TagLoading';
+import { useCreateOotd } from '@/features/ootd/api/useCreateOotd';
+import { dataUrlToFile } from '@/shared/lib/dataUrlToFile';
 
 const OotdCreatePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const photo = (location.state as { photo?: string } | null)?.photo ?? null;
-  const [posting, setPosting] = useState(false);
+  const { mutate: createOotd, isPending } = useCreateOotd();
 
-  // 게시하기 직접 클릭 → 로딩 후 자동 태그되어 피드로 게시
-  useEffect(() => {
-    if (!posting) return;
-    const timer = setTimeout(() => {
-      navigate('/feed', { state: { toast: '자동 태그되어 게시됨.' } });
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, [posting, navigate]);
+  const handlePost = () => {
+    if (!photo) return;
+    const image = dataUrlToFile(photo, 'ootd.jpg');
+    createOotd(image, {
+      onSuccess: () => {
+        navigate('/feed', { state: { toast: '게시되었습니다.' } });
+      },
+      onError: () => {
+        navigate('/feed', { state: { toast: '게시에 실패하였습니다.' } });
+      },
+    });
+  };
 
-  if (posting) {
+  if (isPending) {
     return (
       <div className="bg-bg-white flex h-dvh w-full flex-col">
         <TagLoading title="태그를 작성할 준비를 하고 있어요!" subtitle="잠시만 기다려 주세요!" />
@@ -66,7 +71,7 @@ const OotdCreatePage = () => {
         </button>
         <button
           type="button"
-          onClick={() => setPosting(true)}
+          onClick={handlePost}
           className="bg-brand text-btn-2 text-text-primary flex-1 rounded-md py-3.5 font-medium"
         >
           게시하기

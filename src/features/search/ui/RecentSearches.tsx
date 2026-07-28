@@ -4,7 +4,7 @@ import type { RecentSearchItem } from '../model/types';
 export interface RecentSearchesProps {
   searches: RecentSearchItem[];
   onSelect: (keyword: string) => void;
-  onRemove: (id: string) => void;
+  onRemove: (id: number) => void;
   onClearAll: () => void;
 }
 

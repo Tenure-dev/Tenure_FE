@@ -48,3 +48,10 @@ export interface UserProfile {
 }
 
 export type UpdateProfileRequest = Pick<UserProfile, 'nickname' | 'gender' | 'height' | 'weight'>;
+
+export type WithdrawalReason =
+  'LOW_USAGE' | 'HARD_TO_FIND_ITEMS' | 'USING_OTHER_SERVICE' | 'UNSATISFIED_TRADE';
+
+export interface WithdrawalRequest {
+  reason: WithdrawalReason;
+}

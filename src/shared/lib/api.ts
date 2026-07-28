@@ -19,6 +19,17 @@ export const clearAuthStorage = () => {
   useUserStore.getState().clearUser();
 };
 
+// BaseResponse.code(예: AUTH_1001)를 보존해 호출부가 실패 사유를 분기할 수 있게 한다.
+export class ApiError extends Error {
+  code?: string;
+
+  constructor(message: string, code?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.code = code;
+  }
+}
+
 const instance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
@@ -31,14 +42,24 @@ instance.interceptors.request.use((config) => {
   if (accessToken) {
     config.headers.set('Authorization', `Bearer ${accessToken}`);
   }
+  // FormData 요청은 기본 'application/json' 헤더를 지워야, axios가 FormData를 JSON으로
+  // 직렬화하지 않고 브라우저가 boundary를 붙인 multipart/form-data로 전송한다.
+  if (config.data instanceof FormData) {
+    config.headers.delete('Content-Type');
+  }
   return config;
 });
 
 instance.interceptors.response.use(
   (response) => {
+    // 하트/저장 토글 등 일부 엔드포인트는 204 No Content로 응답해 BaseResponse 포맷을 안 따른다.
+    if (response.status === 204 || !response.data) {
+      return undefined as unknown as AxiosResponse;
+    }
     const body = response.data as BaseResponse<unknown>;
+
     if (!body.success) {
-      return Promise.reject(new Error(body.message));
+      return Promise.reject(new ApiError(body.message, body.code));
     }
     // 실제로는 언래핑된 data를 반환하지만, axios 타입과 맞추기 위해 AxiosResponse로 단언한다.
     return body.data as unknown as AxiosResponse;
@@ -59,10 +80,18 @@ instance.interceptors.response.use(
         window.location.href = LOGIN_PATH;
       }
     }
-    const message =
-      (axios.isAxiosError<BaseResponse<unknown>>(error) && error.response?.data?.message) ||
-      error.message;
-    return Promise.reject(new Error(message));
+    const isAxios = axios.isAxiosError<BaseResponse<unknown>>(error);
+    const responseBody = isAxios ? error.response?.data : undefined;
+    const message = responseBody?.message || error.message;
+
+    if (isAxios) {
+      console.error(
+        `[API Error] ${error.response?.status ?? 'NETWORK'} ${error.config?.method?.toUpperCase()} ${error.config?.url}`,
+        message,
+      );
+    }
+
+    return Promise.reject(new ApiError(message, responseBody?.code));
   },
 );
 

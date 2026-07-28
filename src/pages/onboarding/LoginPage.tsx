@@ -5,13 +5,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import { Eye, EyeOff } from 'lucide-react';
-import { Button } from '@/shared/components';
+import { Button, Toast } from '@/shared/components';
 import logo from '@/shared/assets/logo.png';
 import googleLogo from '@/shared/assets/google.webp';
 import { login } from '@/features/auth/api/authApi';
 import { getMyInfo } from '@/features/auth/api/userApi';
 import { ACCESS_TOKEN_STORAGE_KEY, USER_ID_STORAGE_KEY } from '@/shared/lib/api';
 import { useUserStore } from '@/store/userStore';
+import { useToast } from '@/shared/hooks/useToast';
 
 const loginSchema = z.object({
   email: z.string().email('올바른 이메일 형식이 아닙니다'),
@@ -30,6 +31,7 @@ const LoginPage = () => {
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const loginMutation = useMutation({ mutationFn: login });
+  const { message: toastMessage, show: showToast, hide: hideToast } = useToast();
 
   const {
     register,
@@ -134,7 +136,7 @@ const LoginPage = () => {
       <div className="mt-[20px] flex items-center justify-center gap-4">
         <button
           type="button"
-          onClick={() => {}}
+          onClick={() => showToast('소셜 로그인은 준비 중입니다')}
           aria-label="구글로 계속하기"
           className="flex size-[52px] items-center justify-center rounded-full border border-[#E2E6E8] bg-white"
         >
@@ -142,7 +144,7 @@ const LoginPage = () => {
         </button>
         <button
           type="button"
-          onClick={() => {}}
+          onClick={() => showToast('소셜 로그인은 준비 중입니다')}
           aria-label="네이버로 계속하기"
           className="flex size-[52px] items-center justify-center rounded-full bg-[#03C75A] text-[20px] font-bold text-white"
         >
@@ -156,6 +158,8 @@ const LoginPage = () => {
           회원가입
         </Link>
       </p>
+
+      <Toast message={toastMessage} onClose={hideToast} />
     </div>
   );
 };

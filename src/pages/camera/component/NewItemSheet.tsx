@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { cn } from '@/shared/lib/cn';
 import calendar from '@/shared/assets/calendar.svg';
 import type { OotdItem, WearTarget } from '@/features/ootd/model/item';
+import { createTagDraftItem, toWearingTarget } from '@/features/ootd/api/item';
 import DatePickerSheet from './DatePickerSheet';
 
 type Props = {
@@ -59,15 +60,32 @@ const NewItemSheet = ({ onBack, onSubmit }: Props) => {
 
   const canSubmit = brand.trim() !== '' && name.trim() !== '';
 
-  const handleSubmit = () => {
-    if (!canSubmit) return;
-    onSubmit({
-      id: `new-${Date.now()}`,
-      brand: brand.trim(),
-      name: name.trim(),
-      meta: '신규 아이템',
-      isNew: true,
-    });
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!canSubmit || submitting) return;
+    setSubmitting(true);
+    try {
+      // 'YY.MM.DD' → '20YY-MM-DD' (없으면 생략)
+      const firstOwnedAt = date ? `20${date.replace(/\./g, '-')}` : undefined;
+      const res = await createTagDraftItem({
+        brandName: brand.trim(),
+        itemName: name.trim(),
+        wearingTarget: toWearingTarget(target),
+        ...(firstOwnedAt && { firstOwnedAt }),
+      });
+      onSubmit({
+        id: String(res.itemId),
+        brand: res.brandName,
+        name: res.itemName,
+        meta: '신규 아이템',
+        isNew: true,
+      });
+    } catch (e) {
+      console.error('[간편 아이템 등록 실패]', e);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -141,13 +159,15 @@ const NewItemSheet = ({ onBack, onSubmit }: Props) => {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!canSubmit}
+            disabled={!canSubmit || submitting}
             className={cn(
               'text-btn-2 flex-1 rounded-md py-3.5 font-medium',
-              canSubmit ? 'bg-brand text-text-primary' : 'bg-disabled text-text-inverse',
+              canSubmit && !submitting
+                ? 'bg-brand text-text-primary'
+                : 'bg-disabled text-text-inverse',
             )}
           >
-            등록하기
+            {submitting ? '등록 중…' : '등록하기'}
           </button>
         </div>
       </div>

@@ -7,7 +7,7 @@ export interface NotificationItem {
   id: number;
   category: NotificationCategory;
   message: string;
-  imageUrl: string;
+  imageUrl: string | null;
   brandName: string | null;
   itemName: string | null;
   senderUsername: string | null;

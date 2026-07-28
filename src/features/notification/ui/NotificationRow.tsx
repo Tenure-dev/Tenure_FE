@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/shared/lib/cn';
+import profileDefault from '@/shared/assets/profileDefault.svg';
 import { formatNotificationTime } from '../lib/groupByDate';
 import type { NotificationItem } from '../model/types';
 
@@ -40,7 +41,11 @@ const NotificationRow = ({ item, onRead }: NotificationRowProps) => {
       className="flex w-full items-start gap-3 px-4 py-3 text-left"
     >
       <div className="relative shrink-0">
-        <img src={item.imageUrl} alt="" className="bg-gray-bg size-11 rounded-full object-cover" />
+        <img
+          src={item.imageUrl ?? profileDefault}
+          alt=""
+          className="bg-gray-bg size-11 rounded-full object-cover"
+        />
         <span
           className={cn(
             'ring-bg-white absolute top-0 right-0 size-2.5 rounded-full ring-2',

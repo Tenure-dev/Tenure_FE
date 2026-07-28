@@ -26,7 +26,7 @@ const toNotificationItem = (dto: NotificationDto): NotificationItem => ({
   id: dto.id,
   category: CATEGORY_LABEL[dto.category],
   message: dto.body,
-  imageUrl: resolveFileUrl(dto.imageUrl),
+  imageUrl: dto.imageUrl ? resolveFileUrl(dto.imageUrl) : null,
   brandName: dto.brandName,
   itemName: dto.itemName,
   senderUsername: dto.senderUsername,

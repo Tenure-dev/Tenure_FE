@@ -5,11 +5,11 @@ import { BackHeader, DoubleButton, Input, Toast } from '@/shared/components';
 import { useProfileStore } from '@/store/useProfileStore';
 import { useUserStore } from '@/store/userStore';
 import { useToast } from '@/shared/hooks/useToast';
-import { updateMyInfo } from '@/features/auth/api/userApi';
+import { updateMyInfo, uploadProfileImage } from '@/features/auth/api/userApi';
 import { useMyInfo } from '@/features/auth/model/useMyInfo';
 import type { UserProfile } from '@/features/auth/api/types';
 import { fromApiGender, toApiGender } from '@/features/auth/lib/gender';
-import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
+import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 import ProfileImagePreview from './component/ProfileImagePreview';
 import GenderToggle from './component/GenderToggle';
 import ProfilePhotoPicker from './component/ProfilePhotoPicker';
@@ -43,19 +43,32 @@ const ProfileEditForm = ({ myInfo }: { myInfo: UserProfile }) => {
   const [gender, setGender] = useState(fromApiGender(myInfo.gender));
   const [height, setHeight] = useState(myInfo.heightCm);
   const [weight, setWeight] = useState(myInfo.weightKg);
-  const [photoUrl, setPhotoUrl] = useState(resolveImageUrl(myInfo.profileImageUrl));
+  const [photoUrl, setPhotoUrl] = useState(
+    myInfo.profileImageUrl ? resolveFileUrl(myInfo.profileImageUrl) : null,
+  );
+  const [profileImageUrl, setProfileImageUrl] = useState(myInfo.profileImageUrl);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
 
   const updateProfileMutation = useMutation({ mutationFn: updateMyInfo });
+  const uploadPhotoMutation = useMutation({ mutationFn: uploadProfileImage });
 
   const handleFileSelected = (file: File) => {
     setPendingPhoto(URL.createObjectURL(file));
   };
 
-  const handleConfirmPhoto = (croppedImageUrl: string) => {
-    setPhotoUrl(croppedImageUrl);
+  const handleConfirmPhoto = (croppedImage: Blob) => {
+    setPhotoUrl(URL.createObjectURL(croppedImage));
     if (pendingPhoto) URL.revokeObjectURL(pendingPhoto);
     setPendingPhoto(null);
+
+    const file = new File([croppedImage], 'profile.jpg', { type: 'image/jpeg' });
+    uploadPhotoMutation.mutate(file, {
+      onSuccess: (data) => setProfileImageUrl(data.imageUrl),
+      onError: (error) => {
+        console.error(error);
+        showErrorToast('이미지 업로드에 실패했습니다');
+      },
+    });
   };
 
   const handleCancelPhoto = () => {
@@ -64,9 +77,14 @@ const ProfileEditForm = ({ myInfo }: { myInfo: UserProfile }) => {
   };
 
   const handleSave = () => {
-    // 프로필 이미지 업로드 API가 아직 없어(BE 요청 목록 참고) profileImageUrl은 전송하지 않는다.
     updateProfileMutation.mutate(
-      { username: nickname, gender: toApiGender(gender), heightCm: height, weightKg: weight },
+      {
+        username: nickname,
+        gender: toApiGender(gender),
+        heightCm: height,
+        weightKg: weight,
+        profileImageUrl,
+      },
       {
         onSuccess: (data) => {
           storedProfile.setProfile({
@@ -133,6 +151,7 @@ const ProfileEditForm = ({ myInfo }: { myInfo: UserProfile }) => {
           rightLabel="저장하기"
           onLeftClick={() => navigate(-1)}
           onRightClick={handleSave}
+          disabled={uploadPhotoMutation.isPending || updateProfileMutation.isPending}
         />
       </div>
 

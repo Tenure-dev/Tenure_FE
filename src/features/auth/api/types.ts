@@ -57,3 +57,7 @@ export interface UserProfile {
 export type UpdateProfileRequest = Partial<
   Pick<UserProfile, 'username' | 'gender' | 'heightCm' | 'weightKg' | 'profileImageUrl'>
 >;
+
+export interface ProfileImageUploadResponse {
+  imageUrl: string;
+}

@@ -42,6 +42,11 @@ instance.interceptors.request.use((config) => {
   if (accessToken) {
     config.headers.set('Authorization', `Bearer ${accessToken}`);
   }
+  // FormData 요청은 기본 'application/json' 헤더를 지워야, axios가 FormData를 JSON으로
+  // 직렬화하지 않고 브라우저가 boundary를 붙인 multipart/form-data로 전송한다.
+  if (config.data instanceof FormData) {
+    config.headers.delete('Content-Type');
+  }
   return config;
 });
 

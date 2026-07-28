@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import { useCategories } from '../lib/useCategories';
 import type { SearchFilters } from '../model/types';
 import { HEIGHT_RANGE_LIMIT, WEIGHT_RANGE_LIMIT } from '../model/types';
 
@@ -26,6 +27,7 @@ interface ChipEntry {
 }
 
 const AppliedFilterChips = ({ filters, onRemove }: AppliedFilterChipsProps) => {
+  const categories = useCategories();
   const chips: ChipEntry[] = [];
 
   if (filters.saleStatus !== 'all') {
@@ -44,11 +46,13 @@ const AppliedFilterChips = ({ filters, onRemove }: AppliedFilterChipsProps) => {
     });
   }
 
-  filters.categories.forEach((category) => {
+  filters.categoryIds.forEach((categoryId) => {
+    const name = categories.find((c) => c.id === categoryId)?.name ?? String(categoryId);
     chips.push({
-      key: `category-${category}`,
-      label: category,
-      onRemove: () => onRemove({ categories: filters.categories.filter((c) => c !== category) }),
+      key: `category-${categoryId}`,
+      label: name,
+      onRemove: () =>
+        onRemove({ categoryIds: filters.categoryIds.filter((c) => c !== categoryId) }),
     });
   });
 

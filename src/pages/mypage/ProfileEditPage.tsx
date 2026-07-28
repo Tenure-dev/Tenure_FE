@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { BackHeader, DoubleButton, Input, Toast } from '@/shared/components';
-import { useProfileStore, type Gender } from '@/store/useProfileStore';
+import { useProfileStore } from '@/store/useProfileStore';
 import { useUserStore } from '@/store/userStore';
 import { useToast } from '@/shared/hooks/useToast';
-import { updateMyInfo } from '@/features/auth/api/userApi';
+import { updateMyInfo, uploadProfileImage } from '@/features/auth/api/userApi';
+import { useMyInfo } from '@/features/auth/model/useMyInfo';
+import type { UserProfile } from '@/features/auth/api/types';
 import { fromApiGender, toApiGender } from '@/features/auth/lib/gender';
+import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 import ProfileImagePreview from './component/ProfileImagePreview';
 import GenderToggle from './component/GenderToggle';
 import ProfilePhotoPicker from './component/ProfilePhotoPicker';
@@ -16,28 +19,56 @@ const HEIGHT_RANGE = { min: 140, max: 200 };
 const WEIGHT_RANGE = { min: 30, max: 150 };
 
 const ProfileEditPage = () => {
+  const { data: myInfo, isLoading } = useMyInfo();
+
+  if (isLoading || !myInfo) {
+    return (
+      <div className="bg-bg-white text-text-primary mx-auto min-h-screen max-w-md pb-8">
+        <BackHeader title="프로필 수정" />
+      </div>
+    );
+  }
+
+  return <ProfileEditForm myInfo={myInfo} />;
+};
+
+// myInfo가 로드된 뒤에만 마운트되므로, 폼 상태를 mock 기본값이 아닌 실제 값으로 바로 초기화할 수 있다.
+const ProfileEditForm = ({ myInfo }: { myInfo: UserProfile }) => {
   const navigate = useNavigate();
   const storedProfile = useProfileStore();
   const setUser = useUserStore((state) => state.setUser);
   const { message: errorToast, show: showErrorToast, hide: hideErrorToast } = useToast();
 
-  const [nickname, setNickname] = useState(storedProfile.name);
-  const [gender, setGender] = useState<Gender>(storedProfile.gender);
-  const [height, setHeight] = useState(storedProfile.height);
-  const [weight, setWeight] = useState(storedProfile.weight);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(storedProfile.photoUrl);
+  const [nickname, setNickname] = useState(myInfo.username);
+  const [gender, setGender] = useState(fromApiGender(myInfo.gender));
+  const [height, setHeight] = useState(myInfo.heightCm);
+  const [weight, setWeight] = useState(myInfo.weightKg);
+  const [photoUrl, setPhotoUrl] = useState(
+    myInfo.profileImageUrl ? resolveFileUrl(myInfo.profileImageUrl) : null,
+  );
+  const [profileImageUrl, setProfileImageUrl] = useState(myInfo.profileImageUrl);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
 
   const updateProfileMutation = useMutation({ mutationFn: updateMyInfo });
+  const uploadPhotoMutation = useMutation({ mutationFn: uploadProfileImage });
 
   const handleFileSelected = (file: File) => {
     setPendingPhoto(URL.createObjectURL(file));
   };
 
-  const handleConfirmPhoto = (croppedImageUrl: string) => {
-    setPhotoUrl(croppedImageUrl);
+  const handleConfirmPhoto = (croppedImage: Blob) => {
+    setPhotoUrl(URL.createObjectURL(croppedImage));
     if (pendingPhoto) URL.revokeObjectURL(pendingPhoto);
     setPendingPhoto(null);
+
+    const file = new File([croppedImage], 'profile.jpg', { type: 'image/jpeg' });
+    uploadPhotoMutation.mutate(file, {
+      onSuccess: (data) => setProfileImageUrl(data.imageUrl),
+      onError: (error) => {
+        console.error(error);
+        showErrorToast('이미지 업로드에 실패했습니다');
+      },
+    });
   };
 
   const handleCancelPhoto = () => {
@@ -47,14 +78,20 @@ const ProfileEditPage = () => {
 
   const handleSave = () => {
     updateProfileMutation.mutate(
-      { nickname, gender: toApiGender(gender), height, weight },
+      {
+        username: nickname,
+        gender: toApiGender(gender),
+        heightCm: height,
+        weightKg: weight,
+        profileImageUrl,
+      },
       {
         onSuccess: (data) => {
           storedProfile.setProfile({
-            name: data.nickname,
+            name: data.username,
             gender: fromApiGender(data.gender),
-            height: data.height,
-            weight: data.weight,
+            height: data.heightCm,
+            weight: data.weightKg,
             photoUrl,
           });
           setUser(data);
@@ -114,6 +151,7 @@ const ProfileEditPage = () => {
           rightLabel="저장하기"
           onLeftClick={() => navigate(-1)}
           onRightClick={handleSave}
+          disabled={uploadPhotoMutation.isPending || updateProfileMutation.isPending}
         />
       </div>
 

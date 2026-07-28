@@ -1,32 +1,26 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SegmentedControl } from '@/shared/components';
-import FeedGrid from '@/shared/components/feed/FeedGrid';
-import type { FeedItem } from '@/features/feed/model/types';
 import SearchTopBar from '@/features/search/ui/SearchTopBar';
+import SearchSuggestionsOverlay from '@/features/search/ui/SearchSuggestionsOverlay';
 import AppliedFilterChips from '@/features/search/ui/AppliedFilterChips';
-import SortDropdown from '@/features/search/ui/SortDropdown';
 import FilterBottomSheet from '@/features/search/ui/FilterBottomSheet';
-import CarouselSection from '@/features/search/ui/CarouselSection';
-import AccountResultRow from '@/features/search/ui/AccountResultRow';
-import {
-  filterAccounts,
-  filterSearchItems,
-  sortSearchItems,
-} from '@/features/search/lib/filterItems';
-import {
-  mockSearchAccounts,
-  mockSearchResultItems,
-  newArrivalImages,
-  RELATED_OOTD_ID,
-  trendingStyleImages,
-} from '@/features/search/model/mocks';
+import SearchOotdResultsSection from '@/features/search/ui/SearchOotdResultsSection';
+import SearchAccountResultsSection from '@/features/search/ui/SearchAccountResultsSection';
+import { getNewOotds, getPopularOotds } from '@/features/search/api/searchApi';
+import type { SearchOotdResponse } from '@/features/search/api/types';
+import { useRecentSearchData } from '@/features/search/lib/useRecentSearchData';
+import { useScrollToTop } from '@/features/search/lib/useScrollToTop';
 import {
   DEFAULT_SEARCH_FILTERS,
+  HEIGHT_RANGE_LIMIT,
   isFiltersActive,
+  toApiGender,
+  toApiItemStatusFilter,
+  toApiSort,
+  WEIGHT_RANGE_LIMIT,
   type ResultTab,
   type SearchFilters,
-  type SearchResultItem,
   type SortOption,
 } from '@/features/search/model/types';
 
@@ -40,149 +34,137 @@ const KEY_TO_TAB: Record<ResultTab, (typeof RESULT_TABS)[number]> = {
   account: '계정',
 };
 
-const toFeedItem = (item: SearchResultItem): FeedItem => ({
-  id: item.id,
-  imageUrl: item.imageUrl,
-  ratio: item.ratio,
-  liked: item.liked,
-  bookmarked: item.bookmarked,
-  authorId: item.authorId,
-});
-
 interface LocationState {
   keyword?: string;
   filters?: SearchFilters;
 }
 
 const SearchResultPage = () => {
+  useScrollToTop();
   const navigate = useNavigate();
   const location = useLocation();
   const state = (location.state as LocationState | null) ?? null;
 
+  // keyword: 실제 검색에 쓰이는 "확정된" 값. draftKeyword: 입력창에 바로 묶이는 값.
+  // 이 둘을 분리해야 타이핑할 때마다 결과 섹션이 통째로 리마운트/재조회되는 걸 막을 수 있다.
   const [keyword, setKeyword] = useState(state?.keyword ?? '');
+  const [draftKeyword, setDraftKeyword] = useState(state?.keyword ?? '');
+  const [active, setActive] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>(state?.filters ?? DEFAULT_SEARCH_FILTERS);
   const [tab, setTab] = useState<ResultTab>('post');
   const [sort, setSort] = useState<SortOption>('recommend');
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
-  const [resultItems, setResultItems] = useState(mockSearchResultItems);
-  const [accounts, setAccounts] = useState(mockSearchAccounts);
+  const [noResultSuggestions, setNoResultSuggestions] = useState<{
+    popular: SearchOotdResponse[];
+    fresh: SearchOotdResponse[];
+  }>({ popular: [], fresh: [] });
+  const recentData = useRecentSearchData();
 
-  const filteredItems = useMemo(
-    () => filterSearchItems(resultItems, keyword, filters),
-    [resultItems, keyword, filters],
+  useEffect(() => {
+    getPopularOotds(undefined, 6).then((page) =>
+      setNoResultSuggestions((prev) => ({ ...prev, popular: page.content })),
+    );
+    getNewOotds(undefined, 6).then((page) =>
+      setNoResultSuggestions((prev) => ({ ...prev, fresh: page.content })),
+    );
+  }, []);
+
+  const ootdSearchParams = useMemo(
+    () => ({
+      keyword,
+      gender: toApiGender(filters.gender),
+      itemStatusFilter: toApiItemStatusFilter(filters.saleStatus),
+      categoryIds: filters.categoryIds.length > 0 ? filters.categoryIds : undefined,
+      heightMin:
+        filters.heightRange[0] !== HEIGHT_RANGE_LIMIT[0] ? filters.heightRange[0] : undefined,
+      heightMax:
+        filters.heightRange[1] !== HEIGHT_RANGE_LIMIT[1] ? filters.heightRange[1] : undefined,
+      weightMin:
+        filters.weightRange[0] !== WEIGHT_RANGE_LIMIT[0] ? filters.weightRange[0] : undefined,
+      weightMax:
+        filters.weightRange[1] !== WEIGHT_RANGE_LIMIT[1] ? filters.weightRange[1] : undefined,
+      sort: toApiSort(sort),
+    }),
+    [keyword, filters, sort],
   );
-  const sortedItems = useMemo(() => sortSearchItems(filteredItems, sort), [filteredItems, sort]);
-  const feedItems = useMemo(() => sortedItems.map(toFeedItem), [sortedItems]);
-
-  const filteredAccounts = useMemo(() => filterAccounts(accounts, keyword), [accounts, keyword]);
-
-  const toggleLike = (id: string) => {
-    setResultItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, liked: !item.liked } : item)),
-    );
-  };
-
-  const toggleBookmark = (id: string) => {
-    setResultItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, bookmarked: !item.bookmarked } : item)),
-    );
-  };
-
-  const toggleFollow = (id: string) => {
-    setAccounts((prev) =>
-      prev.map((account) =>
-        account.id === id ? { ...account, following: !account.following } : account,
-      ),
-    );
-  };
+  const ootdSearchParamsKey = JSON.stringify(ootdSearchParams);
 
   const handleRemoveFilterPatch = (patch: Partial<SearchFilters>) => {
     setFilters((prev) => ({ ...prev, ...patch }));
   };
 
+  // 검색창에서 엔터(또는 추천/최근 검색어 클릭) — 이때만 실제 검색이 실행된다.
+  const commitSearch = (nextKeyword: string) => {
+    const trimmed = nextKeyword.trim();
+    if (!trimmed && filters.categoryIds.length === 0) return;
+
+    if (trimmed) recentData.consumeKeyword(trimmed);
+    setKeyword(trimmed);
+    setDraftKeyword(trimmed);
+    setActive(false);
+  };
+
+  const handleCancelEdit = () => {
+    setDraftKeyword(keyword);
+    setActive(false);
+  };
+
   return (
     <div className="bg-bg-white mx-auto flex min-h-screen w-full max-w-md flex-col">
       <SearchTopBar
-        value={keyword}
-        onChange={setKeyword}
-        onBack={() => navigate(-1)}
-        onSubmit={setKeyword}
+        value={draftKeyword}
+        onChange={setDraftKeyword}
+        onFocus={() => {
+          setActive(true);
+          recentData.refresh();
+        }}
+        onBack={active ? handleCancelEdit : () => navigate(-1)}
+        onSubmit={commitSearch}
         onFilterClick={() => setFilterSheetOpen(true)}
         filterActive={isFiltersActive(filters)}
+        autoFocus={active}
       />
 
-      <div className="sticky top-[68px] z-10">
-        <SegmentedControl
-          tabs={[...RESULT_TABS]}
-          activeTab={KEY_TO_TAB[tab]}
-          onChange={(next) => setTab(TAB_TO_KEY[next as (typeof RESULT_TABS)[number]])}
+      {active ? (
+        <SearchSuggestionsOverlay
+          query={draftKeyword}
+          suggestions={recentData.suggestions}
+          recentViewedUsers={recentData.recentViewedUsers}
+          recentSearches={recentData.recentSearches}
+          onSelectKeyword={commitSearch}
+          onRemoveRecentUser={recentData.removeRecentUser}
+          onClearAllRecentUsers={recentData.clearAllRecentUsers}
+          onRemoveRecentKeyword={recentData.removeRecentKeyword}
+          onClearAllRecentKeywords={recentData.clearAllRecentKeywords}
         />
-      </div>
-
-      <AppliedFilterChips filters={filters} onRemove={handleRemoveFilterPatch} />
-
-      {tab === 'post' ? (
-        <div className="flex-1">
-          {feedItems.length > 0 ? (
-            <>
-              <div className="flex items-center justify-between px-4 py-3">
-                <span className="text-body-2 text-text-secondary">
-                  총 게시물 {feedItems.length}개
-                </span>
-                <SortDropdown value={sort} onChange={setSort} />
-              </div>
-              <div className="px-4 pb-8">
-                <FeedGrid
-                  items={feedItems}
-                  onToggleLike={toggleLike}
-                  onToggleBookmark={toggleBookmark}
-                />
-              </div>
-            </>
-          ) : (
-            <div className="pb-10">
-              <div className="px-4 py-8 text-left">
-                <p className="text-body-1 text-text-primary font-semibold">검색 결과가 없어요.</p>
-                <p className="text-body-3 text-text-tertiary mt-1">
-                  다른 키워드로 다시 검색해보세요.
-                </p>
-              </div>
-              <CarouselSection
-                title="지금 인기 있는 스타일"
-                subtitle="좋아요를 많이 받은 OOTD를 추천해요."
-                images={trendingStyleImages}
-                ootdId={RELATED_OOTD_ID}
-              />
-              <CarouselSection
-                title="새로 올라온 OOTD"
-                subtitle="최근 올라온 게시물을 빠르게 둘러보세요."
-                images={newArrivalImages}
-                ootdId={RELATED_OOTD_ID}
-              />
-            </div>
-          )}
-        </div>
       ) : (
-        <div className="flex-1 pb-10">
-          {filteredAccounts.length > 0 ? (
-            <div className="divide-border-secondary divide-y">
-              {filteredAccounts.map((account) => (
-                <AccountResultRow
-                  key={account.id}
-                  account={account}
-                  onToggleFollow={toggleFollow}
-                />
-              ))}
+        <>
+          <div className="sticky top-[68px] z-10">
+            <SegmentedControl
+              tabs={[...RESULT_TABS]}
+              activeTab={KEY_TO_TAB[tab]}
+              onChange={(next) => setTab(TAB_TO_KEY[next as (typeof RESULT_TABS)[number]])}
+            />
+          </div>
+
+          <AppliedFilterChips filters={filters} onRemove={handleRemoveFilterPatch} />
+
+          {tab === 'post' ? (
+            <div className="flex-1">
+              <SearchOotdResultsSection
+                key={ootdSearchParamsKey}
+                params={ootdSearchParams}
+                sort={sort}
+                onSortChange={setSort}
+                noResultSuggestions={noResultSuggestions}
+              />
             </div>
           ) : (
-            <div className="px-4 py-8 text-left">
-              <p className="text-body-1 text-text-primary font-semibold">
-                &apos;{keyword}&apos;에 해당하는 유저가 없어요.
-              </p>
-              <p className="text-body-3 text-text-tertiary mt-1">다시 검색해주세요.</p>
+            <div className="flex-1 pb-10">
+              <SearchAccountResultsSection key={keyword} keyword={keyword} />
             </div>
           )}
-        </div>
+        </>
       )}
 
       <FilterBottomSheet

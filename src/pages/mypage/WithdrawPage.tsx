@@ -1,21 +1,27 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronLeft } from 'lucide-react';
-import { DoubleButton } from '@/shared/components';
+import { DoubleButton, Toast } from '@/shared/components';
+import { useToast } from '@/shared/hooks/useToast';
+import { ApiError } from '@/shared/lib/api';
+import { useWithdraw } from '@/features/auth/api/useWithdraw';
+import type { WithdrawalReason } from '@/features/auth/api/types';
 
-const WITHDRAW_REASONS = [
-  '사용 빈도가 낮아요.',
-  '원하는 아이템을 찾기 어려워요.',
-  '다른 서비스를 이용할 예정이에요.',
-  '거래 경험이 만족스럽지 않았어요.',
+const WITHDRAW_REASONS: { value: WithdrawalReason; label: string }[] = [
+  { value: 'LOW_USAGE', label: '사용 빈도가 낮아요.' },
+  { value: 'HARD_TO_FIND_ITEMS', label: '원하는 아이템을 찾기 어려워요.' },
+  { value: 'USING_OTHER_SERVICE', label: '다른 서비스를 이용할 예정이에요.' },
+  { value: 'UNSATISFIED_TRADE', label: '거래 경험이 만족스럽지 않았어요.' },
 ];
 
 const WithdrawPage = () => {
   const navigate = useNavigate();
-  const [reason, setReason] = useState('');
+  const [reason, setReason] = useState<WithdrawalReason | ''>('');
   const [isOpen, setIsOpen] = useState(false);
+  const { message: toastMessage, show: showToast, hide: hideToast } = useToast();
+  const { mutate: withdraw, isPending } = useWithdraw();
 
-  const canWithdraw = reason !== '';
+  const selectedLabel = WITHDRAW_REASONS.find((option) => option.value === reason)?.label;
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col bg-[#FFFFFF] font-sans">
@@ -38,7 +44,7 @@ const WithdrawPage = () => {
             className="flex h-[52px] w-full items-center justify-between rounded-[8px] border border-[#E2E6E8] bg-white px-[16px] text-[14px]"
           >
             <span className={reason ? 'text-[#111111]' : 'text-[#767676]'}>
-              {reason || '이유를 선택해주세요'}
+              {selectedLabel ?? '이유를 선택해주세요'}
             </span>
             <ChevronDown size={18} className="text-[#767676]" />
           </button>
@@ -46,15 +52,15 @@ const WithdrawPage = () => {
             <div className="absolute top-[56px] left-0 z-10 w-full rounded-[8px] border border-[#E2E6E8] bg-white shadow-[0px_2px_12px_1px_rgba(0,0,0,0.09)]">
               {WITHDRAW_REASONS.map((option) => (
                 <button
-                  key={option}
+                  key={option.value}
                   type="button"
                   onClick={() => {
-                    setReason(option);
+                    setReason(option.value);
                     setIsOpen(false);
                   }}
                   className="flex h-[44px] w-full items-center px-[16px] text-left text-[14px] text-[#111111]"
                 >
-                  {option}
+                  {option.label}
                 </button>
               ))}
             </div>
@@ -69,11 +75,24 @@ const WithdrawPage = () => {
           rightLabel="회원탈퇴"
           onLeftClick={() => navigate(-1)}
           onRightClick={() => {
-            if (!canWithdraw) return;
-            navigate('/login');
+            if (reason === '' || isPending) return;
+            withdraw(
+              { reason },
+              {
+                onError: (error) => {
+                  if (error instanceof ApiError && error.code === 'USER_NOT_FOUND') {
+                    showToast('이미 처리된 요청입니다');
+                    return;
+                  }
+                  showToast('회원 탈퇴에 실패했습니다. 다시 시도해주세요.');
+                },
+              },
+            );
           }}
         />
       </div>
+
+      <Toast message={toastMessage} onClose={hideToast} />
     </div>
   );
 };

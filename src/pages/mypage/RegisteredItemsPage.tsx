@@ -3,17 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { BackHeader, Input } from '@/shared/components';
 import { plus } from '@/shared/assets';
 import { RegisteredItemListSection } from '@/features/mypage/ui';
-import { registeredItems } from './mock';
+import { useItemsQuery } from '@/features/mypage/model/useItemsQuery';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+import { useInfiniteScroll } from '@/shared/hooks/useInfiniteScroll';
 
 const RegisteredItemsPage = () => {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query);
 
-  const filtered = registeredItems.filter(
-    (item) =>
-      item.brand.toLowerCase().includes(query.toLowerCase()) ||
-      item.name.toLowerCase().includes(query.toLowerCase()),
-  );
+  const { data, fetchNextPage, hasNextPage } = useItemsQuery({
+    query: debouncedQuery || undefined,
+  });
+  const items = data?.pages.flatMap((page) => page.content) ?? [];
+
+  const sentinelRef = useInfiniteScroll({ hasMore: !!hasNextPage, onLoadMore: fetchNextPage });
 
   return (
     <div className="bg-bg-white text-text-primary mx-auto min-h-screen max-w-md">
@@ -35,11 +39,20 @@ const RegisteredItemsPage = () => {
           className="!bg-gray-bg !border-transparent"
         />
       </div>
-      <RegisteredItemListSection
-        items={filtered}
-        onItemClick={(id) => navigate(`/mypage/items/${id}`)}
-        onSaleConvert={(id) => navigate(`/mypage/items/${id}/sell`)}
-      />
+      {items.length === 0 ? (
+        <p className="text-body-3 text-text-secondary px-4 py-10 text-center">
+          등록된 아이템이 없어요
+        </p>
+      ) : (
+        <>
+          <RegisteredItemListSection
+            items={items}
+            onItemClick={(id) => navigate(`/mypage/items/${id}`)}
+            onSaleConvert={(id) => navigate(`/mypage/items/${id}/sell`)}
+          />
+          <div ref={sentinelRef} />
+        </>
+      )}
     </div>
   );
 };

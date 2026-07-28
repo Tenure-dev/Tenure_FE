@@ -3,8 +3,8 @@ import RegisteredItemRow from './RegisteredItemRow';
 
 interface RegisteredItemListSectionProps {
   items: RegisteredItem[];
-  onItemClick: (id: string) => void;
-  onSaleConvert?: (id: string) => void;
+  onItemClick: (id: number) => void;
+  onSaleConvert?: (id: number) => void;
 }
 
 const RegisteredItemListSection = ({
@@ -15,11 +15,11 @@ const RegisteredItemListSection = ({
   return (
     <ul>
       {items.map((item) => (
-        <li key={item.id}>
+        <li key={item.itemId}>
           <RegisteredItemRow
             item={item}
-            onClick={() => onItemClick(item.id)}
-            onSaleConvert={onSaleConvert ? () => onSaleConvert(item.id) : undefined}
+            onClick={() => onItemClick(item.itemId)}
+            onSaleConvert={onSaleConvert ? () => onSaleConvert(item.itemId) : undefined}
           />
         </li>
       ))}

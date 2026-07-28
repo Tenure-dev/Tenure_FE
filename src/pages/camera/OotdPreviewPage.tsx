@@ -1,24 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { cn } from '@/shared/lib/cn';
 import chevron from '@/shared/assets/chevron-left.svg';
-import type { OotdItem } from '@/features/ootd/model/item';
+import type { Bbox } from '@/features/ootd/model/item';
+import { dataUrlToFile } from '@/shared/lib/dataUrlToFile';
+import { usePublishOotd } from '@/features/ootd/api/usePublishOotd';
 import TagLoading from './component/TagLoading';
 import TagMessage from './component/TagMessage';
 
-type Phase = 'loading' | 'preview' | 'posting';
+type Phase = 'loading' | 'preview';
 
-// 태그칩 배치 위치 (목업)
-const CHIP_POS = ['right-4 top-6', 'left-4 top-1/2', 'right-6 bottom-24', 'left-5 bottom-10'];
+// 태그작성에서 넘어온 태그 (실제 bbox 좌표 포함)
+type PreviewTag = { itemId: number; bbox: Bbox; labelText: string };
 
 const OotdPreviewPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const state = location.state as { photo?: string; items?: OotdItem[] } | null;
+  const state = location.state as { photo?: string; tags?: PreviewTag[] } | null;
   const photo = state?.photo ?? null;
-  const items = state?.items ?? [];
+  const tags = state?.tags ?? [];
 
   const [phase, setPhase] = useState<Phase>('loading');
+  const { mutate: publish, isPending: posting } = usePublishOotd();
 
   // 선택완료 후 로딩 → 미리보기
   useEffect(() => {
@@ -27,16 +29,22 @@ const OotdPreviewPage = () => {
     return () => clearTimeout(timer);
   }, [phase]);
 
-  // 게시하기 후 로딩 → 상세로 이동 (상세는 별도 PR: /ootd/:id)
-  useEffect(() => {
-    if (phase !== 'posting') return;
-    const timer = setTimeout(() => {
-      navigate('/ootd/1', { state: { toast: '게시물이 등록되었습니다.' } });
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, [phase, navigate]);
+  // 게시하기: 이미지 게시 → ootdId 받고 → 태그 일괄 등록 → 상세로 이동
+  const handlePost = () => {
+    if (!photo) return;
+    const image = dataUrlToFile(photo, 'ootd.jpg');
+    publish(
+      { image, tags },
+      {
+        onSuccess: (ootdId) => {
+          navigate(`/ootd/${ootdId}`, { state: { toast: '게시물이 등록되었습니다.' } });
+        },
+        onError: (e) => console.error('[게시 실패]', e),
+      },
+    );
+  };
 
-  if (phase === 'loading' || phase === 'posting') {
+  if (phase === 'loading' || posting) {
     return (
       <div className="bg-bg-white flex h-dvh w-full flex-col">
         <TagLoading />
@@ -63,18 +71,20 @@ const OotdPreviewPage = () => {
       <div className="relative w-full">
         {photo && <img src={photo} alt="촬영한 사진" className="block w-full" />}
 
-        {items.map((item, i) => {
-          const pos = CHIP_POS[i % CHIP_POS.length];
-          return (
+        {/* 태그작성에서 지정한 실제 bbox 위치에 말풍선 표시 */}
+        {tags.map((tag) => (
+          <div
+            key={tag.itemId}
+            className="absolute"
+            style={{ left: `${tag.bbox.x * 100}%`, top: `${tag.bbox.y * 100}%` }}
+          >
             <TagMessage
-              key={item.id}
-              className={cn('absolute', pos)}
-              title={`${item.brand} / ${item.name}`}
-              status="판매중"
-              side={pos.includes('left') ? 'left' : 'right'}
+              title={tag.labelText}
+              side={tag.bbox.x > 0.5 ? 'right' : 'left'}
+              variant="black"
             />
-          );
-        })}
+          </div>
+        ))}
       </div>
 
       {/* 하단 버튼 (하단 고정) */}
@@ -88,7 +98,7 @@ const OotdPreviewPage = () => {
         </button>
         <button
           type="button"
-          onClick={() => setPhase('posting')}
+          onClick={handlePost}
           className="bg-brand text-btn-2 text-text-primary flex-1 rounded-md py-3.5 font-medium"
         >
           게시하기

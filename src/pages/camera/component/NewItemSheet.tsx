@@ -74,8 +74,6 @@ const NewItemSheet = ({ onBack, onSubmit }: Props) => {
         wearingTarget: toWearingTarget(target),
         ...(firstOwnedAt && { firstOwnedAt }),
       });
-      // 실제 등록 확인용 (itemId, categoryId 자동 분류 결과)
-      console.log('[간편 아이템 등록 성공]', res);
       onSubmit({
         id: String(res.itemId),
         brand: res.brandName,

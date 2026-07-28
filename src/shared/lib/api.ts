@@ -53,10 +53,6 @@ instance.interceptors.response.use(
     }
     const body = response.data as BaseResponse<unknown>;
 
-    console.log(
-      `[API] ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`,
-    );
-
     if (!body.success) {
       return Promise.reject(new ApiError(body.message, body.code));
     }

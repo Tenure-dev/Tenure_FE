@@ -7,7 +7,6 @@ import { useMutation } from '@tanstack/react-query';
 import { Camera, ChevronLeft, Search } from 'lucide-react';
 import { Button, DoubleButton } from '@/shared/components';
 import { login, sendEmailVerification, signup, verifyEmailCode } from '@/features/auth/api/authApi';
-import { createAddress } from '@/features/auth/api/addressApi';
 import { getMyInfo } from '@/features/auth/api/userApi';
 import { toApiGender } from '@/features/auth/lib/gender';
 import { ACCESS_TOKEN_STORAGE_KEY, ApiError, USER_ID_STORAGE_KEY } from '@/shared/lib/api';
@@ -209,21 +208,7 @@ const SignupPage = () => {
   const canProceedStep3 =
     receiverName.trim().length > 0 && isPhoneValid && selectedAddress.length > 0;
 
-  const addressMutation = useMutation({ mutationFn: createAddress });
-
   const handleAddressNext = () => {
-    addressMutation.mutate(
-      {
-        receiverName,
-        phone,
-        addressLine1: selectedAddress,
-        addressLine2: addressDetail,
-        postalCode: selectedPostalCode,
-        requestNote: '',
-        isDefault: true,
-      },
-      { onError: (error) => console.error(error) },
-    );
     setStep(4);
   };
 
@@ -249,10 +234,17 @@ const SignupPage = () => {
       {
         email,
         password,
-        nickname,
+        passwordConfirm,
+        termsOfServiceAgreed: agreements.service,
+        privacyPolicyAgreed: agreements.privacy,
+        thirdPartyAgreed: agreements.thirdParty,
+        addressLine1: selectedAddress,
+        addressLine2: addressDetail,
+        postalCode: selectedPostalCode,
+        username: nickname,
         gender: toApiGender(gender),
-        height,
-        weight,
+        heightCm: height,
+        weightKg: weight,
       },
       {
         onSuccess: async ({ userId }) => {

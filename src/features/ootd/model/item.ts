@@ -10,3 +10,11 @@ export interface OotdItem {
 
 // 새 아이템 등록 폼 값
 export type WearTarget = '남성복' | '여성복' | '공용';
+
+// 태그 bbox — 이미지 대비 0~1 정규화 좌표 (좌상단 x,y + 너비/높이)
+export interface Bbox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}

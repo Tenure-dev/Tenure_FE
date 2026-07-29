@@ -4,7 +4,9 @@ import { chevon, circleCheck, close, plus } from '@/shared/assets';
 import { BackHeader, Checkbox, CTAButton, Input } from '@/shared/components';
 import cn from '@/shared/lib/cn';
 import { CATEGORY_GROUPS } from '@/features/search/model/categoryData';
-import { ootdPickerItems, registeredItemDetails } from './mock';
+import { useItemDetailQuery } from '@/features/mypage/model/useItemDetailQuery';
+import { WEARING_TARGET_LABEL } from '@/features/mypage/lib/wearingTargetLabel';
+import { ootdPickerItems } from './mock';
 
 type View = 'form' | 'ootd-picker' | 'loading' | 'complete';
 
@@ -171,16 +173,16 @@ const Req = () => <span className="text-error ml-0.5">*</span>;
 const SaleConversionPage = () => {
   const navigate = useNavigate();
   const { itemId } = useParams<{ itemId: string }>();
-  const item = registeredItemDetails[itemId ?? ''];
+  const { data: item } = useItemDetailQuery(Number(itemId));
 
   const initForm = (): SaleForm => ({
-    photo: item?.imageUrl ?? '',
-    brand: item?.brand ?? '',
-    name: item?.name ?? '',
-    category: item?.category ?? '',
-    subCategory: item?.subCategory ?? '',
-    size: item?.size ?? '',
-    gender: item?.gender ?? '',
+    photo: item?.representativeImageUrl ?? '',
+    brand: item?.brandName ?? '',
+    name: item?.itemName ?? '',
+    category: item?.categoryLarge ?? '',
+    subCategory: item?.categorySmall ?? '',
+    size: item?.sizeValue ?? '',
+    gender: item ? WEARING_TARGET_LABEL[item.wearingTarget] : '',
     feeBearer: '',
     shippingCost: '',
     price: '',

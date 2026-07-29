@@ -11,8 +11,6 @@ export interface SearchOotdCardProps {
   onToggleBookmark: () => void;
 }
 
-// 초기 liked/bookmarked는 BE의 hearted/saved로 채워지지만, 토글 자체는 좋아요/저장 API가
-// 아직 없어 화면(로컬) 상태로만 반영된다 — Feed 탭·OOTD 상세의 기존 좋아요/북마크와 동일한 수준.
 const SearchOotdCard = ({
   item,
   liked,

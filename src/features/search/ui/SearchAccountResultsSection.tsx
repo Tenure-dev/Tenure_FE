@@ -36,7 +36,6 @@ const SearchAccountResultsSection = ({ keyword }: SearchAccountResultsSectionPro
         prev.map((user) => (user.id === id ? { ...user, following: response.following } : user)),
       );
     } catch {
-      // 실패 시 낙관적 업데이트를 되돌린다.
       setItems((prev) =>
         prev.map((user) => (user.id === id ? { ...user, following: currentlyFollowing } : user)),
       );

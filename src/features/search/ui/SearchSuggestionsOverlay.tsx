@@ -18,7 +18,6 @@ export interface SearchSuggestionsOverlayProps {
   onClearAllRecentKeywords: () => void;
 }
 
-// 검색창이 포커스됐을 때 뜨는 화면(입력 중 관련 검색어 vs 추천/최근 검색). 검색홈과 검색결과 화면이 공유한다.
 const SearchSuggestionsOverlay = ({
   query,
   suggestions,

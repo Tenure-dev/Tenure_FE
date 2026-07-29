@@ -18,12 +18,35 @@ export const createStompClient = (
 ) => {
   const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
 
+  // [디버그] 연결 시작 시점 정보
+  console.log('[WS] 연결 시도:', WS_ENDPOINT, '| 토큰 있음?', !!accessToken);
+
   const client = new Client({
-    webSocketFactory: () => new SockJS(WS_ENDPOINT),
+    webSocketFactory: () => {
+      // [디버그] SockJS 생성 자체가 실패(예: 잘못된 URL)하면 여기서 잡힘
+      try {
+        return new SockJS(WS_ENDPOINT);
+      } catch (e) {
+        console.error('[WS] SockJS 생성 실패:', e);
+        throw e;
+      }
+    },
     connectHeaders: { Authorization: `Bearer ${accessToken}` },
     reconnectDelay: 5000,
-    onConnect: () => onConnect(client),
-    onStompError: (frame) => onError?.(frame.headers['message'] ?? 'STOMP 에러'),
+    onConnect: () => {
+      console.log('[WS] 연결 성공 ✅');
+      onConnect(client);
+    },
+    onStompError: (frame) => {
+      console.error('[WS] STOMP 에러:', frame.headers['message'], frame.body);
+      onError?.(frame.headers['message'] ?? 'STOMP 에러');
+    },
+    onWebSocketError: (event) => {
+      console.error('[WS] WebSocket 에러:', event);
+    },
+    onWebSocketClose: (event) => {
+      console.warn('[WS] WebSocket 종료:', event?.code, event?.reason);
+    },
   });
 
   return client;

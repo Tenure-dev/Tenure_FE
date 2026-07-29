@@ -35,8 +35,6 @@ export type RegisteredItemDetail = {
   history: ItemHistoryEntry[];
 };
 
-export type WearingTarget = 'MENSWEAR' | 'WOMENSWEAR' | 'UNISEX';
-
 export interface CreateItemRequest {
   brandName: string;
   itemName: string;

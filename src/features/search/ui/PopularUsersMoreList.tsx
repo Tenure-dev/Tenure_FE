@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { followUser, unfollowUser } from '../api/followApi';
 import { getPopularUsers } from '../api/searchApi';
 import type {
@@ -28,6 +29,7 @@ const toSearchUser = (
 const fetchPage = (cursor?: PopularUserCursor) => getPopularUsers(cursor, 20);
 
 const PopularUsersMoreList = () => {
+  const navigate = useNavigate();
   const { items, hasNext, loading, loadMore } = useCursorList(fetchPage);
   const sentinelRef = useInfiniteScrollSentinel(hasNext, loadMore);
   const [followingIds, setFollowingIds] = useState<Set<number>>(new Set());
@@ -68,6 +70,7 @@ const PopularUsersMoreList = () => {
           key={user.id}
           account={toSearchUser(user, followingIds.has(user.id))}
           onToggleFollow={toggleFollow}
+          onClick={(id) => navigate(`/users/${id}`)}
         />
       ))}
       {hasNext && <div ref={sentinelRef} className="h-10" />}

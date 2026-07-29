@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { followUser, unfollowUser } from '../api/followApi';
 import { searchUsers } from '../api/searchApi';
 import type { UserSearchCursor, UserSearchPage } from '../api/types';
@@ -13,8 +14,8 @@ export interface SearchAccountResultsSectionProps {
   keyword: string;
 }
 
-// key={keyword}로 리마운트되어 검색어가 바뀔 때마다 처음부터 다시 조회한다.
 const SearchAccountResultsSection = ({ keyword }: SearchAccountResultsSectionProps) => {
+  const navigate = useNavigate();
   const trimmed = keyword.trim();
 
   const fetchPage = useCallback(
@@ -53,6 +54,7 @@ const SearchAccountResultsSection = ({ keyword }: SearchAccountResultsSectionPro
             key={account.id}
             account={account}
             onToggleFollow={(id) => toggleFollow(id, account.following)}
+            onClick={(id) => navigate(`/users/${id}`)}
           />
         ))}
         {hasNext && <div ref={sentinelRef} className="h-10" />}

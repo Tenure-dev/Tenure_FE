@@ -10,6 +10,7 @@ export const useMyPage = () =>
     queryKey: myPageQueryKey,
     queryFn: getMyPage,
     staleTime: 60_000,
+    refetchOnMount: 'always',
   });
 
 export default useMyPage;

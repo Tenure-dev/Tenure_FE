@@ -10,6 +10,8 @@ export interface WishlistItem {
   price: number | null;
   imageUrl: string;
   saleStatus: ApiProductStatus | null;
+  sellerUsername: string | null;
+  wishedDaysAgo: number;
   purchaseOfferEnabled: boolean;
   notifyEnabled: boolean;
 }

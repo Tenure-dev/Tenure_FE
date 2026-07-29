@@ -27,11 +27,15 @@ const WishlistItemRow = ({ item, onToggleNotify }: WishlistItemRowProps) => {
         onClick={() => navigate(`/item/${item.itemId}`)}
         className="flex min-w-0 flex-1 items-center gap-3 text-left"
       >
-        <img
-          src={item.imageUrl}
-          alt=""
-          className="bg-gray-bg size-20 shrink-0 rounded-lg object-cover"
-        />
+        {item.imageUrl ? (
+          <img
+            src={item.imageUrl}
+            alt=""
+            className="bg-gray-bg size-20 shrink-0 rounded-lg object-cover"
+          />
+        ) : (
+          <div className="bg-gray-bg size-20 shrink-0 rounded-lg" />
+        )}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span
             className={cn(
@@ -44,11 +48,16 @@ const WishlistItemRow = ({ item, onToggleNotify }: WishlistItemRowProps) => {
           <p className="text-body-1 text-text-primary truncate font-semibold">
             {item.brand} / {item.name}
           </p>
-          {item.saleStatus === 'ON_SALE' && item.price != null ? (
+          {(item.saleStatus === 'ON_SALE' || item.saleStatus === 'TRADING') &&
+          item.price != null ? (
             <p className="text-body-1 text-text-primary font-semibold">{formatPrice(item.price)}</p>
           ) : item.purchaseOfferEnabled ? (
             <span className="text-body-2 text-text-primary w-fit underline">구매 제안</span>
           ) : null}
+          <span className="text-body-4 text-text-tertiary">
+            {item.sellerUsername ? `${item.sellerUsername} · ` : ''}
+            {item.wishedDaysAgo}일 전
+          </span>
         </div>
       </button>
 

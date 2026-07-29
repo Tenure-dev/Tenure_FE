@@ -1,6 +1,6 @@
 export type ApiProductStatus = 'ON_SALE' | 'TRADING' | 'SOLD' | 'HIDDEN';
 
-/** GET /wishes 항목. BE가 판매자명/등록시각은 아직 내려주지 않는다 (BE 요청 목록 참고). */
+/** GET /wishes 항목 */
 export interface WishListItemDto {
   wishId: number;
   itemId: number;
@@ -9,6 +9,8 @@ export interface WishListItemDto {
   representativeImageUrl: string | null;
   saleStatus: ApiProductStatus | null;
   price: number | null;
+  sellerUsername: string | null;
+  createdAt: string;
   purchaseOfferEnabled: boolean;
   notificationEnabled: boolean;
   wishCount: number;

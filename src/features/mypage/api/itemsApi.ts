@@ -8,6 +8,7 @@ import type {
   OfferSettingRequest,
   OfferSettingResponse,
   ItemHistoryListResponse,
+  FrequentlyWornItem,
 } from '../model/items';
 
 export const getItems = (params?: RegisteredItemListParams) =>
@@ -24,3 +25,6 @@ export const updateOfferSetting = (itemId: number, body: OfferSettingRequest) =>
 
 export const getItemHistories = (itemId: number, params?: { page?: number; size?: number }) =>
   api.get<ItemHistoryListResponse>(`/items/${itemId}/histories`, { params });
+
+export const getFrequentlyWornTogether = (itemId: number) =>
+  api.get<FrequentlyWornItem[]>(`/items/${itemId}/frequently-worn-together`);

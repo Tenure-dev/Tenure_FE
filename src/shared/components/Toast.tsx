@@ -14,7 +14,7 @@ const Toast = ({ message, onClose, className }: ToastProps) => {
   return (
     <div
       className={cn(
-        'fixed inset-x-0 bottom-24 z-50 mx-auto flex w-fit max-w-[90%] items-center gap-3 rounded-lg bg-black/80 px-4 py-3',
+        'fixed inset-x-0 bottom-24 z-50 mx-auto flex w-fit max-w-[90%] items-center gap-3 rounded-sm bg-black/80 px-4 py-3',
         className,
       )}
     >

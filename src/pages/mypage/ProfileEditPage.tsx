@@ -24,7 +24,7 @@ const ProfileEditPage = () => {
 
   if (isLoading || !myInfo) {
     return (
-      <div className="bg-bg-white text-text-primary mx-auto min-h-screen max-w-md pb-8">
+      <div className="bg-bg-white text-text-primary min-h-screen pb-8">
         <BackHeader title="프로필 수정" />
       </div>
     );
@@ -109,7 +109,7 @@ const ProfileEditForm = ({ myInfo }: { myInfo: UserProfile }) => {
   };
 
   return (
-    <div className="bg-bg-white text-text-primary mx-auto min-h-screen max-w-md pb-8">
+    <div className="bg-bg-white text-text-primary min-h-screen pb-8">
       <BackHeader title="프로필 수정" />
 
       <ProfilePhotoPicker imageUrl={photoUrl} onFileSelected={handleFileSelected} />

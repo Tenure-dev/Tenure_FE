@@ -62,7 +62,7 @@ const SearchHomePage = () => {
   };
 
   return (
-    <div className="bg-bg-white mx-auto flex min-h-screen w-full max-w-md flex-col">
+    <div className="bg-bg-white flex min-h-screen flex-col">
       <SearchTopBar
         value={query}
         onChange={setQuery}

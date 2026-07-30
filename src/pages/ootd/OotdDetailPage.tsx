@@ -469,7 +469,7 @@ const OotdDetailPage = () => {
 
   if (loadError) {
     return (
-      <div className="bg-bg-white mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center gap-3 px-4 text-center">
+      <div className="bg-bg-white flex min-h-screen flex-col items-center justify-center gap-3 px-4 text-center">
         <p className="text-body-1 text-text-primary font-semibold">게시물을 찾을 수 없어요.</p>
         <p className="text-body-3 text-text-tertiary">삭제되었거나 존재하지 않는 게시물이에요.</p>
         <button type="button" onClick={() => navigate(-1)} className="text-body-2 text-brand mt-2">
@@ -481,7 +481,7 @@ const OotdDetailPage = () => {
 
   if (loading || !post) {
     return (
-      <div className="bg-bg-white mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center">
+      <div className="bg-bg-white flex min-h-screen flex-col items-center justify-center">
         <div className="border-brand size-10 animate-spin rounded-full border-4 border-t-transparent" />
       </div>
     );
@@ -491,7 +491,7 @@ const OotdDetailPage = () => {
   const showTags = mode === 'view' ? tagsVisible : editTagsVisible;
 
   return (
-    <div className="bg-bg-white relative mx-auto flex min-h-screen w-full max-w-md flex-col">
+    <div className="bg-bg-white relative flex min-h-screen flex-col">
       {mode === 'view' ? (
         <ViewHeader onBack={() => navigate(-1)} onMoreClick={() => setShowMoreMenu(true)} />
       ) : (
@@ -648,7 +648,7 @@ const OotdDetailPage = () => {
           heightPx={getResultExpandedHeightPx()}
           onHandlePointerDown={handleExpandedHandlePointerDown}
           onHandlePointerUp={handleExpandedHandlePointerUp}
-          className="flex max-w-md flex-col"
+          className="flex flex-col"
         >
           <EditTagSheet
             target={editTarget}

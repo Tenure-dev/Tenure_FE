@@ -5,6 +5,7 @@ export const USER_ID_STORAGE_KEY = 'userId';
 export const ACCESS_TOKEN_STORAGE_KEY = 'accessToken';
 
 const LOGIN_PATH = '/login';
+const AUTH_LOGOUT_CODES = ['SECURITY_1001', 'SECURITY_1002', 'AUTH_401'];
 
 interface BaseResponse<T> {
   success: boolean;
@@ -65,23 +66,21 @@ instance.interceptors.response.use(
     return body.data as unknown as AxiosResponse;
   },
   (error) => {
-    // 백엔드가 인증 실패 시 403 반환 확인됨(2026-07-23). 401로 통일되면 이 분기 제거 검토.
-    // TODO: 현재 401/403을 모두 인증 실패로 간주해 로그아웃 처리 중. 하지만 백엔드 스펙상
-    // /trades/{id}/status, /ootds/{id}/tags 등 일부 API는 403을 '정상 로그인 상태의 권한 없음'으로도
-    // 사용함(현재 미연동). 이 API들을 연동하는 시점에는 status 코드 대신 BaseResponse.code(예: USER_1004
-    // 등 접두사)로 인증 실패 여부를 구분하도록 리팩터링 필요.
-    if (
-      axios.isAxiosError(error) &&
-      (error.response?.status === 401 || error.response?.status === 403)
-    ) {
+    const isAxios = axios.isAxiosError<BaseResponse<unknown>>(error);
+    const responseBody = isAxios ? error.response?.data : undefined;
+    const code = responseBody?.code;
+
+    // 인증 실패는 status(401/403)가 아니라 code 화이트리스트로 판단한다.
+    // status만 보면 오판한다: AUTH_403은 이름과 달리 토큰과 무관한 일반 권한없음
+    // (도메인별 403, 예: TRADE_403_FORBIDDEN_TRANSITION)이고, USER_1004(로그인 실패)는
+    // 401이지만 자격 증명이 틀렸다는 뜻일 뿐 세션 만료가 아니다.
+    if (code && AUTH_LOGOUT_CODES.includes(code)) {
       clearAuthStorage();
       // 이미 로그인 페이지라면 리다이렉트하지 않아 무한 루프를 방지한다.
       if (window.location.pathname !== LOGIN_PATH) {
         window.location.href = LOGIN_PATH;
       }
     }
-    const isAxios = axios.isAxiosError<BaseResponse<unknown>>(error);
-    const responseBody = isAxios ? error.response?.data : undefined;
     const message = responseBody?.message || error.message;
 
     if (isAxios) {

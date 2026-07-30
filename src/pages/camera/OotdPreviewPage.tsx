@@ -86,7 +86,7 @@ const OotdPreviewPage = () => {
           </div>
         ))}
       </div>
-      {/* 안내 문구 (사진 바로 아래) */}
+      {/* 여백을 위해 추가, 사진과 버튼 붙는걸 방지*/}
       <p className="text-body-3 text-warning p-4 text-center font-medium"></p>
 
       {/* 하단 버튼 (하단 고정) */}

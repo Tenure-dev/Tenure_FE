@@ -39,3 +39,9 @@ export interface WishDeleteResponseDto {
   userId: number;
   wishCount: number;
 }
+
+export interface WishNotificationUpdateResponseDto {
+  itemId: number;
+  userId: number;
+  notificationEnabled: boolean;
+}

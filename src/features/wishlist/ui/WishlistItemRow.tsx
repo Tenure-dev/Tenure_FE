@@ -5,7 +5,7 @@ import type { WishlistItem } from '../model/types';
 
 export interface WishlistItemRowProps {
   item: WishlistItem;
-  onToggleNotify: (wishId: number) => void;
+  onToggleNotify: (item: WishlistItem) => void;
 }
 
 const formatPrice = (price: number) => `${price.toLocaleString()}원`;
@@ -64,7 +64,7 @@ const WishlistItemRow = ({ item, onToggleNotify }: WishlistItemRowProps) => {
       <button
         type="button"
         aria-label={item.notifyEnabled ? '알림 끄기' : '알림 켜기'}
-        onClick={() => onToggleNotify(item.wishId)}
+        onClick={() => onToggleNotify(item)}
         className="flex size-9 shrink-0 items-center justify-center"
       >
         {item.notifyEnabled ? (

@@ -5,7 +5,8 @@ import { useInfiniteScroll } from '@/shared/hooks/useInfiniteScroll';
 import { getWishes } from '@/features/wishlist/api/wishApi';
 import type { ApiProductStatus } from '@/features/wishlist/api/dto';
 import { toWishlistItem } from '@/features/wishlist/lib/mappers';
-import type { WishlistTab } from '@/features/wishlist/model/types';
+import type { WishlistItem, WishlistTab } from '@/features/wishlist/model/types';
+import { useUpdateWishNotification } from '@/features/wishlist/model/useUpdateWishNotification';
 import WishlistItemRow from '@/features/wishlist/ui/WishlistItemRow';
 
 const TABS: WishlistTab[] = ['전체', '판매중', '거래중'];
@@ -19,8 +20,6 @@ const TAB_TO_SALE_STATUS: Record<WishlistTab, ApiProductStatus | undefined> = {
 
 const WishListPage = () => {
   const [tab, setTab] = useState<WishlistTab>('전체');
-  // 위시 알림 on/off를 저장하는 API가 아직 없어(BE 요청 목록 참고) 로컬 상태에만 반영한다.
-  const [notifyOverrides, setNotifyOverrides] = useState<Record<number, boolean>>({});
 
   const { data, isLoading, hasNextPage, fetchNextPage } = useInfiniteQuery({
     queryKey: ['wishes', tab],
@@ -31,12 +30,8 @@ const WishListPage = () => {
   });
 
   const items = useMemo(
-    () =>
-      (data?.pages.flatMap((page) => page.content) ?? []).map(toWishlistItem).map((item) => ({
-        ...item,
-        notifyEnabled: notifyOverrides[item.wishId] ?? item.notifyEnabled,
-      })),
-    [data, notifyOverrides],
+    () => (data?.pages.flatMap((page) => page.content) ?? []).map(toWishlistItem),
+    [data],
   );
 
   const sentinelRef = useInfiniteScroll({
@@ -44,13 +39,12 @@ const WishListPage = () => {
     onLoadMore: fetchNextPage,
   });
 
+  const { mutate: toggleNotify } = useUpdateWishNotification();
+
   const handleTabChange = (nextTab: string) => setTab(nextTab as WishlistTab);
 
-  const handleToggleNotify = (wishId: number) => {
-    setNotifyOverrides((prev) => {
-      const current = items.find((item) => item.wishId === wishId)?.notifyEnabled ?? true;
-      return { ...prev, [wishId]: !current };
-    });
+  const handleToggleNotify = (item: WishlistItem) => {
+    toggleNotify({ itemId: item.itemId, notificationEnabled: !item.notifyEnabled });
   };
 
   return (

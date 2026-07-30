@@ -4,6 +4,7 @@ import type {
   WishCreateResponseDto,
   WishDeleteResponseDto,
   WishListPageResponse,
+  WishNotificationUpdateResponseDto,
 } from './dto';
 
 export interface GetWishesParams {
@@ -21,3 +22,8 @@ export const createWish = (itemId: number | string) =>
 
 export const deleteWish = (itemId: number | string) =>
   api.delete<WishDeleteResponseDto>(`/items/${itemId}/wish`);
+
+export const updateWishNotification = (itemId: number | string, notificationEnabled: boolean) =>
+  api.patch<WishNotificationUpdateResponseDto>(`/items/${itemId}/wish/notification`, {
+    notificationEnabled,
+  });

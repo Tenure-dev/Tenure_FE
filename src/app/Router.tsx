@@ -17,6 +17,7 @@ import NotificationSettingsPage from '@/pages/mypage/NotificationSettingsPage';
 import AccountVisibilityPage from '@/pages/mypage/AccountVisibilityPage';
 import WithdrawPage from '@/pages/mypage/WithdrawPage';
 import ItemDetailPage from '@/pages/item/ItemDetailPage';
+import ItemReportPage from '@/pages/item/ItemReportPage';
 import SearchHomePage from '@/pages/search/SearchHomePage';
 import SearchResultPage from '@/pages/search/SearchResultPage';
 import SearchSimilarOotdsPage from '@/pages/search/SearchSimilarOotdsPage';
@@ -78,6 +79,7 @@ export const router = createBrowserRouter([
       { path: 'trade/:tradeId', element: <TradeDetailPage /> },
       { path: 'trade/:tradeId/shipping', element: <ShippingInputPage /> },
       { path: 'item/:itemId', element: <ItemDetailPage /> },
+      { path: 'item/:itemId/report', element: <ItemReportPage /> },
       { path: 'item/:itemId/purchase/price', element: <PricePage /> },
       { path: 'item/:itemId/purchase/checkout', element: <CheckoutPage /> },
       { path: 'item/:itemId/purchase/processing', element: <ProcessingPage /> },

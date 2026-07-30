@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Toast } from '@/shared/components';
+import { useToast } from '@/shared/hooks/useToast';
 import { useAuthStore } from '@/store/useAuthStore';
 import { MOCK_ITEM_DETAILS } from '@/features/item/model/mock';
 import type { ViewerRole } from '@/features/item/model/types';
@@ -25,6 +27,7 @@ const ItemDetailPage = () => {
 
 const ItemDetailPageContent = ({ itemId }: { itemId: string }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const currentUserId = useAuthStore((state) => state.currentUserId);
   const item = MOCK_ITEM_DETAILS[itemId];
   const [wished, setWished] = useState(item?.isWished ?? false);
@@ -34,8 +37,18 @@ const ItemDetailPageContent = ({ itemId }: { itemId: string }) => {
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [showShareOptions, setShowShareOptions] = useState(false);
 
-  // 공용 Toast가 머지되면 그걸로 교체
-  const showToast = (message: string) => console.log(message);
+  // 토스트
+  const { message: toastMessage, show: showToast, hide: hideToast } = useToast();
+
+  const initialToastRef = useRef((location.state as { toast?: string } | null)?.toast ?? null);
+  useEffect(() => {
+    if (initialToastRef.current) {
+      const msg = initialToastRef.current;
+      initialToastRef.current = null;
+      showToast(msg);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, navigate, showToast]);
 
   if (!item) {
     return (
@@ -128,6 +141,7 @@ const ItemDetailPageContent = ({ itemId }: { itemId: string }) => {
         role={role}
         isBlocked={isBlocked}
         onToggleBlock={setIsBlocked}
+        onReport={() => navigate(`/item/${itemId}/report`)}
         onToast={showToast}
       />
 
@@ -138,6 +152,8 @@ const ItemDetailPageContent = ({ itemId }: { itemId: string }) => {
         onCopyLink={handleCopyLink}
         onShareToApp={handleShareToApp}
       />
+
+      <Toast message={toastMessage} onClose={hideToast} />
     </div>
   );
 };

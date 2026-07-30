@@ -33,8 +33,6 @@ const SearchHomePage = () => {
   }, []);
 
   useEffect(() => {
-    // 필터 바텀시트(z-40)가 BottomNavBar(z-50)에 가려지지 않도록,
-    // 시트가 열려 있을 때도 입력 활성 상태와 동일하게 nav bar를 숨긴다.
     setInputActive(active || filterSheetOpen);
     return () => setInputActive(false);
   }, [active, filterSheetOpen, setInputActive]);

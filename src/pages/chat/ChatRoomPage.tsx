@@ -16,6 +16,7 @@ import { useChatMessages } from '@/features/chat/api/useChatMessages';
 import { uploadChatImages } from '@/features/chat/api/messages';
 import { useMarkChatRead } from '@/features/chat/api/useMarkChatRead';
 import { useChatRoom } from '@/features/chat/api/useChatRoom';
+import { useExitChatRoom } from '@/features/chat/api/useExitChatRoom';
 
 // role: 'buyer' | 'seller' (내 입장)
 // saleStatus: 'onSale' 판매중 / 'unlisted' 미판매
@@ -39,6 +40,7 @@ const ChatRoomPage = ({
   const { messages: socketMessages, sendMessage } = useChatSocket(roomId);
   const { data: history, fetchNextPage, hasNextPage, isFetchingNextPage } = useChatMessages(roomId);
   const { mutate: markRead } = useMarkChatRead();
+  const { mutate: exitRoom } = useExitChatRoom();
   const { data: room } = useChatRoom(roomId);
 
   // 방 진입 시 읽음 처리 (내 unreadCount 0 → 목록 뱃지 제거)
@@ -103,8 +105,12 @@ const ChatRoomPage = ({
 
   const handleLeave = () => {
     setMenuOpen(false);
-    // 채팅 목록으로 이동하면서 "나갔습니다" 토스트 신호 전달
-    navigate('/chat', { state: { leftChat: true } });
+    exitRoom(roomId, {
+      onSuccess: () => navigate('/chat', { state: { leftChat: true } }),
+      onError: () => {
+        // TODO: 실패 시 토스트 등 피드백
+      },
+    });
   };
 
   return (

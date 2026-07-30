@@ -24,3 +24,7 @@ export const uploadChatImages = (chatRoomId: number, images: File[]) => {
     headers: { 'Content-Type': undefined }, // 브라우저가 multipart/form-data + boundary 자동 설정
   });
 };
+// 채팅방 나가기
+export const exitChatRoom = (chatRoomId: number) => {
+  return api.post<void>(`/chats/${chatRoomId}/exit`);
+};

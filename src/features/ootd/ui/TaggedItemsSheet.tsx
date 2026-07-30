@@ -160,7 +160,7 @@ const TaggedItemsSheet = ({
       onClose={onClose}
       variant="plain"
       dragProgressPx={dragProgressPx}
-      className="max-h-[70vh] max-w-md overflow-y-auto"
+      className="max-h-[70vh] overflow-y-auto"
     >
       <div className="px-5 pb-6">
         <h2 className="text-title-4 text-text-primary font-semibold">태그된 아이템</h2>

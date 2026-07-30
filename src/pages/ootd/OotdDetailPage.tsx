@@ -23,7 +23,9 @@ import {
   unfollowUser,
   unheartOotd,
   unsaveOotd,
+  unwishItem,
   updateTag,
+  wishItem,
 } from '@/features/ootd/api/ootdApi';
 import { toClosetItem, toOotdPost } from '@/features/ootd/lib/mappers';
 import type { ClosetItem } from '@/features/ootd/model/types';
@@ -405,6 +407,34 @@ const OotdDetailPage = () => {
     }
   };
 
+  const toggleTagWish = async (itemId: number, currentlyWished: boolean) => {
+    const next = !currentlyWished;
+    setPost((p) =>
+      p
+        ? {
+            ...p,
+            taggedItems: p.taggedItems.map((t) =>
+              t.itemId === itemId ? { ...t, wished: next } : t,
+            ),
+          }
+        : p,
+    );
+    try {
+      await (next ? wishItem(itemId) : unwishItem(itemId));
+    } catch {
+      setPost((p) =>
+        p
+          ? {
+              ...p,
+              taggedItems: p.taggedItems.map((t) =>
+                t.itemId === itemId ? { ...t, wished: currentlyWished } : t,
+              ),
+            }
+          : p,
+      );
+    }
+  };
+
   const handleDeleteConfirm = async () => {
     if (!post) return;
     setShowDeleteConfirm(false);
@@ -662,6 +692,7 @@ const OotdDetailPage = () => {
         items={post.taggedItems}
         dragProgressPx={sheetDragPx}
         onViewRelatedOotd={() => navigate(`/ootd/${targetId}/related`)}
+        onToggleWish={toggleTagWish}
       />
 
       <ConfirmModal

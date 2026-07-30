@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSearchUiStore } from '@/store/useSearchUiStore';
 import SearchTopBar from '@/features/search/ui/SearchTopBar';
 import SearchSuggestionsOverlay from '@/features/search/ui/SearchSuggestionsOverlay';
 import CarouselSection from '@/features/search/ui/CarouselSection';
@@ -25,10 +26,18 @@ const SearchHomePage = () => {
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const recentData = useRecentSearchData();
+  const setInputActive = useSearchUiStore((state) => state.setInputActive);
 
   useEffect(() => {
     getSearchHome().then(setHome);
   }, []);
+
+  useEffect(() => {
+    // 필터 바텀시트(z-40)가 BottomNavBar(z-50)에 가려지지 않도록,
+    // 시트가 열려 있을 때도 입력 활성 상태와 동일하게 nav bar를 숨긴다.
+    setInputActive(active || filterSheetOpen);
+    return () => setInputActive(false);
+  }, [active, filterSheetOpen, setInputActive]);
 
   const goToResult = (keyword: string, nextFilters: SearchFilters) => {
     const trimmed = keyword.trim();

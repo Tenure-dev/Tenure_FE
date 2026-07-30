@@ -22,7 +22,7 @@ export interface ChatRoomListResponse {
 export interface ChatMessageRequest {
   messageType: MessageType;
   content?: string; // 텍스트 전송 처리
-  imageUrl?: string; // 이미지 전송 처리
+  imageUrls?: string[]; // 이미지 전송 처리 (백엔드가 리스트로 받음)
 }
 
 export interface ChatMessageResponse {
@@ -32,7 +32,7 @@ export interface ChatMessageResponse {
   senderProfileImgUrl: string | null;
   messageType: MessageType;
   content: string | null;
-  contentImageUrl: string | null;
+  contentImageUrls: string[] | null;
   createdAt: string;
 }
 
@@ -44,7 +44,7 @@ export interface ChatMessageListResponse {
 }
 
 export interface ChatImageUploadResponse {
-  imageUrl: string;
+  imageUrls: string[];
 }
 
 export type ProductStatus = 'ON_SALE' | 'TRADING' | 'SOLD' | 'HIDDEN';

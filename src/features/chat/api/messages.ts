@@ -16,10 +16,10 @@ export const markChatRead = (chatRoomId: number) => {
   return api.post<void>(`/chats/${chatRoomId}/read`);
 };
 
-// 채팅 이미지 업로드 (multipart) → 저장된 URL 반환
-export const uploadChatImage = (chatRoomId: number, image: File) => {
+// 채팅 이미지 업로드 (multipart, 여러 장 한 번에) → 저장된 URL 리스트 반환
+export const uploadChatImages = (chatRoomId: number, images: File[]) => {
   const formData = new FormData();
-  formData.append('image', image);
+  images.forEach((image) => formData.append('images', image));
   return api.post<ChatImageUploadResponse>(`/chats/${chatRoomId}/images`, formData, {
     headers: { 'Content-Type': undefined }, // 브라우저가 multipart/form-data + boundary 자동 설정
   });

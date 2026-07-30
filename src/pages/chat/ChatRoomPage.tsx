@@ -13,7 +13,7 @@ import { useParams } from 'react-router-dom';
 import { useChatSocket } from '@/features/chat/api/useChatSocket';
 import { toChatMessage } from '@/features/chat/api/chatMessage';
 import { useChatMessages } from '@/features/chat/api/useChatMessages';
-import { uploadChatImage } from '@/features/chat/api/messages';
+import { uploadChatImages } from '@/features/chat/api/messages';
 import { useMarkChatRead } from '@/features/chat/api/useMarkChatRead';
 import { useChatRoom } from '@/features/chat/api/useChatRoom';
 
@@ -74,13 +74,12 @@ const ChatRoomPage = ({
 
   // 이미지 첨부
   const handleSendImages = async (files: FileList) => {
-    for (const file of Array.from(files)) {
-      try {
-        const { imageUrl } = await uploadChatImage(roomId, file);
-        sendMessage({ messageType: 'IMAGE', imageUrl });
-      } catch (e) {
-        console.error('이미지 업로드 실패', e);
-      }
+    try {
+      // 여러 장을 한 번에 업로드하고, 받은 URL들을 하나의 메시지로 전송(묶음 표시)
+      const { imageUrls } = await uploadChatImages(roomId, Array.from(files));
+      sendMessage({ messageType: 'IMAGE', imageUrls });
+    } catch {
+      // 업로드 실패 시 조용히 무시 (TODO: 사용자 피드백 토스트 연동)
     }
   };
   // 텍스트 전송 → 내 메시지로 추가 (로컬)

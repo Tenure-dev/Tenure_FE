@@ -32,10 +32,8 @@ export const useChatSocket = (chatRoomId: number) => {
   // 메시지 전송 (/pub/chats/{id}로 발행)
   const sendMessage = (body: ChatMessageRequest) => {
     const client = clientRef.current;
-    if (!client || !client.connected) {
-      console.warn('아직 연결되지 않았습니다.');
-      return;
-    }
+    // 아직 연결 전이면 전송하지 않음
+    if (!client || !client.connected) return;
     client.publish({
       destination: `/pub/chats/${chatRoomId}`,
       body: JSON.stringify(body),

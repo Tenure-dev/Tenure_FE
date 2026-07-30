@@ -16,7 +16,9 @@ export const toChatMessage = (res: ChatMessageResponse): ChatMessage => {
     id: res.messageId,
     mine: String(res.senderId) === myUserId,
     text: res.content ?? undefined,
-    images: res.contentImageUrl ? [resolveFileUrl(res.contentImageUrl)] : undefined,
+    images: res.contentImageUrls?.length
+      ? res.contentImageUrls.map((url) => resolveFileUrl(url))
+      : undefined,
     time: formatTime(res.createdAt),
   };
 };

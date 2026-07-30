@@ -36,6 +36,10 @@ export interface AuthResult {
   accessToken: string;
 }
 
+export interface UsernameCheckResponse {
+  available: boolean;
+}
+
 export interface AddressRequest {
   receiverName: string;
   phone: string;

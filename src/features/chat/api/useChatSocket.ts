@@ -10,8 +10,12 @@ export const useChatSocket = (chatRoomId: number) => {
   useEffect(() => {
     const client = createStompClient((connected) => {
       connected.subscribe(`/sub/chats/${chatRoomId}`, (frame) => {
-        const message: ChatMessageResponse = JSON.parse(frame.body);
-        setMessages((prev) => [...prev, message]);
+        const data = JSON.parse(frame.body);
+        // /sub/chats/{id}로는 채팅 메시지 외에 읽음 이벤트({ type: 'READ' })도 오는데,
+        // 이건 메시지가 아니므로(messageId 없음) 목록에 넣지 않는다. (빈 말풍선·중복 key 방지)
+        // TODO: 읽음 "1" 표시 실제 연동 시 여기서 read 상태를 별도로 처리
+        if (data?.type === 'READ') return;
+        setMessages((prev) => [...prev, data as ChatMessageResponse]);
       });
     });
 

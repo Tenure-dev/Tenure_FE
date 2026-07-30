@@ -86,6 +86,8 @@ const OotdPreviewPage = () => {
           </div>
         ))}
       </div>
+      {/* 안내 문구 (사진 바로 아래) */}
+      <p className="text-body-3 text-warning p-4 text-center font-medium"></p>
 
       {/* 하단 버튼 (하단 고정) */}
       <div className="mt-auto flex gap-2 px-5 pb-6">

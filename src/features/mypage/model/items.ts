@@ -90,6 +90,18 @@ export type ItemUpdateResponse = ItemUpdateRequest & {
   itemStatus: ItemStatus;
 };
 
+export type CreateProductResponse = {
+  productId: number;
+  itemId: number;
+  sellerUserId: number;
+  price: number;
+  shippingFee: number;
+  feePolicy: string;
+  productStatus: string;
+  itemStatus: string;
+  attachedOotdIds: number[];
+};
+
 export type OfferSettingRequest = {
   purchaseOfferEnabled: boolean;
 };

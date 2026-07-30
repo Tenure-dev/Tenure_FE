@@ -49,8 +49,6 @@ export interface ChatImageUploadResponse {
 
 export type ProductStatus = 'ON_SALE' | 'TRADING' | 'SOLD' | 'HIDDEN';
 
-// GET /chats/{chatRoomId} 응답 (프로덕트 바용)
-// 주의: 백엔드 boolean 필드 isBuyer → JSON은 buyer 로 옴
 export interface ChatRoomDetailResponse {
   chatRoomId: number;
   opponentUsername: string;
@@ -63,5 +61,8 @@ export interface ChatRoomDetailResponse {
   lastWornAt: string | null;
   tradeId: number | null;
   productId: number;
+  itemId: number;
   buyer: boolean;
+  hasPurchaseIntent: boolean;
+  hasPurchaseOffer: boolean;
 }

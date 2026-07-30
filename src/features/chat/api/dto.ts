@@ -65,4 +65,5 @@ export interface ChatRoomDetailResponse {
   buyer: boolean;
   hasPurchaseIntent: boolean;
   hasPurchaseOffer: boolean;
+  opponentExited: boolean; // 상대방이 채팅방을 나갔는지
 }

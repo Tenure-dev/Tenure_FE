@@ -5,9 +5,10 @@ import up from '@/shared/assets/up.svg';
 type Props = {
   onSendImages?: (files: FileList) => void;
   onSendText?: (text: string) => void;
+  disabled?: boolean; // 상대방이 나간 방 등 → 입력 비활성화
 };
 
-const ChatInput = ({ onSendImages, onSendText }: Props) => {
+const ChatInput = ({ onSendImages, onSendText, disabled = false }: Props) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState('');
 
@@ -31,6 +32,15 @@ const ChatInput = ({ onSendImages, onSendText }: Props) => {
       handleSend();
     }
   };
+
+  // 상대방이 나간 방: 입력창 대신 안내 문구 표시
+  if (disabled) {
+    return (
+      <div className="absolute inset-x-0 bottom-0 flex items-center justify-center px-4 py-6">
+        <p className="text-body-3 text-text-tertiary">상대방이 채팅방을 나갔습니다.</p>
+      </div>
+    );
+  }
 
   return (
     // 하단에 떠 있는 오버레이. 주변은 투명(pointer-events 통과), 입력 pill만 상호작용

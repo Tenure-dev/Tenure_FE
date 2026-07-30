@@ -131,8 +131,7 @@ const ChatRoomPage = ({
           tradeStatus={tradeStatusView}
           offerEnabled={room.offerEnabled}
           tradeId={room.tradeId}
-          productId={room.productId} // 추가 (버튼 이동용)
-          itemId={room.itemId} // 추가 (아이템 관리 이동용)
+          itemId={room.itemId} // 아이템 상세·관리·구매 이동용
         />
       )}
       <ChatMessages
@@ -144,7 +143,11 @@ const ChatRoomPage = ({
         isLoadingOlder={isFetchingNextPage}
         onLoadOlder={fetchNextPage}
       />
-      <ChatInput onSendImages={handleSendImages} onSendText={handleSendText} />
+      <ChatInput
+        onSendImages={handleSendImages}
+        onSendText={handleSendText}
+        disabled={room?.opponentExited}
+      />
 
       <Toast message={toast} onClose={() => setToast(null)} />
 

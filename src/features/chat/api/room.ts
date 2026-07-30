@@ -27,6 +27,7 @@ export interface ChatRoomView {
   productId: number;
   itemId: number;
   tradeId: number | null;
+  opponentExited: boolean;
 }
 
 // 상세 응답 → 바 값으로 변환
@@ -61,5 +62,6 @@ export const toChatRoomView = (r: ChatRoomDetailResponse): ChatRoomView => {
     productId: r.productId,
     itemId: r.itemId,
     tradeId: r.tradeId,
+    opponentExited: r.opponentExited,
   };
 };

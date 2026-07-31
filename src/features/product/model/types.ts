@@ -1,4 +1,4 @@
-export type ItemSaleStatus = 'onSale' | 'unsold' | 'soldOut';
+export type ProductSaleStatus = 'onSale' | 'trading' | 'sold' | 'hidden';
 
 export const ITEM_REPORT_REASONS = [
   '가품 또는 정품 의심',
@@ -28,9 +28,18 @@ export interface ItemTenureRecord {
   firstOwnedDate: string;
 }
 
-export interface ItemMeasurementField {
-  label: string;
-  value: string;
+// 상품 실측
+export interface Measurements {
+  shoulderWidth?: number;
+  chestWidth?: number;
+  sleeveLength?: number;
+  totalLength?: number;
+  waistWidth?: number;
+  thighWidth?: number;
+  rise?: number;
+  inseam?: number;
+  hemWidth?: number;
+  hipWidth?: number;
 }
 
 export interface ItemConditionCheck {
@@ -50,13 +59,13 @@ export interface ItemDetail {
   brand: string;
   name: string;
   imageUrls: string[];
-  saleStatus: ItemSaleStatus;
+  saleStatus: ProductSaleStatus;
   price?: number;
   isWished: boolean;
   description?: string;
   tenureRecord: ItemTenureRecord;
-  measurementTitle?: string;
-  measurements?: ItemMeasurementField[];
+  categoryLarge: string;
+  measurements?: Measurements;
   conditionChecks?: ItemConditionCheck[];
   representativeOOTDs: RepresentativeOOTD[];
   /** unsold 상태에서 서버가 내려주는 구매제안 가능 여부 */

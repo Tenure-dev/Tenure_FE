@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ITEM_REPORT_REASONS } from '@/features/item/model/types';
+import { ITEM_REPORT_REASONS } from '@/features/product/model/types';
 import { BackHeader, Button, SelectBox } from '@/shared/components';
 
 const REPORT_OPTIONS = ITEM_REPORT_REASONS.map((reason) => ({ value: reason, label: reason }));
 
-const ItemReportPage = () => {
+const ProductReportPage = () => {
   const navigate = useNavigate();
   const { itemId } = useParams<{ itemId: string }>();
   const [reason, setReason] = useState('');
@@ -42,4 +42,4 @@ const ItemReportPage = () => {
   );
 };
 
-export default ItemReportPage;
+export default ProductReportPage;

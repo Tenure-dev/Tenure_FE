@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSearchUiStore } from '@/store/useSearchUiStore';
 import SearchTopBar from '@/features/search/ui/SearchTopBar';
 import SearchSuggestionsOverlay from '@/features/search/ui/SearchSuggestionsOverlay';
 import CarouselSection from '@/features/search/ui/CarouselSection';
@@ -25,10 +26,16 @@ const SearchHomePage = () => {
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const recentData = useRecentSearchData();
+  const setInputActive = useSearchUiStore((state) => state.setInputActive);
 
   useEffect(() => {
     getSearchHome().then(setHome);
   }, []);
+
+  useEffect(() => {
+    setInputActive(active || filterSheetOpen);
+    return () => setInputActive(false);
+  }, [active, filterSheetOpen, setInputActive]);
 
   const goToResult = (keyword: string, nextFilters: SearchFilters) => {
     const trimmed = keyword.trim();
@@ -53,7 +60,7 @@ const SearchHomePage = () => {
   };
 
   return (
-    <div className="bg-bg-white mx-auto flex min-h-screen w-full max-w-md flex-col">
+    <div className="bg-bg-white flex min-h-screen flex-col">
       <SearchTopBar
         value={query}
         onChange={setQuery}

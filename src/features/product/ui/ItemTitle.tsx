@@ -1,16 +1,17 @@
 import { cn } from '@/shared/lib/cn';
-import type { ItemSaleStatus } from '../model/types';
+import type { ProductSaleStatus } from '../model/types';
 
 export interface ItemTitleProps {
   brand: string;
   name: string;
-  saleStatus: ItemSaleStatus;
+  saleStatus: ProductSaleStatus;
   price?: number;
 }
 
-const STATUS_TEXT: Partial<Record<ItemSaleStatus, { label: string; className: string }>> = {
-  unsold: { label: '미판매', className: 'text-text-disabled' },
-  soldOut: { label: '판매 완료', className: 'text-success' },
+const STATUS_TEXT: Partial<Record<ProductSaleStatus, { label: string; className: string }>> = {
+  hidden: { label: '미판매', className: 'text-text-disabled' },
+  sold: { label: '판매 완료', className: 'text-success' },
+  trading: { label: '거래 중', className: 'text-success' },
 };
 
 const ItemTitle = ({ brand, name, saleStatus, price }: ItemTitleProps) => {

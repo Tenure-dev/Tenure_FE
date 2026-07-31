@@ -1,14 +1,15 @@
 import { ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SegmentedControl } from '@/shared/components';
-import { PURCHASE_LIST } from './trade/mock';
+import { usePurchaseHistory } from '@/features/trade/api/usePurchaseHistory';
 import TradeListRow from './trade/TradeListRow';
 
 const PurchaseHistoryPage = () => {
   const navigate = useNavigate();
+  const { data, isPending, isError } = usePurchaseHistory('ALL', 1);
 
-  return (
-    <div className="mx-auto min-h-screen w-full max-w-[390px] bg-[#FFFFFF] font-sans">
+  const header = (
+    <>
       <header className="flex h-[52px] items-center justify-between px-[16px]">
         <button type="button" onClick={() => navigate(-1)} aria-label="뒤로가기">
           <ChevronLeft size={24} className="text-[#111111]" />
@@ -26,12 +27,52 @@ const PurchaseHistoryPage = () => {
           }}
         />
       </div>
+    </>
+  );
 
-      <div className="flex flex-col">
-        {PURCHASE_LIST.map((item) => (
-          <TradeListRow key={item.tradeId} item={item} role="buyer" />
-        ))}
+  if (isPending) {
+    return (
+      <div className="mx-auto min-h-screen w-full max-w-[390px] bg-[#FFFFFF] font-sans">
+        {header}
+        <p className="p-[16px] text-center text-[13px] text-[#767676]">불러오는 중...</p>
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="mx-auto min-h-screen w-full max-w-[390px] bg-[#FFFFFF] font-sans">
+        {header}
+        <p className="p-[16px] text-center text-[13px] text-[#767676]">
+          구매내역을 불러오지 못했습니다
+        </p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="mx-auto min-h-screen w-full max-w-[390px] bg-[#FFFFFF] font-sans">
+        {header}
+        <p className="p-[16px] text-center text-[13px] text-[#767676]">
+          구매내역을 불러오지 못했습니다
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto min-h-screen w-full max-w-[390px] bg-[#FFFFFF] font-sans">
+      {header}
+      {data.content.length === 0 ? (
+        <p className="p-[16px] text-center text-[13px] text-[#767676]">구매내역이 없습니다</p>
+      ) : (
+        <div className="flex flex-col">
+          {data.content.map((item) => (
+            <TradeListRow key={item.historyId} item={item} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

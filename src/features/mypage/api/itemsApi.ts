@@ -1,6 +1,8 @@
 import { api } from '@/shared/lib/api';
 
+import type { UpdateProductRequest } from '@/features/product/api/dto';
 import type {
+  CreateProductResponse,
   RegisteredItemListParams,
   RegisteredItemListResponse,
   RegisteredItemDetailResponse,
@@ -11,6 +13,7 @@ import type {
   ItemHistoryListResponse,
   CreateItemRequest,
   CreateItemResponse,
+  FrequentlyWornItem,
 } from '../model/items';
 
 export const getItems = (params?: RegisteredItemListParams) =>
@@ -30,3 +33,10 @@ export const updateOfferSetting = (itemId: number, body: OfferSettingRequest) =>
 
 export const getItemHistories = (itemId: number, params?: { page?: number; size?: number }) =>
   api.get<ItemHistoryListResponse>(`/items/${itemId}/histories`, { params });
+
+// 아이템 판매 전환
+export const createProductFromItem = (itemId: number, body: UpdateProductRequest) =>
+  api.post<CreateProductResponse>(`/items/${itemId}/product`, body);
+
+export const getFrequentlyWornTogether = (itemId: number) =>
+  api.get<FrequentlyWornItem[]>(`/items/${itemId}/frequently-worn-together`);

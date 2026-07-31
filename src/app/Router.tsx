@@ -17,7 +17,9 @@ import SettingsPage from '@/pages/mypage/SettingsPage';
 import NotificationSettingsPage from '@/pages/mypage/NotificationSettingsPage';
 import AccountVisibilityPage from '@/pages/mypage/AccountVisibilityPage';
 import WithdrawPage from '@/pages/mypage/WithdrawPage';
-import ItemDetailPage from '@/pages/item/ItemDetailPage';
+import ProductDetailPage from '@/pages/product/ProductDetailPage';
+import ProductEditPage from '@/pages/product/ProductEditPage';
+import ProductReportPage from '@/pages/product/ProductReportPage';
 import SearchHomePage from '@/pages/search/SearchHomePage';
 import SearchResultPage from '@/pages/search/SearchResultPage';
 import SearchSimilarOotdsPage from '@/pages/search/SearchSimilarOotdsPage';
@@ -26,6 +28,7 @@ import SearchNewOotdsPage from '@/pages/search/SearchNewOotdsPage';
 import SearchPopularUsersPage from '@/pages/search/SearchPopularUsersPage';
 import LoginPage from '@/pages/onboarding/LoginPage';
 import SignupPage from '@/pages/onboarding/SignupPage';
+import FindPasswordPage from '@/pages/onboarding/FindPasswordPage';
 import TestPage from '@/pages/onboarding/Test';
 import OotdDetailPage from '@/pages/ootd/OotdDetailPage';
 import ReportPage from '@/pages/ootd/ReportPage';
@@ -62,6 +65,7 @@ export const router = createBrowserRouter([
       { path: 'ootd/:id/related', element: <RelatedOotdPage /> },
       { path: 'login', element: <LoginPage /> },
       { path: 'signup', element: <SignupPage /> },
+      { path: 'find-password', element: <FindPasswordPage /> },
       // 비로그인 전용 (PublicOnlyLayout)
       // { element: <PublicOnlyLayout />, children: [
       //   { path: 'login', element: <LoginPage /> },
@@ -79,11 +83,13 @@ export const router = createBrowserRouter([
       { path: 'sales-history', element: <SalesHistoryPage /> },
       { path: 'trade/:tradeId', element: <TradeDetailPage /> },
       { path: 'trade/:tradeId/shipping', element: <ShippingInputPage /> },
-      { path: 'item/:itemId', element: <ItemDetailPage /> },
-      { path: 'item/:itemId/purchase/price', element: <PricePage /> },
-      { path: 'item/:itemId/purchase/checkout', element: <CheckoutPage /> },
-      { path: 'item/:itemId/purchase/processing', element: <ProcessingPage /> },
-      { path: 'item/:itemId/purchase/complete', element: <CompletePage /> },
+      { path: 'product/:itemId', element: <ProductDetailPage /> },
+      { path: 'product/:itemId/edit', element: <ProductEditPage /> },
+      { path: 'product/:itemId/report', element: <ProductReportPage /> },
+      { path: 'product/:itemId/purchase/price', element: <PricePage /> },
+      { path: 'product/:itemId/purchase/checkout', element: <CheckoutPage /> },
+      { path: 'product/:itemId/purchase/processing', element: <ProcessingPage /> },
+      { path: 'product/:itemId/purchase/complete', element: <CompletePage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'settings/notifications', element: <NotificationSettingsPage /> },
       { path: 'settings/visibility', element: <AccountVisibilityPage /> },

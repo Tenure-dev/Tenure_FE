@@ -42,7 +42,6 @@ const BottomSheet = ({
         'fixed inset-0 z-40',
         blocksBackground ? 'pointer-events-auto' : 'pointer-events-none',
       )}
-      aria-hidden={!visible}
       inert={!visible}
     >
       {showBackdrop && (

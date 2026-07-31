@@ -59,7 +59,7 @@ const RelatedOotdPage = () => {
   }, [ootdId]);
 
   return (
-    <div className="bg-bg-white mx-auto flex min-h-screen w-full max-w-md flex-col">
+    <div className="bg-bg-white flex min-h-screen flex-col">
       <div className="bg-bg-white sticky top-0 z-10 flex items-center px-4 py-3">
         <button type="button" onClick={() => navigate(-1)} aria-label="뒤로가기">
           <ChevronLeft size={24} className="text-text-primary" />

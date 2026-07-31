@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Delete } from 'lucide-react';
 import { BackHeader, Button } from '@/shared/components';
-import { MOCK_ITEM_DETAILS } from '@/features/item/model/mock';
+import { useProductDetail } from '@/features/product/model/useProductDetail';
 import { useOfferStore } from '@/store/offerStore';
 import { cn } from '@/shared/lib/cn';
 import StepProgress from './components/StepProgress';
@@ -18,11 +18,19 @@ const PricePage = () => {
   const setPrice = useOfferStore((s) => s.setPrice);
   const setSellerNickname = useOfferStore((s) => s.setSellerNickname);
 
-  const item = MOCK_ITEM_DETAILS[itemId];
+  const { data, isLoading, isError } = useProductDetail(Number(itemId));
   const [view, setView] = useState<View>('form');
   const [digits, setDigits] = useState('');
 
-  if (!item) {
+  if (isLoading) {
+    return (
+      <div className="bg-bg-white text-body-3 text-text-secondary flex min-h-screen items-center justify-center">
+        로딩 중...
+      </div>
+    );
+  }
+
+  if (isError || !data) {
     return (
       <div className="bg-bg-white text-body-3 text-text-secondary flex min-h-screen items-center justify-center">
         아이템 정보를 찾을 수 없습니다.
@@ -31,6 +39,7 @@ const PricePage = () => {
   }
 
   const price = parseInt(digits || '0', 10);
+  const sellerNickname = data.seller.username;
 
   const handleKey = (key: string) => {
     if (key === '←') {
@@ -46,8 +55,8 @@ const PricePage = () => {
 
   const handleSubmit = () => {
     setPrice(price);
-    setSellerNickname(item.seller.nickname);
-    navigate(`/item/${itemId}/purchase/checkout`);
+    setSellerNickname(sellerNickname);
+    navigate(`/product/${itemId}/purchase/checkout`);
   };
 
   if (view === 'numpad') {
@@ -59,7 +68,7 @@ const PricePage = () => {
 
         <div className="flex flex-1 flex-col px-4 pt-8">
           <p className="text-body-1 text-text-secondary">
-            <span className="text-text-primary font-bold">{item.seller.nickname}</span>님에게
+            <span className="text-text-primary font-bold">{sellerNickname}</span>님에게
           </p>
           <p className="text-title-1 text-text-secondary mt-1">얼마를 제안할까요?</p>
 
@@ -108,11 +117,11 @@ const PricePage = () => {
       <StepProgress currentStep={1} />
 
       <ItemSummaryCard
-        imageUrl={item.imageUrls[0]}
-        brand={item.brand}
-        name={item.name}
-        sellerNickname={item.seller.nickname}
-        subline={`미판매 · OOTD 인증 ${item.tenureRecord.ootdVerifiedCount}회`}
+        imageUrl={data.mainImageUrl}
+        brand={data.item.brandName}
+        name={data.item.itemName}
+        sellerNickname={sellerNickname}
+        subline={`미판매 · OOTD 인증 ${data.item.ootdVerifiedWearCount}회`}
       />
 
       <div className="flex flex-1 flex-col px-4 pt-6">

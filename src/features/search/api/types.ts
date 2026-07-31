@@ -39,6 +39,7 @@ export interface SearchHomePopularUserResponse {
   profileImageUrl: string | null;
   followerCount: number;
   ootdCount: number;
+  following: boolean;
 }
 
 export interface CategoryResponse {
@@ -83,8 +84,6 @@ export interface SearchUserResponse {
   profileImageUrl: string | null;
   followerCount: number;
   ootdCount: number;
-  // BE의 SearchUserResponse는 필드명이 isFollowing이 아니라 following으로 직렬화된다
-  // (Lombok의 boolean isFollowing 필드 -> Jackson bean getter 규칙으로 "following"이 됨).
   following: boolean;
 }
 

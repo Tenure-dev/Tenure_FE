@@ -13,6 +13,10 @@ import { toApiGender } from '@/features/auth/lib/gender';
 import { ACCESS_TOKEN_STORAGE_KEY, ApiError, USER_ID_STORAGE_KEY } from '@/shared/lib/api';
 import { useUserStore } from '@/store/userStore';
 
+// TODO(#100): 백엔드 SMTP(Gmail)가 Render 포트 차단으로 발송 불가 상태라 임시로 이메일 인증을 스킵.
+// 백엔드가 SendGrid/Mailgun 등으로 전환 완료하면 false로 되돌릴 것.
+const SKIP_EMAIL_VERIFICATION = true;
+
 const TOTAL_STEPS = 4;
 type Step = 1 | 2 | 3 | 4;
 
@@ -168,7 +172,7 @@ const SignupPage = () => {
       : null;
 
   const canProceedStep1 =
-    emailVerifyState === 'verified' &&
+    (SKIP_EMAIL_VERIFICATION || emailVerifyState === 'verified') &&
     !errors.password &&
     password.length >= 8 &&
     passwordConfirm.length > 0 &&

@@ -68,8 +68,16 @@ export type RegisteredItemDetailResponse = {
   purchaseOfferEnabled: boolean;
 };
 
+export type FrequentlyWornItem = {
+  itemId: number;
+  brandName: string;
+  itemName: string;
+  representativeImageUrl: string;
+  togetherCount: number;
+};
+
 export type RegisteredItemDetail = RegisteredItemDetailResponse & {
-  frequentlyWornWith: string[];
+  frequentlyWornWith: FrequentlyWornItem[];
 };
 
 export type ItemUpdateRequest = {
@@ -88,6 +96,18 @@ export type ItemUpdateResponse = ItemUpdateRequest & {
   itemId: number;
   ownerUserId: number;
   itemStatus: ItemStatus;
+};
+
+export type CreateProductResponse = {
+  productId: number;
+  itemId: number;
+  sellerUserId: number;
+  price: number;
+  shippingFee: number;
+  feePolicy: string;
+  productStatus: string;
+  itemStatus: string;
+  attachedOotdIds: number[];
 };
 
 export type OfferSettingRequest = {

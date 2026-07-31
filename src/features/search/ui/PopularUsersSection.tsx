@@ -27,7 +27,12 @@ const PopularUsersSection = ({ users }: PopularUsersSectionProps) => {
 
       <div className="no-scrollbar mt-4 flex gap-4 overflow-x-auto py-1">
         {users.map((user) => (
-          <div key={user.id} className="flex w-15 shrink-0 flex-col items-center gap-1">
+          <button
+            key={user.id}
+            type="button"
+            onClick={() => navigate(`/users/${user.id}`)}
+            className="flex w-15 shrink-0 flex-col items-center gap-1"
+          >
             <img
               src={resolveImageUrl(user.profileImageUrl) || profileDefault}
               alt={user.username}
@@ -36,7 +41,7 @@ const PopularUsersSection = ({ users }: PopularUsersSectionProps) => {
             <span className="text-body-4 text-text-secondary w-full truncate text-center font-medium">
               {user.username}
             </span>
-          </div>
+          </button>
         ))}
       </div>
     </div>

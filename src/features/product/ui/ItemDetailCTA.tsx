@@ -1,9 +1,9 @@
 import { Button, DoubleButton } from '@/shared/components';
-import type { ItemSaleStatus, ViewerRole } from '../model/types';
+import type { ProductSaleStatus, ViewerRole } from '../model/types';
 
 export interface ItemDetailCTAProps {
   role: ViewerRole;
-  saleStatus: ItemSaleStatus;
+  saleStatus: ProductSaleStatus;
   offerAvailable?: boolean;
   onChat?: () => void;
   onBuy?: () => void;
@@ -18,7 +18,7 @@ const ItemDetailCTA = ({
   onBuy,
   onOffer,
 }: ItemDetailCTAProps) => {
-  if (role !== 'buyer' || saleStatus === 'soldOut') {
+  if (role !== 'buyer' || saleStatus === 'sold' || saleStatus === 'trading') {
     return null;
   }
 

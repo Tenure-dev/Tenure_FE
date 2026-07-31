@@ -1,20 +1,15 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import { BackHeader, Button } from '@/shared/components';
-import { MOCK_ITEM_DETAILS } from '@/features/item/model/mock';
-import { useOfferStore, type ShippingAddress, type PaymentMethod } from '@/store/offerStore';
+import { useProductDetail } from '@/features/product/model/useProductDetail';
+import { useOfferStore, type PaymentMethod } from '@/store/offerStore';
+import { useAddresses } from '@/features/purchase/model/useAddresses';
 import { cn } from '@/shared/lib/cn';
 import StepProgress from './components/StepProgress';
 import ItemSummaryCard from './components/ItemSummaryCard';
 
 const SHIPPING_FEE = 5_000;
-const MOCK_ADDRESS: ShippingAddress = {
-  name: '홍길동',
-  address: '서울특별시 동작구 상도로 369 104동 201호',
-  phone: '010-1234-5678',
-  request: '배송 전에 미리 연락 바랍니다.',
-};
 
 const PAYMENT_OPTIONS: { value: PaymentMethod; label: string }[] = [
   { value: 'toss', label: '토스페이' },
@@ -24,23 +19,30 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string }[] = [
 
 const CheckoutPage = () => {
   const { itemId = '' } = useParams();
+  const { state } = useLocation();
   const navigate = useNavigate();
-  const {
-    price,
-    shippingAddress,
-    tradeRequest,
-    paymentMethod,
-    setShippingAddress,
-    setTradeRequest,
-    setPaymentMethod,
-  } = useOfferStore();
+
+  const offerPrice = useOfferStore((s) => s.price);
+  const tradeRequest = useOfferStore((s) => s.tradeRequest);
+  const paymentMethod = useOfferStore((s) => s.paymentMethod);
+  const setTradeRequest = useOfferStore((s) => s.setTradeRequest);
+  const setPaymentMethod = useOfferStore((s) => s.setPaymentMethod);
 
   const [agreeOrder, setAgreeOrder] = useState(false);
   const [agreeAuto, setAgreeAuto] = useState(false);
 
-  const item = MOCK_ITEM_DETAILS[itemId];
+  const { data, isLoading, isError } = useProductDetail(Number(itemId));
+  const { defaultAddress } = useAddresses();
 
-  if (!item) {
+  if (isLoading) {
+    return (
+      <div className="bg-bg-white text-body-3 text-text-secondary flex min-h-screen items-center justify-center">
+        로딩 중...
+      </div>
+    );
+  }
+
+  if (isError || !data) {
     return (
       <div className="bg-bg-white text-body-3 text-text-secondary flex min-h-screen items-center justify-center">
         아이템 정보를 찾을 수 없습니다.
@@ -48,13 +50,13 @@ const CheckoutPage = () => {
     );
   }
 
-  const fee = Math.round(price / 30);
-  const total = price + SHIPPING_FEE + fee;
-  const canPay = !!shippingAddress && agreeOrder && agreeAuto;
+  const isDirect = (state as { direct?: boolean } | null)?.direct === true;
+  const displayPrice = isDirect ? (data.price ?? 0) : offerPrice;
+  const fee = Math.round(displayPrice / 30);
+  const total = displayPrice + SHIPPING_FEE + fee;
+  const canPay = !!defaultAddress && agreeOrder && agreeAuto;
 
-  const handleAddAddress = () => setShippingAddress(MOCK_ADDRESS);
-
-  const handlePay = () => navigate(`/item/${itemId}/purchase/processing`);
+  const handlePay = () => navigate(`/product/${itemId}/purchase/processing`);
 
   return (
     <div className="bg-bg-white flex min-h-screen flex-col pb-[86px]">
@@ -65,16 +67,18 @@ const CheckoutPage = () => {
       <section className="px-4 pt-4">
         <h2 className="text-title-4 text-text-primary mb-3 font-bold">상품 정보</h2>
         <ItemSummaryCard
-          imageUrl={item.imageUrls[0]}
-          brand={item.brand}
-          name={item.name}
-          sellerNickname={item.seller.nickname}
+          imageUrl={data.mainImageUrl}
+          brand={data.item.brandName}
+          name={data.item.itemName}
+          sellerNickname={data.seller.username}
           subline="주문자 : 홍길동 · 010-xxxx-xxxx"
         />
         <div className="mt-3 flex flex-col gap-2">
           <div className="flex justify-between">
             <span className="text-body-2 text-text-secondary">상품 금액</span>
-            <span className="text-body-2 text-text-primary">{price.toLocaleString('ko-KR')}원</span>
+            <span className="text-body-2 text-text-primary">
+              {displayPrice.toLocaleString('ko-KR')}원
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-body-2 text-text-secondary">배송비</span>
@@ -100,45 +104,44 @@ const CheckoutPage = () => {
       {/* 배송지 */}
       <section className="p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-title-4 text-text-primary font-bold">배송지</h2>
-          {shippingAddress && (
-            <button
-              type="button"
-              onClick={handleAddAddress}
-              className="text-body-3 text-text-secondary underline"
-            >
-              주소 변경
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            <h2 className="text-title-4 text-text-primary font-bold">배송지</h2>
+            {defaultAddress && (
+              <span className="bg-bg-secondary text-body-3 text-text-secondary rounded px-1.5 py-0.5">
+                기본
+              </span>
+            )}
+          </div>
+          <button type="button" className="text-body-3 text-text-secondary underline">
+            주소 변경
+          </button>
         </div>
 
-        {shippingAddress ? (
+        {defaultAddress ? (
           <div className="flex flex-col gap-2">
             <div className="flex gap-4">
               <span className="text-body-3 text-text-secondary w-14 shrink-0">받는 분</span>
-              <span className="text-body-3 text-text-primary">{shippingAddress.name}</span>
+              <span className="text-body-3 text-text-primary">{defaultAddress.receiverName}</span>
             </div>
             <div className="flex gap-4">
               <span className="text-body-3 text-text-secondary w-14 shrink-0">주소</span>
-              <span className="text-body-3 text-text-primary">{shippingAddress.address}</span>
+              <span className="text-body-3 text-text-primary">
+                {defaultAddress.addressLine1} {defaultAddress.addressLine2}
+              </span>
             </div>
             <div className="flex gap-4">
               <span className="text-body-3 text-text-secondary w-14 shrink-0">연락처</span>
-              <span className="text-body-3 text-text-primary">{shippingAddress.phone}</span>
+              <span className="text-body-3 text-text-primary">{defaultAddress.phone}</span>
             </div>
-            <div className="flex gap-4">
-              <span className="text-body-3 text-text-secondary w-14 shrink-0">요청사항</span>
-              <span className="text-body-3 text-text-primary">{shippingAddress.request}</span>
-            </div>
+            {defaultAddress.requestNote && (
+              <div className="flex gap-4">
+                <span className="text-body-3 text-text-secondary w-14 shrink-0">요청사항</span>
+                <span className="text-body-3 text-text-primary">{defaultAddress.requestNote}</span>
+              </div>
+            )}
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={handleAddAddress}
-            className="border-border text-body-2 text-text-secondary flex w-full items-center justify-center gap-1 rounded-xl border py-4"
-          >
-            + 배송지 추가
-          </button>
+          <p className="text-body-3 text-text-secondary">등록된 배송지가 없습니다.</p>
         )}
       </section>
 

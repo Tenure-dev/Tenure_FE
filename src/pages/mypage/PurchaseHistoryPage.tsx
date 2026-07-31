@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { SegmentedControl, Toast } from '@/shared/components';
+import { Toast } from '@/shared/components';
 import ConfirmModal from '@/features/ootd/ui/ConfirmModal';
 import { usePurchaseHistory } from '@/features/trade/api/usePurchaseHistory';
 import { useCancelPurchaseHistory } from '@/features/trade/api/useCancelPurchaseHistory';
@@ -9,6 +7,8 @@ import { useInfiniteScroll } from '@/shared/hooks/useInfiniteScroll';
 import { useToast } from '@/shared/hooks/useToast';
 import type { MyPagePurchaseResponse, MyPagePurchaseTab } from '@/features/trade/api/types';
 import PurchaseHistoryCard from './trade/PurchaseHistoryCard';
+import StatusTabs from './trade/StatusTabs';
+import HistoryHeader from './trade/HistoryHeader';
 
 const STATUS_TABS: { label: string; value: MyPagePurchaseTab }[] = [
   { label: '전체', value: 'ALL' },
@@ -18,7 +18,6 @@ const STATUS_TABS: { label: string; value: MyPagePurchaseTab }[] = [
 ];
 
 const PurchaseHistoryPage = () => {
-  const navigate = useNavigate();
   const [statusTab, setStatusTab] = useState<MyPagePurchaseTab>('ALL');
   const [cancelTarget, setCancelTarget] = useState<MyPagePurchaseResponse | null>(null);
   const { message, show, hide } = useToast();
@@ -53,26 +52,10 @@ const PurchaseHistoryPage = () => {
 
   const header = (
     <>
-      <header className="flex h-[52px] items-center justify-between px-[16px]">
-        <button type="button" onClick={() => navigate(-1)} aria-label="뒤로가기">
-          <ChevronLeft size={24} className="text-[#111111]" />
-        </button>
-        <h1 className="text-[16px] font-semibold text-[#111111]">구매내역</h1>
-        <div className="size-[24px]" />
-      </header>
-
-      <div className="border-b border-[#F0F0F0] px-[16px]">
-        <SegmentedControl
-          tabs={['구매내역', '판매내역']}
-          activeTab="구매내역"
-          onChange={(tab) => {
-            if (tab === '판매내역') navigate('/sales-history', { replace: true });
-          }}
-        />
-      </div>
+      <HistoryHeader title="구매내역" />
 
       <div className="border-b border-[#F0F0F0] px-[16px] pb-[12px]">
-        <SegmentedControl
+        <StatusTabs
           tabs={STATUS_TABS.map((t) => t.label)}
           activeTab={activeStatusLabel}
           onChange={(label) => {

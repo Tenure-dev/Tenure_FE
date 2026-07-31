@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { BottomSheet, DoubleButton } from '@/shared/components';
 import { cn } from '@/shared/lib/cn';
-import { CATEGORY_GROUPS } from '../model/categoryData';
+import { useCategories } from '../lib/useCategories';
+import { groupCategories } from '../model/categoryData';
 import {
   DEFAULT_SEARCH_FILTERS,
   HEIGHT_RANGE_LIMIT,
@@ -52,9 +53,11 @@ const SectionHeader = ({
 );
 
 const FilterBottomSheet = ({ open, filters, onClose, onApply }: FilterBottomSheetProps) => {
+  const categories = useCategories();
+  const categoryGroups = groupCategories(categories);
   const [draft, setDraft] = useState<SearchFilters>(filters);
   const [openSections, setOpenSections] = useState<Set<SectionKey>>(new Set());
-  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+  const [openGroups, setOpenGroups] = useState<Set<number>>(new Set());
   const [prevOpen, setPrevOpen] = useState(open);
 
   if (open !== prevOpen) {
@@ -71,21 +74,21 @@ const FilterBottomSheet = ({ open, filters, onClose, onApply }: FilterBottomShee
     });
   };
 
-  const toggleGroup = (name: string) => {
+  const toggleGroup = (id: number) => {
     setOpenGroups((prev) => {
       const next = new Set(prev);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
 
-  const toggleCategoryItem = (item: string) => {
+  const toggleCategoryItem = (id: number) => {
     setDraft((prev) => ({
       ...prev,
-      categories: prev.categories.includes(item)
-        ? prev.categories.filter((c) => c !== item)
-        : [...prev.categories, item],
+      categoryIds: prev.categoryIds.includes(id)
+        ? prev.categoryIds.filter((c) => c !== id)
+        : [...prev.categoryIds, id],
     }));
   };
 
@@ -101,7 +104,7 @@ const FilterBottomSheet = ({ open, filters, onClose, onApply }: FilterBottomShee
       open={open}
       onClose={onClose}
       variant="plain"
-      className="flex max-h-[85vh] max-w-md flex-col"
+      className="flex max-h-[85vh] flex-col"
     >
       <div className="flex items-center justify-between px-4 pb-2">
         <h2 className="text-title-3 text-text-primary font-semibold">필터</h2>
@@ -173,33 +176,33 @@ const FilterBottomSheet = ({ open, filters, onClose, onApply }: FilterBottomShee
           />
           {openSections.has('category') && (
             <div className="pb-4">
-              {CATEGORY_GROUPS.map((group) => (
+              {categoryGroups.map((group) => (
                 <div
-                  key={group.name}
+                  key={group.id}
                   className={cn('border-border-secondary', 'border-t first:border-t-0')}
                 >
                   <button
                     type="button"
-                    onClick={() => toggleGroup(group.name)}
+                    onClick={() => toggleGroup(group.id)}
                     className="flex w-full items-center justify-between py-3"
                   >
                     <span className="text-body-2 text-text-primary font-semibold">
                       {group.name}
                     </span>
-                    {openGroups.has(group.name) ? (
+                    {openGroups.has(group.id) ? (
                       <ChevronUp size={16} className="text-text-tertiary" />
                     ) : (
                       <ChevronDown size={16} className="text-text-tertiary" />
                     )}
                   </button>
-                  {openGroups.has(group.name) && (
+                  {openGroups.has(group.id) && (
                     <div className="flex flex-wrap gap-2 pb-4">
                       {group.items.map((item) => (
                         <FilterOptionChip
-                          key={item}
-                          label={item}
-                          selected={draft.categories.includes(item)}
-                          onClick={() => toggleCategoryItem(item)}
+                          key={item.id}
+                          label={item.name}
+                          selected={draft.categoryIds.includes(item.id)}
+                          onClick={() => toggleCategoryItem(item.id)}
                         />
                       ))}
                     </div>

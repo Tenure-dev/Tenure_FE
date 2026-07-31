@@ -1,21 +1,47 @@
 import { useNavigate } from 'react-router-dom';
-import { formatPrice, getListBadge } from './mock';
-import type { TradeListItem, TradeRole } from './types';
+import type { MyPagePurchaseResponse, MyPageSaleResponse } from '@/features/trade/api/types';
 
 interface TradeListRowProps {
-  item: TradeListItem;
-  role: TradeRole;
+  item: MyPagePurchaseResponse | MyPageSaleResponse;
 }
 
-const TradeListRow = ({ item, role }: TradeListRowProps) => {
+const formatPrice = (value: number) => `${value.toLocaleString('ko-KR')}원`;
+
+const formatListDate = (iso: string) => {
+  const d = new Date(iso);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}.${mm}.${dd}`;
+};
+
+const TradeListRow = ({ item }: TradeListRowProps) => {
   const navigate = useNavigate();
-  const badge = getListBadge(item.status);
-  const isTrading = badge === '거래중';
+
+  // PURCHASE_INTENT/PURCHASE_OFFER 상세 화면은 #87(제안 단계 연동)에서 추가된다.
+  if (item.historyType !== 'TRADE') {
+    return (
+      <div className="flex min-h-[88px] w-full items-center gap-3 border-b border-[#F0F0F0] p-[16px] text-left">
+        <div className="size-[64px] shrink-0 rounded-[8px] bg-[#F5F6F8]" />
+        <div className="flex flex-1 flex-col gap-1">
+          <p className="text-[15px] font-semibold text-[#111111]">
+            {item.brandName} {item.itemName}
+          </p>
+          <p className="text-[15px] text-[#111111]">{formatPrice(item.price)}</p>
+          <p className="text-[13px] text-[#767676]">{formatListDate(item.createdAt)}</p>
+        </div>
+        <span className="text-[12px] text-[#767676]">상세보기 준비 중</span>
+      </div>
+    );
+  }
+
+  const isTrading = item.status !== 'COMPLETED' && item.status !== 'TRANSFERRED';
+  const badge = isTrading ? '거래중' : '거래완료';
 
   return (
     <button
       type="button"
-      onClick={() => navigate(`/trade/${item.tradeId}?role=${role}`)}
+      onClick={() => navigate(`/trade/${item.historyId}`)}
       className="flex min-h-[88px] w-full items-center gap-3 border-b border-[#F0F0F0] p-[16px] text-left"
     >
       <div className="size-[64px] shrink-0 rounded-[8px] bg-[#F5F6F8]" />
@@ -28,10 +54,10 @@ const TradeListRow = ({ item, role }: TradeListRowProps) => {
           {badge}
         </span>
         <p className="text-[15px] font-semibold text-[#111111]">
-          {item.brand} {item.itemName}
+          {item.brandName} {item.itemName}
         </p>
         <p className="text-[15px] text-[#111111]">{formatPrice(item.price)}</p>
-        <p className="text-[13px] text-[#767676]">{item.date}</p>
+        <p className="text-[13px] text-[#767676]">{formatListDate(item.createdAt)}</p>
       </div>
     </button>
   );

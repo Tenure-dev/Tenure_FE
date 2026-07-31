@@ -23,7 +23,7 @@ const MoreMenu = ({
   onReport,
 }: MoreMenuProps) => {
   return (
-    <BottomSheet open={open} onClose={onClose} className="max-w-md">
+    <BottomSheet open={open} onClose={onClose}>
       {isOwner ? (
         <>
           <MenuRow icon={<Pencil size={16} />} label="수정하기" onClick={onEdit} />

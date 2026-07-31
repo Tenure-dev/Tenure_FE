@@ -1,25 +1,21 @@
-import type { RegisteredItem } from '../model/items';
-import RegisteredItemRow from './RegisteredItemRow';
+import type { Item } from '../model/items';
+import ItemRow from './ItemRow';
 
-interface RegisteredItemListSectionProps {
-  items: RegisteredItem[];
-  onItemClick: (id: string) => void;
-  onSaleConvert?: (id: string) => void;
+interface ItemListSectionProps {
+  items: Item[];
+  onItemClick: (id: number) => void;
+  onSaleConvert?: (id: number) => void;
 }
 
-const RegisteredItemListSection = ({
-  items,
-  onItemClick,
-  onSaleConvert,
-}: RegisteredItemListSectionProps) => {
+const ItemListSection = ({ items, onItemClick, onSaleConvert }: ItemListSectionProps) => {
   return (
     <ul>
       {items.map((item) => (
-        <li key={item.id}>
-          <RegisteredItemRow
+        <li key={item.itemId}>
+          <ItemRow
             item={item}
-            onClick={() => onItemClick(item.id)}
-            onSaleConvert={onSaleConvert ? () => onSaleConvert(item.id) : undefined}
+            onClick={() => onItemClick(item.itemId)}
+            onSaleConvert={onSaleConvert ? () => onSaleConvert(item.itemId) : undefined}
           />
         </li>
       ))}
@@ -27,4 +23,4 @@ const RegisteredItemListSection = ({
   );
 };
 
-export default RegisteredItemListSection;
+export default ItemListSection;

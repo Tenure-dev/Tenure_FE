@@ -1,5 +1,6 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { Bell } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, BellRing } from 'lucide-react';
 import { BottomSheet, CTAButton } from '@/shared/components';
 import { cn } from '@/shared/lib/cn';
 import type { TaggedItem } from '@/features/ootd/model/types';
@@ -9,6 +10,7 @@ export interface TaggedItemsSheetProps {
   onClose: () => void;
   items: TaggedItem[];
   onViewRelatedOotd: () => void;
+  onToggleWish: (itemId: number, currentlyWished: boolean) => void;
   dragProgressPx?: number;
 }
 
@@ -17,15 +19,29 @@ const formatPrice = (price?: number) => (price ? `${price.toLocaleString()}원` 
 const ACTION_WIDTH = 84;
 const SWIPE_OPEN_THRESHOLD = ACTION_WIDTH / 2;
 
+const STATUS_LABEL: Record<TaggedItem['status'], string> = {
+  판매중: '판매중',
+  미판매_제안가능: '미판매 · 구매제안 가능',
+  미판매_제안불가: '미판매 · 구매제안 불가능',
+  판매완료: '판매 완료',
+  삭제됨: '삭제된 아이템',
+};
+
 interface TaggedItemRowProps {
   item: TaggedItem;
+  onToggleWish: (itemId: number, currentlyWished: boolean) => void;
 }
 
-const TaggedItemRow = ({ item }: TaggedItemRowProps) => {
-  const hasAction = item.status === '판매중' || (item.status === '미판매' && item.canOffer);
+const TaggedItemRow = ({ item, onToggleWish }: TaggedItemRowProps) => {
+  const navigate = useNavigate();
+  const hasAction = item.status === '판매중' || item.status === '미판매_제안가능';
+  const isDeleted = item.status === '삭제됨';
+  const isDimmed = isDeleted || item.status === '판매완료';
   const [swipePx, setSwipePx] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; startSwipe: number } | null>(null);
+
+  const goToItem = () => navigate(`/item/${item.itemId}`);
 
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!hasAction) return;
@@ -58,6 +74,7 @@ const TaggedItemRow = ({ item }: TaggedItemRowProps) => {
           >
             <button
               type="button"
+              onClick={goToItem}
               className={cn(
                 'text-btn-4 h-10 w-full rounded-md font-semibold',
                 item.status === '판매중'
@@ -78,6 +95,7 @@ const TaggedItemRow = ({ item }: TaggedItemRowProps) => {
           className={cn(
             'bg-bg-white flex touch-pan-y items-center gap-3',
             !isDragging && 'transition-transform duration-200 ease-out',
+            isDimmed && 'opacity-50',
           )}
           style={{ transform: `translateX(-${swipePx}px)` }}
         >
@@ -105,19 +123,25 @@ const TaggedItemRow = ({ item }: TaggedItemRowProps) => {
             >
               {item.status === '판매중'
                 ? `판매중 · ${formatPrice(item.price)}`
-                : `미판매 · 구매제안 ${item.canOffer ? '가능' : '불가능'}`}
+                : STATUS_LABEL[item.status]}
             </p>
           </div>
         </div>
       </div>
 
-      <button
-        type="button"
-        aria-label="알림 설정"
-        className="border-border-secondary text-text-tertiary flex size-9 shrink-0 items-center justify-center rounded-full border"
-      >
-        <Bell size={16} />
-      </button>
+      {!isDeleted && (
+        <button
+          type="button"
+          onClick={() => onToggleWish(item.itemId, item.wished)}
+          aria-label={item.wished ? '관심 해제' : '관심 등록'}
+          className={cn(
+            'flex size-9 shrink-0 items-center justify-center rounded-full border',
+            item.wished ? 'border-brand text-brand' : 'border-border-secondary text-text-tertiary',
+          )}
+        >
+          {item.wished ? <BellRing size={16} /> : <Bell size={16} />}
+        </button>
+      )}
     </li>
   );
 };
@@ -127,6 +151,7 @@ const TaggedItemsSheet = ({
   onClose,
   items,
   onViewRelatedOotd,
+  onToggleWish,
   dragProgressPx,
 }: TaggedItemsSheetProps) => {
   return (
@@ -135,7 +160,7 @@ const TaggedItemsSheet = ({
       onClose={onClose}
       variant="plain"
       dragProgressPx={dragProgressPx}
-      className="max-h-[70vh] max-w-md overflow-y-auto"
+      className="max-h-[70vh] overflow-y-auto"
     >
       <div className="px-5 pb-6">
         <h2 className="text-title-4 text-text-primary font-semibold">태그된 아이템</h2>
@@ -148,7 +173,7 @@ const TaggedItemsSheet = ({
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {items.map((item) => (
-              <TaggedItemRow key={`${item.id}-${open}`} item={item} />
+              <TaggedItemRow key={`${item.id}-${open}`} item={item} onToggleWish={onToggleWish} />
             ))}
           </ul>
         )}

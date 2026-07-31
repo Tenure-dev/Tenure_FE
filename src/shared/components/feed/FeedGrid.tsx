@@ -4,8 +4,6 @@ import FeedCardComponent from './FeedCard';
 
 export interface FeedGridProps {
   items: FeedGridItem[];
-  onToggleLike?: (id: string) => void;
-  onToggleBookmark?: (id: string) => void;
 }
 
 const splitIntoColumns = (items: FeedGridItem[], columnCount: number) => {
@@ -18,7 +16,7 @@ const splitIntoColumns = (items: FeedGridItem[], columnCount: number) => {
   return columns;
 };
 
-const FeedGrid = ({ items, onToggleLike, onToggleBookmark }: FeedGridProps) => {
+const FeedGrid = ({ items }: FeedGridProps) => {
   const isWideLayout = useIsWideLayout();
   const columns = splitIntoColumns(items, isWideLayout ? 3 : 2);
 
@@ -27,12 +25,7 @@ const FeedGrid = ({ items, onToggleLike, onToggleBookmark }: FeedGridProps) => {
       {columns.map((column, columnIndex) => (
         <div key={columnIndex} className="flex flex-col gap-2">
           {column.map((item) => (
-            <FeedCardComponent
-              key={item.ootdId}
-              item={item}
-              onToggleLike={onToggleLike}
-              onToggleBookmark={onToggleBookmark}
-            />
+            <FeedCardComponent key={item.ootdId} item={item} />
           ))}
         </div>
       ))}

@@ -1,53 +1,58 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { BackHeader } from '@/shared/components';
 import { settings } from '@/shared/assets';
 import { useInfiniteScroll } from '@/shared/hooks/useInfiniteScroll';
-import { mockNotifications } from '@/features/notification/model/mocks';
+import {
+  getNotifications,
+  markNotificationRead,
+  type NotificationListCursor,
+} from '@/features/notification/api/notifications';
 import { groupNotificationsByDate } from '@/features/notification/lib/groupByDate';
 import type { NotificationFilter } from '@/features/notification/model/types';
 import NotificationFilterChip from '@/features/notification/ui/NotificationFilterChip';
 import NotificationRow from '@/features/notification/ui/NotificationRow';
 
 const FILTERS: NotificationFilter[] = ['전체', '확인 필요', '아이템 소식', '거래 현황', '관심'];
-const PAGE_SIZE = 10;
 
 const NotificationPage = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<NotificationFilter>('전체');
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const filteredItems = useMemo(
-    () =>
-      filter === '전체'
-        ? mockNotifications
-        : mockNotifications.filter((item) => item.category === filter),
-    [filter],
-  );
-
-  const sortedItems = useMemo(
-    () => [...filteredItems].sort((a, b) => b.createdAt - a.createdAt),
-    [filteredItems],
-  );
-
-  const visibleItems = sortedItems.slice(0, visibleCount);
-  const hasMore = visibleCount < sortedItems.length;
-  const groups = useMemo(() => groupNotificationsByDate(visibleItems), [visibleItems]);
-
-  const sentinelRef = useInfiniteScroll({
-    hasMore,
-    onLoadMore: () => setVisibleCount((prev) => prev + PAGE_SIZE),
+  const { data, isLoading, hasNextPage, fetchNextPage } = useInfiniteQuery({
+    queryKey: ['notifications', 'list', filter],
+    queryFn: ({ pageParam }) => getNotifications(filter, pageParam),
+    initialPageParam: undefined as NotificationListCursor | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
 
-  const handleFilterChange = (next: NotificationFilter) => {
-    setFilter(next);
-    setVisibleCount(PAGE_SIZE);
-  };
+  const items = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data]);
+  const groups = useMemo(() => groupNotificationsByDate(items), [items]);
+
+  const sentinelRef = useInfiniteScroll({
+    hasMore: Boolean(hasNextPage),
+    onLoadMore: fetchNextPage,
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: markNotificationRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'has-unread'] });
+    },
+  });
 
   return (
-    <div className="bg-bg-white mx-auto flex h-screen w-full max-w-md flex-col">
+    <div className="bg-bg-white flex h-screen flex-col">
       <BackHeader
         title="알림"
         rightActions={
-          <button type="button" onClick={() => {}} aria-label="알림 설정">
+          <button
+            type="button"
+            onClick={() => navigate('/settings/notifications')}
+            aria-label="알림 설정"
+          >
             <img src={settings} width={22} height={22} alt="" />
           </button>
         }
@@ -59,12 +64,15 @@ const NotificationPage = () => {
             key={item}
             label={item}
             selected={filter === item}
-            onClick={() => handleFilterChange(item)}
+            onClick={() => setFilter(item)}
           />
         ))}
       </div>
 
       <div className="no-scrollbar flex-1 overflow-y-auto pb-6">
+        {!isLoading && groups.length === 0 && (
+          <p className="text-body-2 text-text-tertiary px-4 py-10 text-center">알림이 없습니다</p>
+        )}
         {groups.map((group) => (
           <div key={group.label}>
             <h2 className="text-title-4 text-text-primary px-4 pt-2 pb-1 font-semibold">
@@ -72,12 +80,12 @@ const NotificationPage = () => {
             </h2>
             <div className="divide-border-secondary divide-y">
               {group.items.map((item) => (
-                <NotificationRow key={item.id} item={item} />
+                <NotificationRow key={item.id} item={item} onRead={markReadMutation.mutate} />
               ))}
             </div>
           </div>
         ))}
-        {hasMore && <div ref={sentinelRef} className="h-1" />}
+        {hasNextPage && <div ref={sentinelRef} className="h-1" />}
       </div>
     </div>
   );

@@ -80,6 +80,7 @@ export interface ProductDetailResponse {
     categorySmall: string;
     ootdVerifiedWearCount: number;
     wishCount: number;
+    wished: boolean;
   };
   seller: {
     userId: number;

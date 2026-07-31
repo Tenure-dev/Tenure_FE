@@ -121,3 +121,30 @@ export type OfferSettingResponse = {
   itemId: number;
   purchaseOfferEnabled: boolean;
 };
+
+export interface CreateItemRequest {
+  brandName: string;
+  itemName: string;
+  wearingTarget: WearingTarget;
+  categoryLarge: string;
+  categorySmall?: string;
+  sizeSystem: 'KR';
+  sizeValue?: string;
+  firstOwnedAt?: string;
+  representativeImageUrl?: string;
+}
+
+export interface CreateItemResponse {
+  itemId: number;
+  ownerUserId: number;
+  brandName: string;
+  itemName: string;
+  categoryLarge: string;
+  categorySmall: string | null;
+  wearingTarget: WearingTarget;
+  sizeSystem: string;
+  sizeValue: string | null;
+  representativeImageUrl: string | null;
+  itemStatus: string;
+  firstOwnedAt: string | null;
+}

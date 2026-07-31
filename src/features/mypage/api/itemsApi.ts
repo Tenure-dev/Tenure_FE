@@ -1,4 +1,5 @@
 import { api } from '@/shared/lib/api';
+
 import type { UpdateProductRequest } from '@/features/product/api/dto';
 import type {
   CreateProductResponse,
@@ -10,13 +11,19 @@ import type {
   OfferSettingRequest,
   OfferSettingResponse,
   ItemHistoryListResponse,
+  CreateItemRequest,
+  CreateItemResponse,
   FrequentlyWornItem,
 } from '../model/items';
 
 export const getItems = (params?: RegisteredItemListParams) =>
   api.get<RegisteredItemListResponse>('/items', { params });
 
-export const getItemDetail = (itemId: number) => api.get<ItemDetailResponse>(`/items/${itemId}`);
+export const createItem = (payload: CreateItemRequest) =>
+  api.post<CreateItemResponse>('/items', payload);
+
+export const getItemDetail = (itemId: number) => 
+  api.get<ItemDetailResponse>(`/items/${itemId}`);
 
 export const updateItem = (itemId: number, body: ItemUpdateRequest) =>
   api.patch<ItemUpdateResponse>(`/items/${itemId}`, body);

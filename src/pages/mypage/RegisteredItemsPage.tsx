@@ -24,7 +24,11 @@ const RegisteredItemsPage = () => {
       <BackHeader
         title="등록한 아이템"
         rightActions={
-          <button type="button" aria-label="아이템 추가">
+          <button
+            type="button"
+            aria-label="아이템 추가"
+            onClick={() => navigate('/mypage/items/new')}
+          >
             <img src={plus} className="size-5.5" alt="" />
           </button>
         }

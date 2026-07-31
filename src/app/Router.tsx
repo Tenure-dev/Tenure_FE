@@ -40,6 +40,8 @@ import ChatRoomPage from '@/pages/chat/ChatRoomPage';
 import PricePage from '@/pages/purchase/PricePage';
 import CheckoutPage from '@/pages/purchase/CheckoutPage';
 import ProcessingPage from '@/pages/purchase/ProcessingPage';
+import OfferDetailPage from '@/pages/purchase/OfferDetailPage';
+import IntentDetailPage from '@/pages/purchase/IntentDetailPage';
 import OotdTagPage from '@/pages/camera/OotdTagPage';
 import OotdCreatePage from '@/pages/camera/OotdCreatePage';
 import OotdCameraPage from '@/pages/camera/OotdCameraPage';
@@ -84,6 +86,8 @@ export const router = createBrowserRouter([
           { path: 'users/:userId', element: <UserProfilePage /> },
           { path: 'purchase-history', element: <PurchaseHistoryPage /> },
           { path: 'sales-history', element: <SalesHistoryPage /> },
+          { path: 'purchase/offer/:offerId', element: <OfferDetailPage /> },
+          { path: 'purchase/intent/:intentId', element: <IntentDetailPage /> },
           { path: 'items/:itemId/offers', element: <ReceivedOffersPage /> },
           { path: 'trade/:tradeId', element: <TradeDetailPage /> },
           { path: 'trade/:tradeId/shipping', element: <ShippingInputPage /> },

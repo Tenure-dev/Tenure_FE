@@ -1,14 +1,15 @@
 type Props = {
   avatar: string;
   name: string;
-  price: number;
+  price?: number | null; // offer 모드에서만 사용
   timeLeft: string;
+  mode: 'offer' | 'intent';
   onClick?: () => void;
 };
 
 const formatPrice = (n: number) => `${n.toLocaleString('ko-KR')}원`;
 
-const OfferCard = ({ avatar, name, price, timeLeft, onClick }: Props) => (
+const OfferCard = ({ avatar, name, price, timeLeft, mode, onClick }: Props) => (
   <button
     type="button"
     onClick={onClick}
@@ -20,11 +21,15 @@ const OfferCard = ({ avatar, name, price, timeLeft, onClick }: Props) => (
       className="bg-bg-secondary size-15 shrink-0 rounded-full object-cover"
     />
     <div className="min-w-0 flex-1">
-      <p className="text-body-2 text-text-primary truncate font-medium">{name}</p>
-      <p className="mt-0.5">
-        <span className="text-body-2 text-error font-medium">{formatPrice(price)}</span>
-        <span className="text-body-3 text-text-secondary"> 구매 제안</span>
-      </p>
+      <p className="text-body-1 text-text-primary truncate font-medium">{name}</p>
+      {mode === 'intent' ? (
+        <p className="text-body-2 text-text-secondary mt-0.5 font-medium">거래 의사를 보냈어요.</p>
+      ) : (
+        <p className="mt-0.5">
+          <span className="text-body-2 text-error font-medium">{formatPrice(price ?? 0)}</span>
+          <span className="text-body-3 text-text-secondary"> 구매 제안</span>
+        </p>
+      )}
       <div className="text-body-4 text-text-tertiary mt-1 flex items-center gap-1">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />

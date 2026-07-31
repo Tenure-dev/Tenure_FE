@@ -48,7 +48,6 @@ import OotdCameraPage from '@/pages/camera/OotdCameraPage';
 import OotdPreviewPage from '@/pages/camera/OotdPreviewPage';
 import UserProfilePage from '@/pages/user/UserProfilePage';
 import ReceivedOffersPage from '@/pages/offer/ReceivedOffersPage';
-
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -59,7 +58,6 @@ export const router = createBrowserRouter([
       { path: 'login', element: <LoginPage /> },
       { path: 'signup', element: <SignupPage /> },
       { path: 'find-password', element: <FindPasswordPage /> },
-
       // 로그인 필요 라우트
       {
         element: <ProtectedLayout />,

@@ -7,12 +7,12 @@ const REPORT_OPTIONS = ITEM_REPORT_REASONS.map((reason) => ({ value: reason, lab
 
 const ProductReportPage = () => {
   const navigate = useNavigate();
-  const { itemId } = useParams<{ itemId: string }>();
+  const { productId } = useParams<{ productId: string }>();
   const [reason, setReason] = useState('');
 
   const handleSubmit = () => {
     if (!reason) return;
-    navigate(`/item/${itemId}`, { replace: true, state: { toast: '신고가 접수되었어요.' } });
+    navigate(`/product/${productId}`, { replace: true, state: { toast: '신고가 접수되었어요.' } });
   };
 
   return (

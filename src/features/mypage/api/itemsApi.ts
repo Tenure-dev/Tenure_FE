@@ -4,7 +4,7 @@ import type {
   CreateProductResponse,
   RegisteredItemListParams,
   RegisteredItemListResponse,
-  RegisteredItemDetailResponse,
+  ItemDetailResponse,
   ItemUpdateRequest,
   ItemUpdateResponse,
   OfferSettingRequest,
@@ -16,8 +16,7 @@ import type {
 export const getItems = (params?: RegisteredItemListParams) =>
   api.get<RegisteredItemListResponse>('/items', { params });
 
-export const getItemDetail = (itemId: number) =>
-  api.get<RegisteredItemDetailResponse>(`/items/${itemId}`);
+export const getItemDetail = (itemId: number) => api.get<ItemDetailResponse>(`/items/${itemId}`);
 
 export const updateItem = (itemId: number, body: ItemUpdateRequest) =>
   api.patch<ItemUpdateResponse>(`/items/${itemId}`, body);

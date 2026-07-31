@@ -13,12 +13,13 @@ type View = 'form' | 'numpad';
 const NUMPAD_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', '←'];
 
 const PricePage = () => {
-  const { itemId = '' } = useParams();
+  const { productId = '' } = useParams();
   const navigate = useNavigate();
+  const setItemId = useOfferStore((s) => s.setItemId);
   const setPrice = useOfferStore((s) => s.setPrice);
   const setSellerNickname = useOfferStore((s) => s.setSellerNickname);
 
-  const { data, isLoading, isError } = useProductDetail(Number(itemId));
+  const { data, isLoading, isError } = useProductDetail(Number(productId));
   const [view, setView] = useState<View>('form');
   const [digits, setDigits] = useState('');
 
@@ -54,9 +55,10 @@ const PricePage = () => {
   const handleConfirmNumpad = () => setView('form');
 
   const handleSubmit = () => {
+    setItemId(data.item.itemId);
     setPrice(price);
     setSellerNickname(sellerNickname);
-    navigate(`/product/${itemId}/purchase/checkout`);
+    navigate(`/product/${productId}/purchase/checkout`);
   };
 
   if (view === 'numpad') {

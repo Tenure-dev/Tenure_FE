@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { MoreVertical } from 'lucide-react';
 import { BackHeader, BottomSheet, Toast } from '@/shared/components';
 import { edit } from '@/shared/assets';
@@ -14,16 +14,17 @@ import { useItemDetailQuery } from '@/features/mypage/model/useItemDetailQuery';
 import { useFrequentlyWornQuery } from '@/features/mypage/model/useFrequentlyWornQuery';
 import { useUpdateItemMutation } from '@/features/mypage/model/useUpdateItemMutation';
 import { useUpdateOfferSettingMutation } from '@/features/mypage/model/useUpdateOfferSettingMutation';
-import type { RegisteredItemDetail } from '@/features/mypage/model/items';
+import type { ItemDetail } from '@/features/mypage/model/items';
 
-const RegisteredItemDetailPage = () => {
+const ItemDetailPage = () => {
   const { itemId } = useParams<{ itemId: string }>();
   const { data } = useItemDetailQuery(Number(itemId));
   const { data: frequentlyWornWith = [] } = useFrequentlyWornQuery(Number(itemId));
   const { mutate: updateItem } = useUpdateItemMutation(Number(itemId));
   const { mutate: updateOfferSetting } = useUpdateOfferSettingMutation(Number(itemId));
+  const navigate = useNavigate();
   const { message, show, hide } = useToast();
-  const item: RegisteredItemDetail | undefined = data && {
+  const item: ItemDetail | undefined = data && {
     ...data,
     frequentlyWornWith,
   };
@@ -77,7 +78,9 @@ const RegisteredItemDetailPage = () => {
       <div className="px-4 pt-1">
         <button
           type="button"
-          className="bg-text-primary text-body-1 font-regular text-text-inverse w-full rounded-sm py-3"
+          disabled={!item.productId}
+          onClick={() => navigate(`/product/${item.productId}`)}
+          className="bg-text-primary text-body-1 font-regular text-text-inverse w-full rounded-sm py-3 disabled:opacity-40"
         >
           {isForSale ? '판매 페이지로' : '공개 페이지로'}
         </button>
@@ -119,4 +122,4 @@ const RegisteredItemDetailPage = () => {
   );
 };
 
-export default RegisteredItemDetailPage;
+export default ItemDetailPage;

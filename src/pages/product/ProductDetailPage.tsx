@@ -24,11 +24,11 @@ import { useCompleteProductExternal } from '@/features/product/model/useComplete
 import ItemDetailHeader from './components/ProductDetailHeader';
 
 const ProductDetailPage = () => {
-  const { itemId = '' } = useParams();
-  return <ProductDetailPageContent key={itemId} itemId={itemId} />;
+  const { productId = '' } = useParams();
+  return <ProductDetailPageContent key={productId} productId={productId} />;
 };
 
-const ProductDetailPageContent = ({ itemId }: { itemId: string }) => {
+const ProductDetailPageContent = ({ productId }: { productId: string }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [wished, setWished] = useState(false);
@@ -37,10 +37,9 @@ const ProductDetailPageContent = ({ itemId }: { itemId: string }) => {
   const [showShareOptions, setShowShareOptions] = useState(false);
   const { message: toastMessage, show: showToast, hide: hideToast } = useToast();
 
-  const productId = Number(itemId);
-  const { data, isLoading, isError } = useProductDetail(productId);
-  const { mutate: markUnsold } = useDeleteProduct(productId);
-  const { mutate: markSoldOut } = useCompleteProductExternal(productId);
+  const { data, isLoading, isError } = useProductDetail(Number(productId));
+  const { mutate: markUnsold } = useDeleteProduct(Number(productId));
+  const { mutate: markSoldOut } = useCompleteProductExternal(Number(productId));
 
   const initialToastRef = useRef((location.state as { toast?: string } | null)?.toast ?? null);
   useEffect(() => {
@@ -176,8 +175,10 @@ const ProductDetailPageContent = ({ itemId }: { itemId: string }) => {
         role={role}
         saleStatus={saleStatus}
         offerAvailable={offerAvailable}
-        onBuy={() => navigate(`/product/${itemId}/purchase/checkout`, { state: { direct: true } })}
-        onOffer={() => navigate(`/product/${itemId}/purchase/price`)}
+        onBuy={() =>
+          navigate(`/product/${productId}/purchase/checkout`, { state: { direct: true } })
+        }
+        onOffer={() => navigate(`/product/${productId}/purchase/price`)}
       />
 
       {/* 추가기능 - 바텀시트, 토스트 */}
@@ -187,8 +188,8 @@ const ProductDetailPageContent = ({ itemId }: { itemId: string }) => {
         role={role}
         isBlocked={isBlocked}
         onToggleBlock={setIsBlocked}
-        onEdit={() => navigate(`/product/${itemId}/edit`)}
-        onReport={() => navigate(`/product/${itemId}/report`)}
+        onEdit={() => navigate(`/product/${productId}/edit`)}
+        onReport={() => navigate(`/product/${productId}/report`)}
         onMarkUnsold={() =>
           markUnsold(undefined, { onSuccess: () => showToast('미판매로 변경되었습니다.') })
         }

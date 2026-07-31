@@ -10,8 +10,8 @@ export interface FeedCardProps {
 }
 
 const FeedCard = ({ item, className }: FeedCardProps) => {
-  const { hearted, toggle: toggleHeart } = useToggleHeart(item.ootdId, item.hearted);
-  const { saved, toggle: toggleSave } = useToggleSave(item.ootdId, item.saved);
+  const { hearted, toggle: toggleHeart } = useToggleHeart(Number(item.ootdId), item.hearted);
+  const { saved, toggle: toggleSave } = useToggleSave(Number(item.ootdId), item.saved);
 
   return (
     <div className={cn('bg-gray-bg relative w-full overflow-hidden rounded-md', className)}>

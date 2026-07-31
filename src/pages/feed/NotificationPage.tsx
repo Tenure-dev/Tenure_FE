@@ -44,7 +44,7 @@ const NotificationPage = () => {
   });
 
   return (
-    <div className="bg-bg-white mx-auto flex h-screen w-full max-w-md flex-col">
+    <div className="bg-bg-white flex h-screen flex-col">
       <BackHeader
         title="알림"
         rightActions={

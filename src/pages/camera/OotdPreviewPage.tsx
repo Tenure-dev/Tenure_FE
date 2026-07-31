@@ -4,6 +4,8 @@ import chevron from '@/shared/assets/chevron-left.svg';
 import type { Bbox } from '@/features/ootd/model/item';
 import { dataUrlToFile } from '@/shared/lib/dataUrlToFile';
 import { usePublishOotd } from '@/features/ootd/api/usePublishOotd';
+import { Toast } from '@/shared/components';
+import { useToast } from '@/shared/hooks/useToast';
 import TagLoading from './component/TagLoading';
 import TagMessage from './component/TagMessage';
 
@@ -21,6 +23,7 @@ const OotdPreviewPage = () => {
 
   const [phase, setPhase] = useState<Phase>('loading');
   const { mutate: publish, isPending: posting } = usePublishOotd();
+  const { message: toast, show: showToast, hide: hideToast } = useToast();
 
   // 선택완료 후 로딩 → 미리보기
   useEffect(() => {
@@ -39,7 +42,7 @@ const OotdPreviewPage = () => {
         onSuccess: (ootdId) => {
           navigate(`/ootd/${ootdId}`, { state: { toast: '게시물이 등록되었습니다.' } });
         },
-        onError: (e) => console.error('[게시 실패]', e),
+        onError: () => showToast('게시에 실패했어요. 잠시 후 다시 시도해주세요.'),
       },
     );
   };
@@ -86,6 +89,8 @@ const OotdPreviewPage = () => {
           </div>
         ))}
       </div>
+      {/* 여백을 위해 추가, 사진과 버튼 붙는걸 방지*/}
+      <p className="text-body-3 text-warning p-4 text-center font-medium"></p>
 
       {/* 하단 버튼 (하단 고정) */}
       <div className="mt-auto flex gap-2 px-5 pb-6">
@@ -104,6 +109,8 @@ const OotdPreviewPage = () => {
           게시하기
         </button>
       </div>
+
+      <Toast message={toast} onClose={hideToast} />
     </div>
   );
 };

@@ -104,7 +104,7 @@ const FilterBottomSheet = ({ open, filters, onClose, onApply }: FilterBottomShee
       open={open}
       onClose={onClose}
       variant="plain"
-      className="flex max-h-[85vh] max-w-md flex-col"
+      className="flex max-h-[85vh] flex-col"
     >
       <div className="flex items-center justify-between px-4 pb-2">
         <h2 className="text-title-3 text-text-primary font-semibold">필터</h2>

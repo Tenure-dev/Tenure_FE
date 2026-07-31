@@ -6,6 +6,7 @@ import type { SearchUserResponse } from '../api/types';
 export interface AccountResultRowProps {
   account: SearchUserResponse;
   onToggleFollow: (id: number) => void;
+  onClick: (id: number) => void;
 }
 
 const formatCount = (count: number) => {
@@ -16,9 +17,17 @@ const formatCount = (count: number) => {
   return count.toLocaleString();
 };
 
-const AccountResultRow = ({ account, onToggleFollow }: AccountResultRowProps) => {
+const AccountResultRow = ({ account, onToggleFollow, onClick }: AccountResultRowProps) => {
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onClick(account.id)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onClick(account.id);
+      }}
+      className="flex w-full items-center gap-3 px-4 py-3 text-left"
+    >
       <img
         src={resolveImageUrl(account.profileImageUrl) || profileDefault}
         alt=""
@@ -30,7 +39,9 @@ const AccountResultRow = ({ account, onToggleFollow }: AccountResultRowProps) =>
           팔로우 {formatCount(account.followerCount)}명 · 게시물 {account.ootdCount}개
         </p>
       </div>
-      <FollowButton following={account.following} onToggle={() => onToggleFollow(account.id)} />
+      <span onClick={(e) => e.stopPropagation()} className="inline-flex shrink-0">
+        <FollowButton following={account.following} onToggle={() => onToggleFollow(account.id)} />
+      </span>
     </div>
   );
 };

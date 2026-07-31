@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { BackHeader, DoubleButton, Input, Toast } from '@/shared/components';
 import { useProfileStore } from '@/store/useProfileStore';
 import { useUserStore } from '@/store/userStore';
@@ -10,6 +10,7 @@ import { useMyInfo } from '@/features/auth/model/useMyInfo';
 import type { UserProfile } from '@/features/auth/api/types';
 import { fromApiGender, toApiGender } from '@/features/auth/lib/gender';
 import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
+import { myPageQueryKey } from '@/features/mypage/api/useMyPage';
 import ProfileImagePreview from './component/ProfileImagePreview';
 import GenderToggle from './component/GenderToggle';
 import ProfilePhotoPicker from './component/ProfilePhotoPicker';
@@ -23,7 +24,7 @@ const ProfileEditPage = () => {
 
   if (isLoading || !myInfo) {
     return (
-      <div className="bg-bg-white text-text-primary mx-auto min-h-screen max-w-md pb-8">
+      <div className="bg-bg-white text-text-primary min-h-screen pb-8">
         <BackHeader title="프로필 수정" />
       </div>
     );
@@ -35,6 +36,7 @@ const ProfileEditPage = () => {
 // myInfo가 로드된 뒤에만 마운트되므로, 폼 상태를 mock 기본값이 아닌 실제 값으로 바로 초기화할 수 있다.
 const ProfileEditForm = ({ myInfo }: { myInfo: UserProfile }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const storedProfile = useProfileStore();
   const setUser = useUserStore((state) => state.setUser);
   const { message: errorToast, show: showErrorToast, hide: hideErrorToast } = useToast();
@@ -95,6 +97,7 @@ const ProfileEditForm = ({ myInfo }: { myInfo: UserProfile }) => {
             photoUrl,
           });
           setUser(data);
+          queryClient.invalidateQueries({ queryKey: myPageQueryKey });
           navigate('/mypage', { state: { toast: '프로필이 수정되었습니다' } });
         },
         onError: (error) => {
@@ -106,7 +109,7 @@ const ProfileEditForm = ({ myInfo }: { myInfo: UserProfile }) => {
   };
 
   return (
-    <div className="bg-bg-white text-text-primary mx-auto min-h-screen max-w-md pb-8">
+    <div className="bg-bg-white text-text-primary min-h-screen pb-8">
       <BackHeader title="프로필 수정" />
 
       <ProfilePhotoPicker imageUrl={photoUrl} onFileSelected={handleFileSelected} />

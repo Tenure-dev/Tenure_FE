@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, BellRing } from 'lucide-react';
 import { BottomSheet, CTAButton } from '@/shared/components';
 import { cn } from '@/shared/lib/cn';
-import { unwishItem, wishItem } from '@/features/ootd/api/ootdApi';
 import type { TaggedItem } from '@/features/ootd/model/types';
 
 export interface TaggedItemsSheetProps {
@@ -11,6 +10,7 @@ export interface TaggedItemsSheetProps {
   onClose: () => void;
   items: TaggedItem[];
   onViewRelatedOotd: () => void;
+  onToggleWish: (itemId: number, currentlyWished: boolean) => void;
   dragProgressPx?: number;
 }
 
@@ -29,9 +29,10 @@ const STATUS_LABEL: Record<TaggedItem['status'], string> = {
 
 interface TaggedItemRowProps {
   item: TaggedItem;
+  onToggleWish: (itemId: number, currentlyWished: boolean) => void;
 }
 
-const TaggedItemRow = ({ item }: TaggedItemRowProps) => {
+const TaggedItemRow = ({ item, onToggleWish }: TaggedItemRowProps) => {
   const navigate = useNavigate();
   const hasAction = item.status === '판매중' || item.status === '미판매_제안가능';
   const isDeleted = item.status === '삭제됨';
@@ -39,19 +40,8 @@ const TaggedItemRow = ({ item }: TaggedItemRowProps) => {
   const [swipePx, setSwipePx] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; startSwipe: number } | null>(null);
-  const [wished, setWished] = useState(item.wished);
 
   const goToItem = () => navigate(`/item/${item.itemId}`);
-
-  const toggleWish = async () => {
-    const next = !wished;
-    setWished(next);
-    try {
-      await (next ? wishItem(item.itemId) : unwishItem(item.itemId));
-    } catch {
-      setWished(!next);
-    }
-  };
 
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!hasAction) return;
@@ -142,14 +132,14 @@ const TaggedItemRow = ({ item }: TaggedItemRowProps) => {
       {!isDeleted && (
         <button
           type="button"
-          onClick={toggleWish}
-          aria-label={wished ? '관심 해제' : '관심 등록'}
+          onClick={() => onToggleWish(item.itemId, item.wished)}
+          aria-label={item.wished ? '관심 해제' : '관심 등록'}
           className={cn(
             'flex size-9 shrink-0 items-center justify-center rounded-full border',
-            wished ? 'border-brand text-brand' : 'border-border-secondary text-text-tertiary',
+            item.wished ? 'border-brand text-brand' : 'border-border-secondary text-text-tertiary',
           )}
         >
-          {wished ? <BellRing size={16} /> : <Bell size={16} />}
+          {item.wished ? <BellRing size={16} /> : <Bell size={16} />}
         </button>
       )}
     </li>
@@ -161,6 +151,7 @@ const TaggedItemsSheet = ({
   onClose,
   items,
   onViewRelatedOotd,
+  onToggleWish,
   dragProgressPx,
 }: TaggedItemsSheetProps) => {
   return (
@@ -169,7 +160,7 @@ const TaggedItemsSheet = ({
       onClose={onClose}
       variant="plain"
       dragProgressPx={dragProgressPx}
-      className="max-h-[70vh] max-w-md overflow-y-auto"
+      className="max-h-[70vh] overflow-y-auto"
     >
       <div className="px-5 pb-6">
         <h2 className="text-title-4 text-text-primary font-semibold">태그된 아이템</h2>
@@ -182,7 +173,7 @@ const TaggedItemsSheet = ({
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {items.map((item) => (
-              <TaggedItemRow key={`${item.id}-${open}`} item={item} />
+              <TaggedItemRow key={`${item.id}-${open}`} item={item} onToggleWish={onToggleWish} />
             ))}
           </ul>
         )}

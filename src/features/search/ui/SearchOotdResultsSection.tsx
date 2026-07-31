@@ -1,11 +1,5 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { heartOotd, saveOotd, unheartOotd, unsaveOotd } from '@/features/ootd/api/ootdApi';
 import { searchOotds } from '../api/searchApi';
 import type {
   OotdSearchCursor,
@@ -70,13 +64,45 @@ const SearchOotdResultsSection = ({
     }
   }, [items]);
 
-  const toggleId = (setter: Dispatch<SetStateAction<Set<number>>>) => (id: number) =>
-    setter((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+  const toggleLike = async (id: number) => {
+    const next = !likedIds.has(id);
+    setLikedIds((prev) => {
+      const set = new Set(prev);
+      if (next) set.add(id);
+      else set.delete(id);
+      return set;
     });
+    try {
+      await (next ? heartOotd(id) : unheartOotd(id));
+    } catch {
+      setLikedIds((prev) => {
+        const set = new Set(prev);
+        if (next) set.delete(id);
+        else set.add(id);
+        return set;
+      });
+    }
+  };
+
+  const toggleBookmark = async (id: number) => {
+    const next = !bookmarkedIds.has(id);
+    setBookmarkedIds((prev) => {
+      const set = new Set(prev);
+      if (next) set.add(id);
+      else set.delete(id);
+      return set;
+    });
+    try {
+      await (next ? saveOotd(id) : unsaveOotd(id));
+    } catch {
+      setBookmarkedIds((prev) => {
+        const set = new Set(prev);
+        if (next) set.delete(id);
+        else set.add(id);
+        return set;
+      });
+    }
+  };
 
   if (items.length > 0) {
     return (
@@ -93,8 +119,8 @@ const SearchOotdResultsSection = ({
             onLoadMore={loadMore}
             likedIds={likedIds}
             bookmarkedIds={bookmarkedIds}
-            onToggleLike={toggleId(setLikedIds)}
-            onToggleBookmark={toggleId(setBookmarkedIds)}
+            onToggleLike={toggleLike}
+            onToggleBookmark={toggleBookmark}
           />
         </div>
       </>

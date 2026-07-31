@@ -10,6 +10,7 @@ import type {
   OfferSettingRequest,
   OfferSettingResponse,
   ItemHistoryListResponse,
+  FrequentlyWornItem,
 } from '../model/items';
 
 export const getItems = (params?: RegisteredItemListParams) =>
@@ -30,3 +31,6 @@ export const getItemHistories = (itemId: number, params?: { page?: number; size?
 // 아이템 판매 전환
 export const createProductFromItem = (itemId: number, body: UpdateProductRequest) =>
   api.post<CreateProductResponse>(`/items/${itemId}/product`, body);
+
+export const getFrequentlyWornTogether = (itemId: number) =>
+  api.get<FrequentlyWornItem[]>(`/items/${itemId}/frequently-worn-together`);

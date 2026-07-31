@@ -1,4 +1,5 @@
 import { api } from '@/shared/lib/api';
+import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 import type { ChatRoomFilterType, ChatRoomListResponse, ChatRoomSummary } from './dto';
 import type { ChatRoom } from '../model/types';
 
@@ -10,7 +11,7 @@ const formatChatDate = (iso: string): string => {
 const toChatRoom = (s: ChatRoomSummary): ChatRoom => ({
   id: s.chatRoomId,
   name: s.opponentUsername,
-  avatar: s.opponentProfileImgUrl ?? '',
+  avatar: resolveFileUrl(s.opponentProfileImgUrl),
   product: `${s.brandName} / ${s.itemName}`,
   message: s.lastMessage,
   date: formatChatDate(s.lastMessageAt),

@@ -5,6 +5,7 @@ import { cn } from '@/shared/lib/cn';
 // 하단 탭바를 숨길 경로.
 // - 카메라/OOTD 등록 플로우 (촬영·게시글 작성) 및 OOTD 상세('/ootd/:id', report 포함, related만 제외)
 // - 채팅방('/chat/'는 방만, 목록 '/chat'은 제외), 타인 프로필('/users/:userId')
+// - 구매내역/판매내역 (마이페이지 하위 드릴다운 화면)
 const HIDE_NAV_PREFIXES = [
   '/ootd/camera',
   '/ootd/create',
@@ -12,6 +13,8 @@ const HIDE_NAV_PREFIXES = [
   '/ootd/preview',
   '/chat/',
   '/users/',
+  '/purchase-history',
+  '/sales-history',
 ];
 const HIDE_NAV_PATH_PATTERN = /^\/ootd\/\d+(\/report)?$/;
 

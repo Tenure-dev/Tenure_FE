@@ -23,7 +23,7 @@ const SalesHistoryPage = () => {
           tabs={['구매내역', '판매내역']}
           activeTab="판매내역"
           onChange={(tab) => {
-            if (tab === '구매내역') navigate('/purchase-history');
+            if (tab === '구매내역') navigate('/purchase-history', { replace: true });
           }}
         />
       </div>

@@ -20,6 +20,7 @@ import WithdrawPage from '@/pages/mypage/WithdrawPage';
 import ProductDetailPage from '@/pages/product/ProductDetailPage';
 import ProductEditPage from '@/pages/product/ProductEditPage';
 import ProductReportPage from '@/pages/product/ProductReportPage';
+import OotdGridPage from '@/pages/product/OotdGridPage';
 import SearchHomePage from '@/pages/search/SearchHomePage';
 import SearchResultPage from '@/pages/search/SearchResultPage';
 import SearchSimilarOotdsPage from '@/pages/search/SearchSimilarOotdsPage';
@@ -83,6 +84,7 @@ export const router = createBrowserRouter([
       { path: 'trade/:tradeId', element: <TradeDetailPage /> },
       { path: 'trade/:tradeId/shipping', element: <ShippingInputPage /> },
       { path: 'product/:productId', element: <ProductDetailPage /> },
+      { path: 'product/:productId/ootds', element: <OotdGridPage /> },
       { path: 'product/:productId/edit', element: <ProductEditPage /> },
       { path: 'product/:productId/report', element: <ProductReportPage /> },
       { path: 'product/:productId/purchase/price', element: <PricePage /> },

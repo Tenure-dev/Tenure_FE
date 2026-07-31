@@ -47,6 +47,21 @@ export type ItemHistoryListResponse = {
   hasNext: boolean;
 };
 
+export type HistoryOotdItem = {
+  ootdId: number;
+  imageUrl: string;
+  createdAt: string;
+};
+
+export type HistoryOotdsResponse = {
+  content: HistoryOotdItem[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+};
+
 export type WearingTarget = 'MENSWEAR' | 'WOMENSWEAR' | 'UNISEX';
 
 export type ItemDetailResponse = {

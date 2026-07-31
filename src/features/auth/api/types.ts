@@ -3,10 +3,18 @@ export type ApiGender = 'MALE' | 'FEMALE';
 export interface SignupRequest {
   email: string;
   password: string;
-  nickname: string;
+  passwordConfirm: string;
+  termsOfServiceAgreed: boolean;
+  privacyPolicyAgreed: boolean;
+  thirdPartyAgreed: boolean;
+  addressLine1: string;
+  addressLine2: string;
+  postalCode?: string;
+  username: string;
   gender: ApiGender;
-  height: number;
-  weight: number;
+  heightCm: number;
+  weightKg: number;
+  profileImageUrl?: string;
 }
 
 export interface LoginRequest {
@@ -36,6 +44,10 @@ export interface PasswordResetRequest {
 export interface AuthResult {
   userId: number;
   accessToken: string;
+}
+
+export interface UsernameCheckResponse {
+  available: boolean;
 }
 
 export interface AddressRequest {

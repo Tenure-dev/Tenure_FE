@@ -53,6 +53,9 @@ importers:
       react:
         specifier: ^19.2.7
         version: 19.2.7
+      react-daum-postcode:
+        specifier: ^4.0.0
+        version: 4.0.0(react@19.2.7)
       react-dom:
         specifier: ^19.2.7
         version: 19.2.7(react@19.2.7)
@@ -1542,6 +1545,11 @@ packages:
   quansync@0.2.11:
     resolution: {integrity: sha512-AifT7QEbW9Nri4tAwR5M/uzpBuqfZf+zwaEM/QkzEjj7NBuFD2rBuy0K3dE+8wltbezDV7JMA0WfnCPYRSYbXA==}
 
+  react-daum-postcode@4.0.0:
+    resolution: {integrity: sha512-2CGR8Aa/5637IKaplJXv5m9S/qQWWYBr30FhQ9mK9nXiisVbTvrpU9D4U1mgr8YYCKw2RgcK8daN+F+PJhW+ig==}
+    peerDependencies:
+      react: '>=16.8.0'
+      
   querystringify@2.2.0:
     resolution: {integrity: sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==}
 
@@ -3235,6 +3243,10 @@ snapshots:
 
   quansync@0.2.11: {}
 
+  react-daum-postcode@4.0.0(react@19.2.7):
+    dependencies:
+      react: 19.2.7
+      
   querystringify@2.2.0: {}
 
   react-dom@19.2.7(react@19.2.7):

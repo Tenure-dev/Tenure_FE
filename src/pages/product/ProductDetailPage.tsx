@@ -21,6 +21,7 @@ import {
 import { useProductDetail } from '@/features/product/model/useProductDetail';
 import { useDeleteProduct } from '@/features/product/model/useDeleteProduct';
 import { useCompleteProductExternal } from '@/features/product/model/useCompleteProductExternal';
+import { useToggleWish } from '@/features/wishlist/model/useToggleWish';
 import ItemDetailHeader from './components/ProductDetailHeader';
 
 const ProductDetailPage = () => {
@@ -31,7 +32,6 @@ const ProductDetailPage = () => {
 const ProductDetailPageContent = ({ productId }: { productId: string }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [wished, setWished] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [showShareOptions, setShowShareOptions] = useState(false);
@@ -40,6 +40,10 @@ const ProductDetailPageContent = ({ productId }: { productId: string }) => {
   const { data, isLoading, isError } = useProductDetail(Number(productId));
   const { mutate: markUnsold } = useDeleteProduct(Number(productId));
   const { mutate: markSoldOut } = useCompleteProductExternal(Number(productId));
+  const { wished, toggle: toggleWish } = useToggleWish(
+    data?.item.itemId,
+    data?.item.wished ?? false,
+  );
 
   const initialToastRef = useRef((location.state as { toast?: string } | null)?.toast ?? null);
   useEffect(() => {
@@ -145,7 +149,7 @@ const ProductDetailPageContent = ({ productId }: { productId: string }) => {
         imageUrls={[data.mainImageUrl]}
         dimmed={saleStatus === 'sold'}
         wished={wished}
-        onToggleWish={() => setWished((prev) => !prev)}
+        onToggleWish={toggleWish}
       >
         <ItemTitle
           brand={data.item.brandName}

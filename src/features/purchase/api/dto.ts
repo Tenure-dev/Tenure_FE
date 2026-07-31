@@ -56,7 +56,7 @@ export interface OfferDetailResponse {
   proposer: TradeUser;
   owner: TradeUser;
   amounts: ProposalAmounts;
-  delivery: ProposalDelivery;
+  delivery: ProposalDelivery | null;
   tradeRequestNote: string | null;
   deliveryDisclosureStatus: DeliveryDisclosureStatus;
   paymentMethodId: string;
@@ -80,7 +80,7 @@ export interface IntentDetailResponse {
   buyer: TradeUser;
   seller: TradeUser;
   amounts: ProposalAmounts;
-  delivery: ProposalDelivery;
+  delivery: ProposalDelivery | null;
   tradeRequestNote?: string | null;
   deliveryDisclosureStatus: DeliveryDisclosureStatus;
   paymentMethodId: string;

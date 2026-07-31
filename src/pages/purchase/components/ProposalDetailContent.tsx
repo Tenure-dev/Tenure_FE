@@ -40,7 +40,7 @@ export interface ProposalDetailContentProps {
   productPrice?: number;
   amounts: ProposalAmounts;
   counterpart: CounterpartUser;
-  delivery: ProposalDelivery;
+  delivery: ProposalDelivery | null;
   deliveryDisclosureStatus: 'VISIBLE' | 'HIDDEN';
   tradeRequestNote?: string | null;
   paymentMethodId: string;
@@ -293,18 +293,20 @@ const ProposalDetailContent = ({
         </div>
 
         {/* 배송지 */}
-        <div className="border-border-light border-b-5 p-[16px]">
-          <SectionTitle>배송지</SectionTitle>
-          <div className="flex flex-col gap-[8px]">
-            <InfoRow label="수령인" value={delivery.receiverName} />
-            <InfoRow label="주소" value={delivery.addressLine1} />
-            {delivery.addressLine2 && (
-              <InfoRow label="상세주소" value={isVisible ? delivery.addressLine2 : '•••••••••'} />
-            )}
-            <InfoRow label="연락처" value={isVisible ? delivery.phone : '•••••••••'} />
-            {delivery.requestNote && <InfoRow label="요청사항" value={delivery.requestNote} />}
+        {delivery && (
+          <div className="border-border-light border-b-5 p-[16px]">
+            <SectionTitle>배송지</SectionTitle>
+            <div className="flex flex-col gap-[8px]">
+              <InfoRow label="수령인" value={delivery.receiverName} />
+              <InfoRow label="주소" value={delivery.addressLine1} />
+              {delivery.addressLine2 && (
+                <InfoRow label="상세주소" value={isVisible ? delivery.addressLine2 : '•••••••••'} />
+              )}
+              <InfoRow label="연락처" value={isVisible ? delivery.phone : '•••••••••'} />
+              {delivery.requestNote && <InfoRow label="요청사항" value={delivery.requestNote} />}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 구매자 요청사항 */}
         {tradeRequestNote != null && (

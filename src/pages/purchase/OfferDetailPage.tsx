@@ -44,6 +44,24 @@ const OfferDetailPage = () => {
     ? `${data.owner.username} 님에게 구매 제안을 보냈습니다!`
     : `${data.proposer.username} 님이 구매 제안을 보냈습니다!`;
 
+  // offer 상세 금액은 필드명이 달라(offerAmount/proposerServiceFee/…) 공통 컴포넌트 형태로 변환.
+  // 판매자 수수료는 응답에 없어 (제안가 - 정산액)으로 계산. 정산액은 판매자 뷰에서만 내려온다.
+  const {
+    offerAmount,
+    shippingFee,
+    proposerServiceFee,
+    totalPaymentAmount,
+    ownerSettlementAmount,
+  } = data.amounts;
+  const amounts = {
+    productAmount: offerAmount,
+    shippingFee,
+    buyerServiceFee: proposerServiceFee,
+    sellerServiceFee: ownerSettlementAmount != null ? offerAmount - ownerSettlementAmount : 0,
+    buyerPaymentAmount: totalPaymentAmount,
+    sellerSettlementAmount: ownerSettlementAmount ?? 0,
+  };
+
   return (
     <ProposalDetailContent
       proposalType="OFFER"
@@ -55,7 +73,7 @@ const OfferDetailPage = () => {
       brandName={data.item.brandName}
       itemName={data.item.itemName}
       imageUrl={null}
-      amounts={data.amounts}
+      amounts={amounts}
       counterpart={counterpart}
       delivery={data.delivery}
       deliveryDisclosureStatus={data.deliveryDisclosureStatus}

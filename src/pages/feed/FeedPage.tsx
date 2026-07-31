@@ -10,11 +10,12 @@ import FollowAvatarRow from '@/features/feed/ui/FollowAvatarRow';
 import { mockFollowedUsers } from '@/features/feed/model/mocks';
 import type { FeedCard, FeedTab } from '@/features/feed/model/types';
 import { useFeedQuery } from '@/features/feed/model/useFeedQuery';
+import { useProfileStore } from '@/store/useProfileStore';
 
 const TABS: FeedTab[] = ['모두', '팔로우'];
 
 const FeedPage = () => {
-  const userName = '테뉴어';
+  const { name: userName } = useProfileStore();
   const [activeTab, setActiveTab] = useState<FeedTab>('모두');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 

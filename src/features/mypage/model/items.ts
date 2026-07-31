@@ -1,6 +1,6 @@
 export type ItemStatus = 'OWNED' | 'ON_SALE' | 'SOLD' | 'TRANSFERRED' | 'ARCHIVED';
 
-export type RegisteredItem = {
+export type Item = {
   itemId: number;
   brandName: string;
   itemName: string;
@@ -12,7 +12,7 @@ export type RegisteredItem = {
 };
 
 export type RegisteredItemListResponse = {
-  content: RegisteredItem[];
+  content: Item[];
   page: number;
   size: number;
   totalElements: number;
@@ -49,7 +49,7 @@ export type ItemHistoryListResponse = {
 
 export type WearingTarget = 'MENSWEAR' | 'WOMENSWEAR' | 'UNISEX';
 
-export type RegisteredItemDetailResponse = {
+export type ItemDetailResponse = {
   itemId: number;
   ownerUserId: number;
   brandName: string;
@@ -66,6 +66,9 @@ export type RegisteredItemDetailResponse = {
   firstOwnedAt: string;
   wishCount: number;
   purchaseOfferEnabled: boolean;
+  productId?: number | null;
+  price?: number | null;
+  saleStatus?: string | null;
 };
 
 export type FrequentlyWornItem = {
@@ -76,7 +79,7 @@ export type FrequentlyWornItem = {
   togetherCount: number;
 };
 
-export type RegisteredItemDetail = RegisteredItemDetailResponse & {
+export type ItemDetail = ItemDetailResponse & {
   frequentlyWornWith: FrequentlyWornItem[];
 };
 

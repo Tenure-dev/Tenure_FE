@@ -13,8 +13,8 @@ import { DEFAULT_CONDITION_FLAGS } from '@/features/product/ui/saleForm';
 type View = 'form' | 'ootd-picker';
 
 const ProductEditPage = () => {
-  const { itemId = '' } = useParams();
-  const productId = Number(itemId);
+  const { productId: productIdStr = '' } = useParams();
+  const productId = Number(productIdStr);
   const { data, isLoading, isError } = useProductDetail(productId);
 
   if (isLoading) {

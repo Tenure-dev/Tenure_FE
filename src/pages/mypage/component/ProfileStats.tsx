@@ -12,7 +12,7 @@ const ProfileStats = () => {
   const stats = [
     { label: '피드', value: data?.feedCount, to: null },
     { label: '아이템', value: data?.itemCount, to: '/mypage/items' },
-    { label: '위시', value: data?.wishCount, to: null },
+    { label: '위시', value: data?.wishCount, to: '/wishlist' },
     { label: '팔로워', value: data?.followerCount, to: null },
   ];
 

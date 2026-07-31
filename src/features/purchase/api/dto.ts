@@ -20,6 +20,17 @@ interface ProposalAmounts {
   sellerSettlementAmount: number;
 }
 
+// OFFER 응답은 productAmount/buyerServiceFee 같은 명칭이 아니라
+// offerAmount/proposerServiceFee/ownerSettlementAmount로 내려온다.
+// ownerSettlementAmount는 viewerRole이 OWNER가 아니면 null.
+export interface OfferAmounts {
+  offerAmount: number;
+  shippingFee: number;
+  proposerServiceFee: number;
+  totalPaymentAmount: number;
+  ownerSettlementAmount: number | null;
+}
+
 interface ProposalDelivery {
   receiverName: string;
   phone: string;
@@ -55,8 +66,8 @@ export interface OfferDetailResponse {
   };
   proposer: TradeUser;
   owner: TradeUser;
-  amounts: ProposalAmounts;
-  delivery: ProposalDelivery;
+  amounts: OfferAmounts;
+  delivery: ProposalDelivery | null;
   tradeRequestNote: string | null;
   deliveryDisclosureStatus: DeliveryDisclosureStatus;
   paymentMethodId: string;
@@ -80,7 +91,7 @@ export interface IntentDetailResponse {
   buyer: TradeUser;
   seller: TradeUser;
   amounts: ProposalAmounts;
-  delivery: ProposalDelivery;
+  delivery: ProposalDelivery | null;
   tradeRequestNote?: string | null;
   deliveryDisclosureStatus: DeliveryDisclosureStatus;
   paymentMethodId: string;

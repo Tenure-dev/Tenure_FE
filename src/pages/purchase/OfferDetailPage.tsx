@@ -44,6 +44,20 @@ const OfferDetailPage = () => {
     ? `${data.owner.username} 님에게 구매 제안을 보냈습니다!`
     : `${data.proposer.username} 님이 구매 제안을 보냈습니다!`;
 
+  // OfferDetailResponse.amounts는 필드명이 달라서(offerAmount/proposerServiceFee/
+  // ownerSettlementAmount) ProposalDetailContent가 쓰는 공통 형태로 맞춰준다.
+  const amounts = {
+    productAmount: data.amounts.offerAmount,
+    shippingFee: data.amounts.shippingFee,
+    buyerServiceFee: data.amounts.proposerServiceFee,
+    sellerServiceFee:
+      data.amounts.ownerSettlementAmount == null
+        ? 0
+        : data.amounts.offerAmount - data.amounts.ownerSettlementAmount,
+    buyerPaymentAmount: data.amounts.totalPaymentAmount,
+    sellerSettlementAmount: data.amounts.ownerSettlementAmount ?? 0,
+  };
+
   return (
     <ProposalDetailContent
       proposalType="OFFER"
@@ -55,7 +69,7 @@ const OfferDetailPage = () => {
       brandName={data.item.brandName}
       itemName={data.item.itemName}
       imageUrl={null}
-      amounts={data.amounts}
+      amounts={amounts}
       counterpart={counterpart}
       delivery={data.delivery}
       deliveryDisclosureStatus={data.deliveryDisclosureStatus}

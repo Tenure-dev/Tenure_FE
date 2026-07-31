@@ -20,6 +20,17 @@ interface ProposalAmounts {
   sellerSettlementAmount: number;
 }
 
+// 구매 제안(offer) 상세 응답의 금액은 거래 의사(intent)와 필드명이 다르다.
+// (offerAmount/proposerServiceFee/totalPaymentAmount/ownerSettlementAmount)
+// ownerSettlementAmount는 판매자(OWNER)가 볼 때만 내려온다.
+interface OfferAmounts {
+  offerAmount: number;
+  shippingFee: number;
+  proposerServiceFee: number;
+  totalPaymentAmount: number;
+  ownerSettlementAmount: number | null;
+}
+
 interface ProposalDelivery {
   receiverName: string;
   phone: string;
@@ -55,7 +66,7 @@ export interface OfferDetailResponse {
   };
   proposer: TradeUser;
   owner: TradeUser;
-  amounts: ProposalAmounts;
+  amounts: OfferAmounts;
   delivery: ProposalDelivery | null;
   tradeRequestNote: string | null;
   deliveryDisclosureStatus: DeliveryDisclosureStatus;

@@ -54,8 +54,13 @@ const ProfileEditForm = ({ myInfo }: { myInfo: UserProfile }) => {
   const updateProfileMutation = useMutation({ mutationFn: updateMyInfo });
   const uploadPhotoMutation = useMutation({ mutationFn: uploadProfileImage });
 
-  const handleFileSelected = (file: File) => {
-    setPendingPhoto(URL.createObjectURL(file));
+  const handleImageSelected = (webPath: string) => {
+    setPendingPhoto(webPath);
+  };
+
+  const handleResetToDefault = () => {
+    setPhotoUrl(null);
+    setProfileImageUrl(null);
   };
 
   const handleConfirmPhoto = (croppedImage: Blob) => {
@@ -112,7 +117,11 @@ const ProfileEditForm = ({ myInfo }: { myInfo: UserProfile }) => {
     <div className="bg-bg-white text-text-primary min-h-screen pb-8">
       <BackHeader title="프로필 수정" />
 
-      <ProfilePhotoPicker imageUrl={photoUrl} onFileSelected={handleFileSelected} />
+      <ProfilePhotoPicker
+        imageUrl={photoUrl}
+        onImageSelected={handleImageSelected}
+        onResetToDefault={handleResetToDefault}
+      />
 
       <div className="flex flex-col gap-6 px-4">
         <div className="flex flex-col gap-2">

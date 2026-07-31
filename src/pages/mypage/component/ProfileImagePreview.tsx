@@ -89,7 +89,7 @@ const ProfileImagePreview = ({ imageUrl, onCancel, onConfirm }: ProfileImagePrev
   };
 
   return (
-    <div className="fixed inset-0 z-50 mx-auto flex max-w-md flex-col items-center justify-center gap-10 bg-black px-6">
+    <div className="fixed inset-0 z-50 mx-auto flex max-w-[768px] min-w-[320px] flex-col items-center justify-center gap-10 bg-black px-6">
       <div
         className="relative size-64 touch-none overflow-hidden rounded-full"
         onPointerDown={handlePointerDown}

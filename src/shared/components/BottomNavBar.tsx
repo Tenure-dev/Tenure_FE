@@ -57,6 +57,7 @@ const HIDDEN_PATHS = [
   '/mypage/edit',
   '/mypage/items',
   '/item',
+  '/settings',
 ];
 
 const NavLink = ({ item, pathname }: { item: NavItem; pathname: string }) => {

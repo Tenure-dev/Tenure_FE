@@ -1,67 +1,59 @@
+import { useParams, useNavigate } from 'react-router-dom';
 import { BackHeader } from '@/shared/components';
+import { useReceivedOffers } from '@/features/product/model/useReceivedOffers';
 import OfferProductInfo from './component/OfferProductInfo';
 import OfferCard from './component/OfferCard';
 
-const MOCK_PRODUCT = {
-  thumbnail: 'https://picsum.photos/seed/offer-product/200/200',
-  brand: 'Levis / LVC 1955 501',
-};
+const ReceivedOffersPage = () => {
+  const { itemId } = useParams();
+  const navigate = useNavigate();
+  const { view, isLoading } = useReceivedOffers(Number(itemId));
 
-const MOCK_OFFERS = [
-  {
-    id: 1,
-    name: '중고나라 속 보석',
-    avatar: 'https://picsum.photos/seed/offer-1/120',
-    price: 360000,
-    timeLeft: '23시간 18분 남음',
-  },
-  {
-    id: 2,
-    name: '도윤마켓',
-    avatar: 'https://picsum.photos/seed/offer-2/120',
-    price: 345000,
-    timeLeft: '15시간 23분 남음',
-  },
-  {
-    id: 3,
-    name: '지아 closet',
-    avatar: 'https://picsum.photos/seed/offer-3/120',
-    price: 285000,
-    timeLeft: '9시간 4분 남음',
-  },
-  {
-    id: 4,
-    name: '수현룩',
-    avatar: 'https://picsum.photos/seed/offer-4/120',
-    price: 370000,
-    timeLeft: '12시간 32분 남음',
-  },
-];
+  // mode로 갈라서 상세로 이동 (offer -> offerId, intent -> intentId. card.id에 각 값이 들어있음)
+  const goDetail = (mode: 'offer' | 'intent', id: number) => {
+    navigate(mode === 'offer' ? `/purchase/offer/${id}` : `/purchase/intent/${id}`);
+  };
 
-const ReceivedOffersPage = () => (
-  <div className="bg-bg-white min-h-screen">
-    <BackHeader title="받은 제안" />
+  return (
+    <div className="bg-bg-white min-h-screen">
+      <BackHeader title="받은 제안" />
 
-    <OfferProductInfo
-      thumbnail={MOCK_PRODUCT.thumbnail}
-      brand={MOCK_PRODUCT.brand}
-      count={MOCK_OFFERS.length}
-    />
+      {isLoading && <p className="text-body-3 text-text-secondary p-4">불러오는 중...</p>}
 
-    <ul className="flex flex-col gap-3 p-4">
-      {MOCK_OFFERS.map((offer) => (
-        <li key={offer.id}>
-          <OfferCard
-            avatar={offer.avatar}
-            name={offer.name}
-            price={offer.price}
-            timeLeft={offer.timeLeft}
-            onClick={() => {}}
+      {view && (
+        <>
+          <OfferProductInfo
+            thumbnail={view.product.thumbnail}
+            brand={view.product.brand}
+            count={view.count}
+            mode={view.mode}
+            price={view.product.price}
           />
-        </li>
-      ))}
-    </ul>
-  </div>
-);
+
+          {view.cards.length === 0 ? (
+            <p className="text-body-3 text-text-secondary p-4">
+              아직 받은 {view.mode === 'intent' ? '거래 의사가' : '구매 제안이'} 없어요.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-3 p-4">
+              {view.cards.map((card) => (
+                <li key={card.id}>
+                  <OfferCard
+                    avatar={card.avatar}
+                    name={card.name}
+                    price={card.price}
+                    timeLeft={card.timeLeft}
+                    mode={view.mode}
+                    onClick={() => goDetail(view.mode, card.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
 
 export default ReceivedOffersPage;

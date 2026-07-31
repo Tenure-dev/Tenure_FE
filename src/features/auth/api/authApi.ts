@@ -4,6 +4,8 @@ import type {
   EmailSendRequest,
   EmailVerifyRequest,
   LoginRequest,
+  PasswordResetRequest,
+  PasswordResetSendRequest,
   SignupRequest,
   UsernameCheckResponse,
 } from './types';
@@ -20,3 +22,9 @@ export const verifyEmailCode = (payload: EmailVerifyRequest) =>
 
 export const checkUsernameAvailable = (username: string) =>
   api.get<UsernameCheckResponse>('/auth/username/check', { params: { username } });
+
+export const sendPasswordResetCode = (payload: PasswordResetSendRequest) =>
+  api.post<void>('/auth/password/reset/send', payload);
+
+export const resetPassword = (payload: PasswordResetRequest) =>
+  api.post<void>('/auth/password/reset', payload);

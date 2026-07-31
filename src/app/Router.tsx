@@ -26,6 +26,7 @@ import SearchNewOotdsPage from '@/pages/search/SearchNewOotdsPage';
 import SearchPopularUsersPage from '@/pages/search/SearchPopularUsersPage';
 import LoginPage from '@/pages/onboarding/LoginPage';
 import SignupPage from '@/pages/onboarding/SignupPage';
+import FindPasswordPage from '@/pages/onboarding/FindPasswordPage';
 import TestPage from '@/pages/onboarding/Test';
 import OotdDetailPage from '@/pages/ootd/OotdDetailPage';
 import ReportPage from '@/pages/ootd/ReportPage';
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
       { path: 'ootd/:id/related', element: <RelatedOotdPage /> },
       { path: 'login', element: <LoginPage /> },
       { path: 'signup', element: <SignupPage /> },
+      { path: 'find-password', element: <FindPasswordPage /> },
       // 비로그인 전용 (PublicOnlyLayout)
       // { element: <PublicOnlyLayout />, children: [
       //   { path: 'login', element: <LoginPage /> },

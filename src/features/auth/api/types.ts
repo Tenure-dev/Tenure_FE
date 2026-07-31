@@ -31,6 +31,16 @@ export interface EmailVerifyRequest {
   code: string;
 }
 
+export interface PasswordResetSendRequest {
+  email: string;
+}
+
+export interface PasswordResetRequest {
+  email: string;
+  newPassword: string;
+  newPasswordConfirm: string;
+}
+
 export interface AuthResult {
   userId: number;
   accessToken: string;

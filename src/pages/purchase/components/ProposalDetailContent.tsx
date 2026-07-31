@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Clock } from 'lucide-react';
 import { BackHeader, Button, DoubleButton } from '@/shared/components';
 import { cn } from '@/shared/lib/cn';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 
 interface CounterpartUser {
   userId: number;
@@ -41,7 +42,7 @@ export interface ProposalDetailContentProps {
   amounts: ProposalAmounts;
   counterpart: CounterpartUser;
   delivery: ProposalDelivery | null;
-  deliveryDisclosureStatus: 'VISIBLE' | 'HIDDEN';
+  deliveryDisclosureStatus: 'VISIBLE' | 'AFTER_ACCEPTANCE';
   tradeRequestNote?: string | null;
   paymentMethodId: string;
   onAccept: () => void;
@@ -210,7 +211,13 @@ const ProposalDetailContent = ({
             onClick={() => navigate(itemNavigationPath)}
           >
             <div className="bg-bg-primary size-[64px] shrink-0 overflow-hidden rounded-md">
-              {imageUrl && <img src={imageUrl} alt={itemName} className="size-full object-cover" />}
+              {imageUrl && (
+                <img
+                  src={resolveImageUrl(imageUrl)}
+                  alt={itemName}
+                  className="size-full object-cover"
+                />
+              )}
             </div>
             <div className="flex-1">
               <p className="text-body-1 text-text-primary font-semibold">
@@ -275,7 +282,7 @@ const ProposalDetailContent = ({
               <div className="bg-bg-quaternary size-[60px] shrink-0 overflow-hidden rounded-full">
                 {counterpart.profileImageUrl && (
                   <img
-                    src={counterpart.profileImageUrl}
+                    src={resolveImageUrl(counterpart.profileImageUrl)}
                     alt={counterpart.username}
                     className="size-full object-cover"
                   />
@@ -294,9 +301,9 @@ const ProposalDetailContent = ({
         </div>
 
         {/* 배송지 */}
-        {delivery && (
-          <div className="border-border-light border-b-5 p-[16px]">
-            <SectionTitle>배송지</SectionTitle>
+        <div className="border-border-light border-b-5 p-[16px]">
+          <SectionTitle>배송지</SectionTitle>
+          {delivery ? (
             <div className="flex flex-col gap-[8px]">
               <InfoRow label="수령인" value={delivery.receiverName} />
               <InfoRow label="주소" value={delivery.addressLine1} />
@@ -306,8 +313,10 @@ const ProposalDetailContent = ({
               <InfoRow label="연락처" value={isVisible ? delivery.phone : '•••••••••'} />
               {delivery.requestNote && <InfoRow label="요청사항" value={delivery.requestNote} />}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-body-3 text-text-secondary">수락 후 배송지가 공개됩니다.</p>
+          )}
+        </div>
 
         {/* 구매자 요청사항 */}
         {tradeRequestNote != null && (

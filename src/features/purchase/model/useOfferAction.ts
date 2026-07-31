@@ -14,6 +14,11 @@ export const useOfferAction = (offerId: number) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['offers', offerId] });
+      // 수락/거절/취소 결과가 목록 화면(마이페이지 판매·구매내역, 받은 제안)에도 반영되도록 함께 무효화한다.
+      queryClient.invalidateQueries({ queryKey: ['my-page-sales'] });
+      queryClient.invalidateQueries({ queryKey: ['my-page-purchases'] });
+      queryClient.invalidateQueries({ queryKey: ['received-offers'] });
+      queryClient.invalidateQueries({ queryKey: ['item-detail'] });
     },
   });
 };

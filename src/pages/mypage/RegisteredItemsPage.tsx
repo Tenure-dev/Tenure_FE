@@ -51,8 +51,8 @@ const RegisteredItemsPage = () => {
         <>
           <RegisteredItemListSection
             items={items}
-            onItemClick={(id) => navigate(`/mypage/items/${id}`)}
-            onSaleConvert={(id) => navigate(`/mypage/items/${id}/sell`)}
+            onItemClick={(id) => navigate(`/items/${id}`)}
+            onSaleConvert={(id) => navigate(`/items/${id}/sell`)}
           />
           <div ref={sentinelRef} />
         </>

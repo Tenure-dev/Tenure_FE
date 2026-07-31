@@ -18,20 +18,22 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string }[] = [
 ];
 
 const CheckoutPage = () => {
-  const { itemId = '' } = useParams();
+  const { productId = '' } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
 
   const offerPrice = useOfferStore((s) => s.price);
   const tradeRequest = useOfferStore((s) => s.tradeRequest);
   const paymentMethod = useOfferStore((s) => s.paymentMethod);
+  const setItemId = useOfferStore((s) => s.setItemId);
+  const setSellerNickname = useOfferStore((s) => s.setSellerNickname);
   const setTradeRequest = useOfferStore((s) => s.setTradeRequest);
   const setPaymentMethod = useOfferStore((s) => s.setPaymentMethod);
 
   const [agreeOrder, setAgreeOrder] = useState(false);
   const [agreeAuto, setAgreeAuto] = useState(false);
 
-  const { data, isLoading, isError } = useProductDetail(Number(itemId));
+  const { data, isLoading, isError } = useProductDetail(Number(productId));
   const { defaultAddress } = useAddresses();
 
   if (isLoading) {
@@ -56,7 +58,13 @@ const CheckoutPage = () => {
   const total = displayPrice + SHIPPING_FEE + fee;
   const canPay = !!defaultAddress && agreeOrder && agreeAuto;
 
-  const handlePay = () => navigate(`/product/${itemId}/purchase/processing`);
+  const handlePay = () => {
+    if (isDirect) {
+      setItemId(data.item.itemId);
+      setSellerNickname(data.seller.username);
+    }
+    navigate(`/product/${productId}/purchase/processing`, { state: { direct: isDirect } });
+  };
 
   return (
     <div className="bg-bg-white flex min-h-screen flex-col pb-[86px]">

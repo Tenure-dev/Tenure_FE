@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { circleCheck } from '@/shared/assets';
 import { BackHeader, CTAButton } from '@/shared/components';
 import { getSizeSystem } from '@/shared/lib/itemSizeData';
-import type { RegisteredItemDetailResponse } from '@/features/mypage/model/items';
+import type { ItemDetailResponse } from '@/features/mypage/model/items';
 import { useItemDetailQuery } from '@/features/mypage/model/useItemDetailQuery';
 import { useCreateProduct } from '@/features/mypage/model/useCreateProduct';
 import { SaleFormBody, OotdPickerView } from '@/features/product/ui/saleForm';
@@ -42,7 +42,7 @@ const SaleConversionPage = () => {
   return <SaleConversionContent item={item} />;
 };
 
-const SaleConversionContent = ({ item }: { item: RegisteredItemDetailResponse }) => {
+const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
   const navigate = useNavigate();
   const [view, setView] = useState<View>('form');
   const [tempOotdIds, setTempOotdIds] = useState<number[]>([]);

@@ -1,9 +1,9 @@
 import { formatDate } from '../lib/formatDate';
 import { WEARING_TARGET_LABEL } from '../lib/wearingTargetLabel';
-import type { RegisteredItemDetail } from '../model/items';
+import type { ItemDetail } from '../model/items';
 
 interface ItemInfoSectionProps {
-  item: RegisteredItemDetail;
+  item: ItemDetail;
   allowProposal: boolean;
 }
 

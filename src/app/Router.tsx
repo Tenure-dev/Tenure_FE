@@ -10,8 +10,8 @@ import SalesHistoryPage from '@/pages/mypage/SalesHistoryPage';
 import ShippingInputPage from '@/pages/mypage/ShippingInputPage';
 import TradeDetailPage from '@/pages/mypage/TradeDetailPage';
 import RegisteredItemsPage from '@/pages/mypage/RegisteredItemsPage';
-import RegisteredItemDetailPage from '@/pages/mypage/RegisteredItemDetailPage';
 import ItemAddPage from '@/pages/mypage/ItemAddPage';
+import ItemDetailPage from '@/pages/mypage/ItemDetailPage';
 import SaleConversionPage from '@/pages/mypage/SaleConversionPage';
 import SettingsPage from '@/pages/mypage/SettingsPage';
 import NotificationSettingsPage from '@/pages/mypage/NotificationSettingsPage';
@@ -38,7 +38,6 @@ import ChatRoomPage from '@/pages/chat/ChatRoomPage';
 import PricePage from '@/pages/purchase/PricePage';
 import CheckoutPage from '@/pages/purchase/CheckoutPage';
 import ProcessingPage from '@/pages/purchase/ProcessingPage';
-import CompletePage from '@/pages/purchase/CompletePage';
 import OotdTagPage from '@/pages/camera/OotdTagPage';
 import OotdCreatePage from '@/pages/camera/OotdCreatePage';
 import OotdCameraPage from '@/pages/camera/OotdCameraPage';
@@ -76,20 +75,19 @@ export const router = createBrowserRouter([
       { path: 'mypage/edit', element: <ProfileEditPage /> },
       { path: 'mypage/items', element: <RegisteredItemsPage /> },
       { path: 'mypage/items/new', element: <ItemAddPage /> },
-      { path: 'mypage/items/:itemId', element: <RegisteredItemDetailPage /> },
-      { path: 'mypage/items/:itemId/sell', element: <SaleConversionPage /> },
+      { path: 'items/:itemId', element: <ItemDetailPage /> },
+      { path: 'items/:itemId/sell', element: <SaleConversionPage /> },
       { path: 'users/:userId', element: <UserProfilePage /> },
       { path: 'purchase-history', element: <PurchaseHistoryPage /> },
       { path: 'sales-history', element: <SalesHistoryPage /> },
       { path: 'trade/:tradeId', element: <TradeDetailPage /> },
       { path: 'trade/:tradeId/shipping', element: <ShippingInputPage /> },
-      { path: 'product/:itemId', element: <ProductDetailPage /> },
-      { path: 'product/:itemId/edit', element: <ProductEditPage /> },
-      { path: 'product/:itemId/report', element: <ProductReportPage /> },
-      { path: 'product/:itemId/purchase/price', element: <PricePage /> },
-      { path: 'product/:itemId/purchase/checkout', element: <CheckoutPage /> },
-      { path: 'product/:itemId/purchase/processing', element: <ProcessingPage /> },
-      { path: 'product/:itemId/purchase/complete', element: <CompletePage /> },
+      { path: 'product/:productId', element: <ProductDetailPage /> },
+      { path: 'product/:productId/edit', element: <ProductEditPage /> },
+      { path: 'product/:productId/report', element: <ProductReportPage /> },
+      { path: 'product/:productId/purchase/price', element: <PricePage /> },
+      { path: 'product/:productId/purchase/checkout', element: <CheckoutPage /> },
+      { path: 'product/:productId/purchase/processing', element: <ProcessingPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'settings/notifications', element: <NotificationSettingsPage /> },
       { path: 'settings/visibility', element: <AccountVisibilityPage /> },

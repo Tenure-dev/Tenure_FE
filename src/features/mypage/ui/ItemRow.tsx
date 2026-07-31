@@ -1,15 +1,15 @@
 import { Button } from '@/shared/components';
 import { getDaysAgo } from '../lib/daysAgo';
 import { ITEM_STATUS_LABEL } from '../lib/statusLabel';
-import type { RegisteredItem } from '../model/items';
+import type { Item } from '../model/items';
 
-interface RegisteredItemRowProps {
-  item: RegisteredItem;
+interface ItemRowProps {
+  item: Item;
   onClick: () => void;
   onSaleConvert?: () => void;
 }
 
-const RegisteredItemRow = ({ item, onClick, onSaleConvert }: RegisteredItemRowProps) => {
+const ItemRow = ({ item, onClick, onSaleConvert }: ItemRowProps) => {
   const wornInfo = item.lastWornAt
     ? `최근 착용 ${getDaysAgo(item.lastWornAt)}일 전`
     : '착용 기록 없음';
@@ -53,4 +53,4 @@ const RegisteredItemRow = ({ item, onClick, onSaleConvert }: RegisteredItemRowPr
   );
 };
 
-export default RegisteredItemRow;
+export default ItemRow;

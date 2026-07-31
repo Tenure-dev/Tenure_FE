@@ -48,6 +48,7 @@ import OotdCameraPage from '@/pages/camera/OotdCameraPage';
 import OotdPreviewPage from '@/pages/camera/OotdPreviewPage';
 import UserProfilePage from '@/pages/user/UserProfilePage';
 import ReceivedOffersPage from '@/pages/offer/ReceivedOffersPage';
+import FollowListPage from '@/pages/mypage/FollowListPage';
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -75,6 +76,7 @@ export const router = createBrowserRouter([
           { path: 'ootd/:id/report', element: <ReportPage /> },
           { path: 'ootd/:id/related', element: <RelatedOotdPage /> },
           { path: 'mypage', element: <MyPage /> },
+          { path: 'mypage/follow', element: <FollowListPage /> },
           { path: 'wishlist', element: <WishListPage /> },
           { path: 'mypage/edit', element: <ProfileEditPage /> },
           { path: 'mypage/items', element: <RegisteredItemsPage /> },

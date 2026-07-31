@@ -7,9 +7,9 @@ import FeedHeader from './components/FeedHeader';
 import FeedIntro from './components/FeedIntro';
 
 import FollowAvatarRow from '@/features/feed/ui/FollowAvatarRow';
-import { mockFollowedUsers } from '@/features/feed/model/mocks';
 import type { FeedCard, FeedTab } from '@/features/feed/model/types';
 import { useFeedQuery } from '@/features/feed/model/useFeedQuery';
+import { useFollowings } from '@/features/feed/model/useFollowings';
 import { useProfileStore } from '@/store/useProfileStore';
 
 const TABS: FeedTab[] = ['모두', '팔로우'];
@@ -33,8 +33,11 @@ const FeedPage = () => {
     }
   }, [location.pathname, navigate, showToast]);
 
+  const { data: followings = [] } = useFollowings();
+
   const { data } = useFeedQuery({
     tab: activeTab === '팔로우' ? 'following' : 'all',
+    userId: selectedUserId ? Number(selectedUserId) : undefined,
   });
 
   const items = useMemo<FeedCard[]>(
@@ -67,7 +70,7 @@ const FeedPage = () => {
 
       {activeTab === '팔로우' && (
         <FollowAvatarRow
-          users={mockFollowedUsers}
+          users={followings}
           selectedUserId={selectedUserId}
           onSelect={handleSelectUser}
         />

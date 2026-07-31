@@ -12,11 +12,11 @@ const FollowAvatarItem = ({ user, selected, onSelect }: FollowAvatarItemProps) =
   return (
     <button
       type="button"
-      onClick={() => onSelect(user.id)}
+      onClick={() => onSelect(String(user.userId))}
       className="flex w-15 shrink-0 flex-col items-center gap-1 md:w-19"
     >
       <img
-        src={user.avatarUrl || profileDefault}
+        src={user.profileImageUrl || profileDefault}
         alt="followed user avatar"
         className={cn(
           'size-13 rounded-full object-cover ring-2 ring-offset-1 md:size-16',
@@ -29,7 +29,7 @@ const FollowAvatarItem = ({ user, selected, onSelect }: FollowAvatarItemProps) =
           selected ? 'text-text-primary' : 'text-text-secondary',
         )}
       >
-        {user.name}
+        {user.username}
       </span>
     </button>
   );

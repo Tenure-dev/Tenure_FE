@@ -169,7 +169,10 @@ const ProductDetailPageContent = ({ productId }: { productId: string }) => {
 
       {showListingSections && conditionChecks && <ConditionCheckSection items={conditionChecks} />}
 
-      <RepresentativeOOTDSection items={representativeOOTDs} />
+      <RepresentativeOOTDSection
+        items={representativeOOTDs}
+        onMoreClick={() => navigate(`/product/${productId}/ootds`)}
+      />
 
       <ItemDetailCTA
         role={role}

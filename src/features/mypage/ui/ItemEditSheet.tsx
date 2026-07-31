@@ -80,7 +80,7 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
     categorySmall: item.categorySmall,
     sizeValue: item.sizeValue,
     wearingTarget: item.wearingTarget,
-    firstOwnedAt: item.firstOwnedAt.slice(0, 10),
+    firstOwnedAt: item.firstOwnedAt?.slice(0, 10) ?? '',
   });
 
   const [form, setForm] = useState<ItemEditForm>(toForm);

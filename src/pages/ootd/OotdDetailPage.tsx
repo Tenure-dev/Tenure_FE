@@ -583,16 +583,18 @@ const OotdDetailPage = () => {
           </div>
 
           <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate(`/users/${post.author.id}`)}
+              className="flex items-center gap-2"
+            >
               <div className="bg-gray-bg size-9 overflow-hidden rounded-full">
                 {post.author.avatarUrl && (
                   <img src={post.author.avatarUrl} alt="" className="size-full object-cover" />
                 )}
               </div>
-              <div>
-                <p className="text-body-2 text-text-primary font-semibold">{post.author.name}</p>
-              </div>
-            </div>
+              <p className="text-body-2 text-text-primary font-semibold">{post.author.name}</p>
+            </button>
             {!post.isOwner && <FollowButton following={post.isFollowing} onToggle={toggleFollow} />}
           </div>
 

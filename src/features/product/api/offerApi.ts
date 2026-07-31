@@ -26,3 +26,13 @@ export interface CreateOfferResponse {
 
 export const createOffer = (itemId: number, body: CreateOfferRequest) =>
   api.post<CreateOfferResponse>(`/items/${itemId}/offers`, body);
+
+export interface PurchaseOfferCancelResponse {
+  offerId: number;
+  status: string;
+  paymentAuthorizationStatus: string;
+  serverTime: string;
+}
+
+export const cancelPurchaseOffer = (offerId: number) =>
+  api.post<PurchaseOfferCancelResponse>(`/purchase-offers/${offerId}/cancel`);

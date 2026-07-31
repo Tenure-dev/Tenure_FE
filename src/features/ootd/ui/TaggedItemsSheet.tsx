@@ -1,8 +1,10 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import { Bell, BellRing } from 'lucide-react';
 import { BottomSheet, CTAButton } from '@/shared/components';
 import { cn } from '@/shared/lib/cn';
+import { getItemDetail } from '@/features/mypage/api/itemsApi';
 import type { TaggedItem } from '@/features/ootd/model/types';
 
 export interface TaggedItemsSheetProps {
@@ -40,12 +42,35 @@ const TaggedItemRow = ({ item, onToggleWish }: TaggedItemRowProps) => {
   const [swipePx, setSwipePx] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; startSwipe: number } | null>(null);
+  const draggedRef = useRef(false);
 
-  const goToItem = () => navigate(`/item/${item.itemId}`);
+  const { mutate: fetchProductId } = useMutation({
+    mutationFn: () => getItemDetail(item.itemId),
+    onSuccess: (detail) => {
+      if (detail.productId) navigate(`/product/${detail.productId}`);
+    },
+  });
+
+  const goToItemDetail = () => navigate(`/items/${item.itemId}`);
+
+  // 판매중(활성 product 있음)만 productId로 브릿지, 나머지(구매제안)는 itemId 상세로 보낸다.
+  const handlePurchaseAction = () => {
+    if (item.status === '판매중') {
+      fetchProductId();
+    } else {
+      goToItemDetail();
+    }
+  };
+
+  const handleRowClick = () => {
+    if (isDeleted || draggedRef.current) return;
+    goToItemDetail();
+  };
 
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!hasAction) return;
     dragStartRef.current = { x: e.clientX, startSwipe: swipePx };
+    draggedRef.current = false;
     setIsDragging(true);
     e.currentTarget.setPointerCapture(e.pointerId);
   };
@@ -53,6 +78,7 @@ const TaggedItemRow = ({ item, onToggleWish }: TaggedItemRowProps) => {
   const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!dragStartRef.current) return;
     const draggedLeft = dragStartRef.current.x - e.clientX;
+    if (Math.abs(draggedLeft) > 5) draggedRef.current = true;
     const next = Math.min(ACTION_WIDTH, Math.max(0, dragStartRef.current.startSwipe + draggedLeft));
     setSwipePx(next);
   };
@@ -74,7 +100,7 @@ const TaggedItemRow = ({ item, onToggleWish }: TaggedItemRowProps) => {
           >
             <button
               type="button"
-              onClick={goToItem}
+              onClick={handlePurchaseAction}
               className={cn(
                 'text-btn-4 h-10 w-full rounded-md font-semibold',
                 item.status === '판매중'
@@ -92,8 +118,10 @@ const TaggedItemRow = ({ item, onToggleWish }: TaggedItemRowProps) => {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerEnd}
           onPointerCancel={handlePointerEnd}
+          onClick={handleRowClick}
           className={cn(
             'bg-bg-white flex touch-pan-y items-center gap-3',
+            !isDeleted && 'cursor-pointer active:opacity-70',
             !isDragging && 'transition-transform duration-200 ease-out',
             isDimmed && 'opacity-50',
           )}

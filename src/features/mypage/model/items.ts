@@ -78,7 +78,7 @@ export type ItemDetailResponse = {
   itemStatus: ItemStatus;
   ootdVerifiedWearCount: number;
   lastWornAt: string | null;
-  firstOwnedAt: string;
+  firstOwnedAt: string | null;
   wishCount: number;
   purchaseOfferEnabled: boolean;
   productId?: number | null;

@@ -20,10 +20,10 @@ interface ProposalAmounts {
   sellerSettlementAmount: number;
 }
 
-// OFFER 응답은 productAmount/buyerServiceFee 같은 명칭이 아니라
-// offerAmount/proposerServiceFee/ownerSettlementAmount로 내려온다.
-// ownerSettlementAmount는 viewerRole이 OWNER가 아니면 null.
-export interface OfferAmounts {
+// 구매 제안(offer) 상세 응답의 금액은 거래 의사(intent)와 필드명이 다르다.
+// (offerAmount/proposerServiceFee/totalPaymentAmount/ownerSettlementAmount)
+// ownerSettlementAmount는 판매자(OWNER)가 볼 때만 내려온다.
+interface OfferAmounts {
   offerAmount: number;
   shippingFee: number;
   proposerServiceFee: number;

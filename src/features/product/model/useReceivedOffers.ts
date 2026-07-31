@@ -62,7 +62,10 @@ export const useReceivedOffers = (itemId: number) => {
     const brand = `${item.brandName} / ${item.itemName}`;
 
     if (mode === 'intent' && intentQuery.data) {
-      const rows = intentQuery.data.content.filter((r) => r.itemId === itemId);
+      // 아직 응답 안 한(SENT) 것만 보여준다 - 수락/거절/취소된 과거 이력까지 섞이면 안 됨.
+      const rows = intentQuery.data.content.filter(
+        (r) => r.itemId === itemId && r.status === 'SENT',
+      );
       view = {
         mode,
         product: { thumbnail, brand, price: item.price ?? null },
@@ -76,7 +79,10 @@ export const useReceivedOffers = (itemId: number) => {
         })),
       };
     } else if (mode === 'offer' && offerQuery.data) {
-      const rows = offerQuery.data.content.filter((r) => r.itemId === itemId);
+      // 아직 응답 안 한(SENT) 것만 보여준다 - 수락/거절/취소된 과거 이력까지 섞이면 안 됨.
+      const rows = offerQuery.data.content.filter(
+        (r) => r.itemId === itemId && r.status === 'SENT',
+      );
       view = {
         mode,
         product: { thumbnail, brand, price: null },

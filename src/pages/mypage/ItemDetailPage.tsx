@@ -112,6 +112,7 @@ const ItemDetailPage = () => {
         <button
           type="button"
           className="text-body-1 font-regular text-text-primary w-full py-3 text-center"
+          onClick={() => navigate(`/items/${itemId}/sell`)}
         >
           판매 전환
         </button>

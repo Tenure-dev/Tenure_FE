@@ -51,7 +51,8 @@ export interface ProposalDetailContentProps {
   isMutating: boolean;
 }
 
-const formatPrice = (value: number) => `${value.toLocaleString('ko-KR')}원`;
+const formatPrice = (value?: number | null) =>
+  value == null ? '-' : `${value.toLocaleString('ko-KR')}원`;
 
 const formatRemaining = (seconds: number): string => {
   if (seconds <= 0) return '만료됨';

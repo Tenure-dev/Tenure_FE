@@ -3,6 +3,8 @@ import { cn } from '@/shared/lib/cn';
 import calendar from '@/shared/assets/calendar.svg';
 import type { OotdItem, WearTarget } from '@/features/ootd/model/item';
 import { createTagDraftItem, toWearingTarget } from '@/features/ootd/api/item';
+import { Toast } from '@/shared/components';
+import { useToast } from '@/shared/hooks/useToast';
 import DatePickerSheet from './DatePickerSheet';
 
 type Props = {
@@ -61,6 +63,7 @@ const NewItemSheet = ({ onBack, onSubmit }: Props) => {
   const canSubmit = brand.trim() !== '' && name.trim() !== '';
 
   const [submitting, setSubmitting] = useState(false);
+  const { message: toast, show: showToast, hide: hideToast } = useToast();
 
   const handleSubmit = async () => {
     if (!canSubmit || submitting) return;
@@ -81,8 +84,8 @@ const NewItemSheet = ({ onBack, onSubmit }: Props) => {
         meta: '신규 아이템',
         isNew: true,
       });
-    } catch (e) {
-      console.error('[간편 아이템 등록 실패]', e);
+    } catch {
+      showToast('아이템 등록에 실패했어요. 다시 시도해주세요.');
     } finally {
       setSubmitting(false);
     }
@@ -181,6 +184,8 @@ const NewItemSheet = ({ onBack, onSubmit }: Props) => {
           }}
         />
       )}
+
+      <Toast message={toast} onClose={hideToast} />
     </div>
   );
 };

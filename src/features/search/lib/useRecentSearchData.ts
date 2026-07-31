@@ -8,7 +8,6 @@ import {
 } from '../api/searchApi';
 import type { RecentSearchItem, RecentViewedUser } from '../model/types';
 
-// 검색홈/검색결과 화면이 공유하는 "최근 검색어 · 최근 본 사용자 · 추천 검색어" 상태.
 export const useRecentSearchData = () => {
   const [recentViewedUsers, setRecentViewedUsers] = useState<RecentViewedUser[]>([]);
   const [recentSearches, setRecentSearches] = useState<RecentSearchItem[]>([]);

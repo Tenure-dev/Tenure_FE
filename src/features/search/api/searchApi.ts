@@ -147,7 +147,6 @@ export const deleteRecentUser = (userId: number): Promise<void> =>
 
 export const deleteAllRecentUsers = (): Promise<void> => api.delete('/search/recent-users');
 
-// 검색 결과에서 OOTD/유저를 클릭했을 때 "최근 본" 목록에 기록한다.
 export const saveRecentOotd = (ootdId: number): Promise<void> =>
   api.post(`/search/recent-ootds/${ootdId}`);
 

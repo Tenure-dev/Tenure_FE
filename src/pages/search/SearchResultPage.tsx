@@ -93,7 +93,6 @@ const SearchResultPage = () => {
     setFilters((prev) => ({ ...prev, ...patch }));
   };
 
-  // 검색창에서 엔터(또는 추천/최근 검색어 클릭) — 이때만 실제 검색이 실행된다.
   const commitSearch = (nextKeyword: string) => {
     const trimmed = nextKeyword.trim();
     if (!trimmed && filters.categoryIds.length === 0) return;
@@ -110,7 +109,7 @@ const SearchResultPage = () => {
   };
 
   return (
-    <div className="bg-bg-white mx-auto flex min-h-screen w-full max-w-md flex-col">
+    <div className="bg-bg-white flex min-h-screen flex-col">
       <SearchTopBar
         value={draftKeyword}
         onChange={setDraftKeyword}

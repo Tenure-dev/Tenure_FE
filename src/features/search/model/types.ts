@@ -47,7 +47,6 @@ const SORT_TO_API: Record<SortOption, ApiSortType> = {
   save: 'SAVE',
 };
 
-// BE의 ItemStatusFilter(ALL/ON_SALE_INCLUDED/ON_SALE_ONLY)에 맞춘 매핑.
 const SALE_STATUS_TO_API: Record<SaleStatusFilter, ApiItemStatusFilter | undefined> = {
   all: undefined,
   onSaleIncluded: 'ON_SALE_INCLUDED',

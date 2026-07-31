@@ -20,9 +20,14 @@ export const useCursorList = <TPage extends CursorPage<unknown, object>>(
   const [loading, setLoading] = useState(false);
   const [lastPage, setLastPage] = useState<TPage>();
   const startedRef = useRef(false);
+  // loading state는 업데이트가 비동기라, 마운트 시 자동 호출과 이미 화면에 보이는
+  // sentinel의 IntersectionObserver가 거의 동시에 loadMore를 불러도 둘 다 통과해버릴 수 있다.
+  // ref는 동기적으로 갱신되므로 이 경쟁을 막는 락으로 쓴다.
+  const inFlightRef = useRef(false);
 
   const loadMore = useCallback(async () => {
-    if (loading || !hasNext) return;
+    if (inFlightRef.current || !hasNext) return;
+    inFlightRef.current = true;
     setLoading(true);
     try {
       const page = await fetchPage(cursor);
@@ -31,9 +36,10 @@ export const useCursorList = <TPage extends CursorPage<unknown, object>>(
       setCursor(page.nextCursor as CursorOf<TPage>);
       setLastPage(page);
     } finally {
+      inFlightRef.current = false;
       setLoading(false);
     }
-  }, [fetchPage, cursor, hasNext, loading]);
+  }, [fetchPage, cursor, hasNext]);
 
   useEffect(() => {
     if (startedRef.current) return;

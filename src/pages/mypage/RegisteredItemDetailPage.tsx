@@ -11,6 +11,7 @@ import {
   ItemEditSheet,
 } from '@/features/mypage/ui';
 import { useItemDetailQuery } from '@/features/mypage/model/useItemDetailQuery';
+import { useFrequentlyWornQuery } from '@/features/mypage/model/useFrequentlyWornQuery';
 import { useUpdateItemMutation } from '@/features/mypage/model/useUpdateItemMutation';
 import { useUpdateOfferSettingMutation } from '@/features/mypage/model/useUpdateOfferSettingMutation';
 import type { RegisteredItemDetail } from '@/features/mypage/model/items';
@@ -18,12 +19,13 @@ import type { RegisteredItemDetail } from '@/features/mypage/model/items';
 const RegisteredItemDetailPage = () => {
   const { itemId } = useParams<{ itemId: string }>();
   const { data } = useItemDetailQuery(Number(itemId));
+  const { data: frequentlyWornWith = [] } = useFrequentlyWornQuery(Number(itemId));
   const { mutate: updateItem } = useUpdateItemMutation(Number(itemId));
   const { mutate: updateOfferSetting } = useUpdateOfferSettingMutation(Number(itemId));
   const { message, show, hide } = useToast();
   const item: RegisteredItemDetail | undefined = data && {
     ...data,
-    frequentlyWornWith: [],
+    frequentlyWornWith,
   };
   const [allowProposal, setAllowProposal] = useState(false);
   const [syncedItemId, setSyncedItemId] = useState<number | null>(null);

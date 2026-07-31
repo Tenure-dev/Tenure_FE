@@ -1,17 +1,17 @@
-import type { SaleStatus, TradeStatus } from '@/features/chat/model/types';
+import type { ApiProductStatus } from '../api/dto';
 
 export type WishlistTab = '전체' | '판매중' | '거래중';
 
 export interface WishlistItem {
-  id: string;
-  itemId: string;
+  wishId: number;
+  itemId: number;
   brand: string;
   name: string;
-  price: number;
+  price: number | null;
   imageUrl: string;
-  saleStatus: SaleStatus;
-  tradeStatus: TradeStatus;
-  sellerName: string;
-  updatedAt: string;
+  saleStatus: ApiProductStatus | null;
+  sellerUsername: string | null;
+  wishedDaysAgo: number;
+  purchaseOfferEnabled: boolean;
   notifyEnabled: boolean;
 }

@@ -1,5 +1,6 @@
 import type { ChatRoom } from '@/features/chat/model/types';
 import { Link } from 'react-router-dom';
+import profileDefault from '@/shared/assets/profileDefault.svg';
 
 const ChatListItem = ({ room }: { room: ChatRoom }) => {
   return (
@@ -8,7 +9,7 @@ const ChatListItem = ({ room }: { room: ChatRoom }) => {
       className="border-border-secondary flex items-center gap-3 border-b px-5 py-4"
     >
       <img
-        src={room.avatar}
+        src={room.avatar || profileDefault}
         alt={room.name}
         className="size-12 shrink-0 rounded-full object-cover"
       />

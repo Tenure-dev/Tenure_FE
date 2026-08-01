@@ -187,7 +187,7 @@ const ItemAddForm = ({ onSuccess }: ItemAddFormProps) => {
         wearingTarget: WEAR_TARGET_MAP[form.gender],
         categoryLarge: form.category,
         ...(form.subCategory && { categorySmall: form.subCategory }),
-        sizeSystem: form.sizeSystem || 'KR',
+        sizeSystem: 'KR',
         ...(form.size && { sizeValue: form.size }),
         ...(form.firstOwnedAt && { firstOwnedAt: form.firstOwnedAt }),
         representativeImageUrl,

@@ -49,6 +49,7 @@ import OotdPreviewPage from '@/pages/camera/OotdPreviewPage';
 import UserProfilePage from '@/pages/user/UserProfilePage';
 import ReceivedOffersPage from '@/pages/offer/ReceivedOffersPage';
 import FollowListPage from '@/pages/mypage/FollowListPage';
+import AppLoadingPage from '@/pages/onboarding/AppLoadingPage';
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -63,6 +64,7 @@ export const router = createBrowserRouter([
       {
         element: <ProtectedLayout />,
         children: [
+          { path: 'loading', element: <AppLoadingPage /> },
           { index: true, element: <FeedPage /> },
           { path: 'feed', element: <FeedPage /> },
           { path: 'notifications', element: <NotificationPage /> },

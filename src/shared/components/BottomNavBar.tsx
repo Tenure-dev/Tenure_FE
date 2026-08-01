@@ -59,6 +59,7 @@ const HIDDEN_PATHS = [
   '/item',
   '/settings',
   '/purchase',
+  '/product',
 ];
 
 const NavLink = ({ item, pathname }: { item: NavItem; pathname: string }) => {

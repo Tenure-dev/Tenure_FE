@@ -40,6 +40,8 @@ const ItemDetailPage = () => {
 
   if (!item) return null;
 
+  const myUserId = Number(localStorage.getItem('userId'));
+  const isOwner = item.ownerUserId === myUserId;
   const isForSale = item.itemStatus === 'ON_SALE';
 
   const handleToggleProposal = () => {
@@ -62,14 +64,16 @@ const ItemDetailPage = () => {
       <BackHeader
         title={`${item.brandName} / ${item.itemName}`}
         rightActions={
-          <div className="flex items-center gap-3">
-            <button type="button" aria-label="수정" onClick={() => setEditOpen(true)}>
-              <img src={edit} alt="" className="size-5" />
-            </button>
-            <button type="button" aria-label="더보기" onClick={() => setActionSheetOpen(true)}>
-              <MoreVertical className="size-5" />
-            </button>
-          </div>
+          isOwner ? (
+            <div className="flex items-center gap-3">
+              <button type="button" aria-label="수정" onClick={() => setEditOpen(true)}>
+                <img src={edit} alt="" className="size-5" />
+              </button>
+              <button type="button" aria-label="더보기" onClick={() => setActionSheetOpen(true)}>
+                <MoreVertical className="size-5" />
+              </button>
+            </div>
+          ) : undefined
         }
       />
       <ItemInfoSection item={item} allowProposal={allowProposal} />

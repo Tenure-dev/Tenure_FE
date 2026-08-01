@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { chevon, close, plus } from '@/shared/assets';
 import { DoubleButton, Input, Toast } from '@/shared/components';
-import { CATEGORY_GROUPS } from '@/features/search/model/categoryData';
+import { CATEGORY_GROUPS, CATEGORY_SIZES } from '@/shared/lib/itemSizeData';
 import { useCreateItem } from '../model/useCreateItem';
+import { uploadItemImage } from '../api/itemsApi';
 import type { WearingTarget } from '../model/items';
 import { useToast } from '@/shared/hooks/useToast';
 import cn from '@/shared/lib/cn';
@@ -11,39 +12,6 @@ import ItemImageCropView from './image/ImageCropView';
 import PostPickerView from './image/PostPickerView';
 
 const CATEGORIES = CATEGORY_GROUPS.map((g) => g.name);
-
-const SIZES = [
-  'XS',
-  'S',
-  'M',
-  'L',
-  'XL',
-  '2XL',
-  '3XL',
-  '85',
-  '90',
-  '95',
-  '100',
-  '105',
-  '110',
-  '115',
-  '36',
-  '38',
-  '40',
-  '42',
-  '44',
-  '46',
-  '48',
-  '50',
-  '0',
-  '1',
-  '2',
-  '3',
-  '4',
-  '5',
-  '6',
-  'Free',
-];
 
 const GENDERS = ['남성복', '여성복', '공용'] as const;
 type WearTarget = (typeof GENDERS)[number];
@@ -61,6 +29,7 @@ interface ItemAddFormState {
   category: string;
   subCategory: string;
   size: string;
+  sizeSystem: string;
   gender: WearTarget | '';
   firstOwnedAt: string;
 }
@@ -71,6 +40,7 @@ const EMPTY_FORM: ItemAddFormState = {
   category: '',
   subCategory: '',
   size: '',
+  sizeSystem: '',
   gender: '',
   firstOwnedAt: '',
 };
@@ -140,6 +110,7 @@ const ItemAddForm = ({ onSuccess }: ItemAddFormProps) => {
   );
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [pickerState, setPickerState] = useState<PickerState>({ step: 'idle' });
+  const [isUploading, setIsUploading] = useState(false);
   const { message: errorMsg, show: showError, hide: hideError } = useToast();
   const { mutate: createItem, isPending } = useCreateItem();
 
@@ -185,7 +156,7 @@ const ItemAddForm = ({ onSuccess }: ItemAddFormProps) => {
     setImagePreview(null);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!imagePreview) {
       showError('대표 사진을 선택해주세요');
       return;
@@ -194,6 +165,21 @@ const ItemAddForm = ({ onSuccess }: ItemAddFormProps) => {
       showError('필수 항목을 모두 입력해주세요');
       return;
     }
+
+    let representativeImageUrl: string | undefined;
+    try {
+      setIsUploading(true);
+      const blob = await fetch(imagePreview).then((r) => r.blob());
+      const file = new File([blob], 'item-image.jpg', { type: blob.type });
+      const uploaded = await uploadItemImage(file);
+      representativeImageUrl = uploaded.imageUrl;
+    } catch {
+      showError('이미지 업로드에 실패했습니다');
+      return;
+    } finally {
+      setIsUploading(false);
+    }
+
     createItem(
       {
         brandName: form.brand,
@@ -201,9 +187,10 @@ const ItemAddForm = ({ onSuccess }: ItemAddFormProps) => {
         wearingTarget: WEAR_TARGET_MAP[form.gender],
         categoryLarge: form.category,
         ...(form.subCategory && { categorySmall: form.subCategory }),
-        sizeSystem: 'KR',
+        sizeSystem: form.sizeSystem || 'KR',
         ...(form.size && { sizeValue: form.size }),
         ...(form.firstOwnedAt && { firstOwnedAt: form.firstOwnedAt }),
+        representativeImageUrl,
       },
       {
         onSuccess,
@@ -286,7 +273,15 @@ const ItemAddForm = ({ onSuccess }: ItemAddFormProps) => {
                     key={cat}
                     label={cat}
                     selected={form.category === cat}
-                    onClick={() => setForm((prev) => ({ ...prev, category: cat, subCategory: '' }))}
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        category: cat,
+                        subCategory: '',
+                        size: '',
+                        sizeSystem: '',
+                      }))
+                    }
                   />
                 ))}
               </div>
@@ -332,12 +327,14 @@ const ItemAddForm = ({ onSuccess }: ItemAddFormProps) => {
             />
             {openSections.has('size') && (
               <div className="flex flex-wrap gap-2 pb-4">
-                {SIZES.map((size) => (
+                {(CATEGORY_SIZES[form.category] ?? []).map((o) => (
                   <SelectChip
-                    key={size}
-                    label={size}
-                    selected={form.size === size}
-                    onClick={() => setForm((prev) => ({ ...prev, size }))}
+                    key={`${o.system}-${o.value}`}
+                    label={o.value}
+                    selected={form.size === o.value && form.sizeSystem === o.system}
+                    onClick={() =>
+                      setForm((prev) => ({ ...prev, size: o.value, sizeSystem: o.system }))
+                    }
                   />
                 ))}
               </div>
@@ -401,7 +398,7 @@ const ItemAddForm = ({ onSuccess }: ItemAddFormProps) => {
             rightLabel="적용하기"
             onLeftClick={handleReset}
             onRightClick={handleSubmit}
-            disabled={isPending}
+            disabled={isPending || isUploading}
           />
         </div>
       </div>

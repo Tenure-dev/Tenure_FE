@@ -14,7 +14,6 @@ import type {
   FeePolicy,
 } from '@/features/product/ui/saleForm';
 import { DEFAULT_CONDITION_FLAGS } from '@/features/product/ui/saleForm';
-import { ootdPickerItems } from './mock';
 
 type View = 'form' | 'ootd-picker' | 'loading' | 'complete';
 
@@ -128,12 +127,12 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
     setView('form');
   };
 
-  const selectedOotds = ootdPickerItems.filter((o) => form.attachedOotdIds.includes(o.id));
+  const selectedOotds: { id: number; imageUrl: string }[] = [];
 
   if (view === 'ootd-picker') {
     return (
       <OotdPickerView
-        items={ootdPickerItems}
+        items={[]}
         selectedIds={tempOotdIds}
         onToggle={toggleTempOotd}
         onConfirm={confirmOotdSelection}

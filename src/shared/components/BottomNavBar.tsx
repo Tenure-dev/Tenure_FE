@@ -52,6 +52,7 @@ const RIGHT_ITEMS: NavItem[] = [
 const HIDDEN_PATHS = [
   '/login',
   '/signup',
+  '/loading',
   '/test',
   '/trade',
   '/mypage/edit',
@@ -60,6 +61,7 @@ const HIDDEN_PATHS = [
   '/settings',
   '/purchase',
   '/product',
+  '/trade',
 ];
 
 const NavLink = ({ item, pathname }: { item: NavItem; pathname: string }) => {

@@ -22,6 +22,7 @@ import { useProductDetail } from '@/features/product/model/useProductDetail';
 import { useDeleteProduct } from '@/features/product/model/useDeleteProduct';
 import { useCompleteProductExternal } from '@/features/product/model/useCompleteProductExternal';
 import { useToggleWish } from '@/features/wishlist/model/useToggleWish';
+import { createOrGetChatRoom } from '@/features/chat/api/room';
 import ItemDetailHeader from './components/ProductDetailHeader';
 
 const ProductDetailPage = () => {
@@ -186,6 +187,10 @@ const ProductDetailPageContent = ({ productId }: { productId: string }) => {
           navigate(`/product/${productId}/purchase/checkout`, { state: { direct: true } })
         }
         onOffer={() => navigate(`/product/${productId}/purchase/price`)}
+        onChat={async () => {
+          const { chatRoomId } = await createOrGetChatRoom(data.item.itemId);
+          navigate(`/chat/${chatRoomId}`);
+        }}
       />
 
       {/* 추가기능 - 바텀시트, 토스트 */}

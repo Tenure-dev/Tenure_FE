@@ -1,14 +1,7 @@
 export type OotdPickerItem = { id: number; imageUrl: string };
 
 export const ootdPickerItems: OotdPickerItem[] = [
-  { id: 1, imageUrl: 'https://picsum.photos/seed/ootdp1/400/600' },
-  { id: 2, imageUrl: 'https://picsum.photos/seed/ootdp2/400/450' },
-  { id: 3, imageUrl: 'https://picsum.photos/seed/ootdp3/400/700' },
-  { id: 4, imageUrl: 'https://picsum.photos/seed/ootdp4/400/500' },
-  { id: 5, imageUrl: 'https://picsum.photos/seed/ootdp5/400/550' },
-  { id: 6, imageUrl: 'https://picsum.photos/seed/ootdp6/400/480' },
-  { id: 7, imageUrl: 'https://picsum.photos/seed/ootdp7/400/620' },
-  { id: 8, imageUrl: 'https://picsum.photos/seed/ootdp8/400/520' },
+  { id: 900413, imageUrl: '/files/items/3dcfe762-55b3-438d-8eb8-dd4189cc5e59.jpg' },
 ];
 
 export const profile = {

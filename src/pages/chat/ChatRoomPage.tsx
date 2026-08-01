@@ -127,6 +127,7 @@ const ChatRoomPage = ({
           tradeStatus={tradeStatusView}
           offerEnabled={offerEnabled}
           tradeId={room.tradeId}
+          productId={room.productId}
         />
       )}
       <ChatMessages

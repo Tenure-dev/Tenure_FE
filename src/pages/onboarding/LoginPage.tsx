@@ -69,7 +69,7 @@ const LoginPage = () => {
         } catch (error) {
           console.error(error);
         }
-        navigate('/feed');
+        navigate('/loading');
       },
       onError: (error) => {
         console.error(error);

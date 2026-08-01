@@ -35,6 +35,13 @@ export const updateOfferSetting = (itemId: number, body: OfferSettingRequest) =>
 export const createProductFromItem = (itemId: number, body: UpdateProductRequest) =>
   api.post<CreateProductResponse>(`/items/${itemId}/product`, body);
 
+// 아이템 대표 사진
+export const uploadItemImage = (file: File) => {
+  const formData = new FormData();
+  formData.append('image', file);
+  return api.post<{ imageUrl: string }>('/images/items', formData);
+};
+
 export const getFrequentlyWornTogether = (itemId: number) =>
   api.get<FrequentlyWornItem[]>(`/items/${itemId}/frequently-worn-together`);
 

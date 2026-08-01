@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { SegmentedControl } from '@/shared/components';
 import { useSalesHistory } from '@/features/trade/api/useSalesHistory';
 import { useInfiniteScroll } from '@/shared/hooks/useInfiniteScroll';
 import type { MyPageSaleResponse, MyPageSalesTab } from '@/features/trade/api/types';
 import SalesHistoryCard from './trade/SalesHistoryCard';
+import StatusTabs from './trade/StatusTabs';
+import HistoryHeader from './trade/HistoryHeader';
 
 const STATUS_TABS: { label: string; value: MyPageSalesTab }[] = [
   { label: '전체', value: 'ALL' },
@@ -32,7 +31,6 @@ const dedupeByItem = (items: MyPageSaleResponse[]): MyPageSaleResponse[] => {
 };
 
 const SalesHistoryPage = () => {
-  const navigate = useNavigate();
   const [statusTab, setStatusTab] = useState<MyPageSalesTab>('ALL');
 
   const { data, fetchNextPage, hasNextPage, isPending, isError } = useSalesHistory(statusTab);
@@ -44,26 +42,10 @@ const SalesHistoryPage = () => {
 
   const header = (
     <>
-      <header className="flex h-[52px] items-center justify-between px-[16px]">
-        <button type="button" onClick={() => navigate(-1)} aria-label="뒤로가기">
-          <ChevronLeft size={24} className="text-[#111111]" />
-        </button>
-        <h1 className="text-[16px] font-semibold text-[#111111]">판매내역</h1>
-        <div className="size-[24px]" />
-      </header>
-
-      <div className="border-b border-[#F0F0F0] px-[16px]">
-        <SegmentedControl
-          tabs={['구매내역', '판매내역']}
-          activeTab="판매내역"
-          onChange={(tab) => {
-            if (tab === '구매내역') navigate('/purchase-history', { replace: true });
-          }}
-        />
-      </div>
+      <HistoryHeader title="판매내역" />
 
       <div className="border-b border-[#F0F0F0] px-[16px] pb-[12px]">
-        <SegmentedControl
+        <StatusTabs
           tabs={STATUS_TABS.map((t) => t.label)}
           activeTab={activeStatusLabel}
           onChange={(label) => {

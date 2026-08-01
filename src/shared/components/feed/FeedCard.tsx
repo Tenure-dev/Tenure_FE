@@ -1,4 +1,5 @@
 import { Bookmark, Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/shared/lib/cn';
 import type { FeedGridItem } from '@/features/feed/model/types';
 import { useToggleHeart } from '@/features/ootd/model/useToggleHeart';
@@ -14,12 +15,18 @@ const FeedCard = ({ item, className }: FeedCardProps) => {
   const { saved, toggle: toggleSave } = useToggleSave(Number(item.ootdId), item.saved);
 
   return (
-    <div className={cn('bg-gray-bg relative w-full overflow-hidden rounded-md', className)}>
+    <Link
+      to={`/ootd/${item.ootdId}`}
+      className={cn('bg-gray-bg relative block w-full overflow-hidden rounded-md', className)}
+    >
       <img src={item.imageUrl} alt="" loading="lazy" className="block h-auto w-full" />
       <div className="absolute right-2 bottom-2 flex flex-col items-center gap-1.5">
         <button
           type="button"
-          onClick={toggleHeart}
+          onClick={(e) => {
+            e.preventDefault();
+            toggleHeart();
+          }}
           aria-label={hearted ? '좋아요 취소' : '좋아요'}
           className="inline-flex size-6 items-center justify-center"
         >
@@ -30,7 +37,10 @@ const FeedCard = ({ item, className }: FeedCardProps) => {
         </button>
         <button
           type="button"
-          onClick={toggleSave}
+          onClick={(e) => {
+            e.preventDefault();
+            toggleSave();
+          }}
           aria-label={saved ? '북마크 취소' : '북마크'}
           className="inline-flex size-6 items-center justify-center"
         >
@@ -40,7 +50,7 @@ const FeedCard = ({ item, className }: FeedCardProps) => {
           />
         </button>
       </div>
-    </div>
+    </Link>
   );
 };
 

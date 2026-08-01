@@ -11,6 +11,7 @@ import type { FeedCard, FeedTab } from '@/features/feed/model/types';
 import { useFeedQuery } from '@/features/feed/model/useFeedQuery';
 import { useFollowings } from '@/features/feed/model/useFollowings';
 import { useProfileStore } from '@/store/useProfileStore';
+import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 
 const TABS: FeedTab[] = ['모두', '팔로우'];
 
@@ -41,7 +42,14 @@ const FeedPage = () => {
   });
 
   const items = useMemo<FeedCard[]>(
-    () => (data?.pages ?? []).flatMap((page) => page.content),
+    () =>
+      (data?.pages ?? []).flatMap((page) =>
+        page.content.map((item) => ({
+          ...item,
+          imageUrl: resolveFileUrl(item.imageUrl),
+          profileImageUrl: resolveFileUrl(item.profileImageUrl),
+        })),
+      ),
     [data],
   );
 

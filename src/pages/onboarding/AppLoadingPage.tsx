@@ -35,8 +35,9 @@ const AppLoadingPage = () => {
   }, [navigate, queryClient]);
 
   return (
-    <div className="bg-bg-white flex min-h-screen items-center justify-center">
+    <div className="bg-bg-white flex min-h-screen flex-col items-center justify-center gap-4">
       <div className="border-gray-bg border-t-brand size-12 animate-spin rounded-full border-4" />
+      <p className="text-body-2 text-text-secondary">데이터 불러오는 중...</p>
     </div>
   );
 };

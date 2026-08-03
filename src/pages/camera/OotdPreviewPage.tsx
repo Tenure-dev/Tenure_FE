@@ -96,7 +96,7 @@ const OotdPreviewPage = () => {
       <div className="mt-auto flex gap-2 px-5 pb-6">
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/ootd/tag', { state: { photo, tags } })}
           className="bg-gray-bg text-btn-2 text-text-primary flex-1 rounded-md py-3.5 font-medium"
         >
           태그 수정

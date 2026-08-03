@@ -11,30 +11,47 @@ export interface OotdResultGridProps {
   onLoadMore: () => void;
 }
 
+const COLUMN_COUNT = 2;
+
+const splitIntoColumns = (items: SearchOotdResponse[], columnCount: number) => {
+  const columns: SearchOotdResponse[][] = Array.from({ length: columnCount }, () => []);
+  items.forEach((item, index) => columns[index % columnCount].push(item));
+  return columns;
+};
+
+// 촬영 시 고른 비율(3:4, 4:5, 1:1 등)이 그대로 보이도록 고정 aspect로 자르지 않고,
+// 매이슨리(2열 flex 컬럼)로 쌓아 이미지 원본 비율을 유지한다.
 const OotdResultGrid = ({ items, hasNext, loading, onLoadMore }: OotdResultGridProps) => {
   const navigate = useNavigate();
   const sentinelRef = useInfiniteScrollSentinel(hasNext, onLoadMore);
+  const columns = splitIntoColumns(items, COLUMN_COUNT);
+
+  const handleClick = (id: number) => {
+    saveRecentOotd(id);
+    navigate(`/ootd/${id}`);
+  };
 
   return (
     <>
       <div className="grid grid-cols-2 gap-2">
-        {items.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => {
-              saveRecentOotd(item.id);
-              navigate(`/ootd/${item.id}`);
-            }}
-            className="bg-gray-bg aspect-[3/4] overflow-hidden rounded-lg"
-          >
-            <img
-              src={resolveImageUrl(item.imageUrl)}
-              alt=""
-              loading="lazy"
-              className="size-full object-cover"
-            />
-          </button>
+        {columns.map((column, columnIndex) => (
+          <div key={columnIndex} className="flex flex-col gap-2">
+            {column.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleClick(item.id)}
+                className="bg-gray-bg block w-full overflow-hidden rounded-lg"
+              >
+                <img
+                  src={resolveImageUrl(item.imageUrl)}
+                  alt=""
+                  loading="lazy"
+                  className="block w-full object-cover"
+                />
+              </button>
+            ))}
+          </div>
         ))}
       </div>
 

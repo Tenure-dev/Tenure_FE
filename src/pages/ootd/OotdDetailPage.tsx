@@ -10,7 +10,14 @@ import { Bookmark, Eye, EyeOff, Heart } from 'lucide-react';
 import { BottomSheet, FollowButton, Toast } from '@/shared/components';
 import { useToast } from '@/shared/hooks/useToast';
 import { USER_ID_STORAGE_KEY } from '@/shared/lib/api';
-import { MAX_TAGGED_ITEMS, type Bbox, type OotdPost } from '@/features/ootd/model/types';
+import {
+  MAX_TAGGED_ITEMS,
+  type Bbox,
+  type ItemStatus,
+  type OotdPost,
+  type TaggedItem,
+} from '@/features/ootd/model/types';
+import { useTagNavigation } from '@/features/ootd/lib/useTagNavigation';
 import {
   confirmTags,
   createTag,
@@ -52,6 +59,10 @@ interface DragBoxRect {
   y2: number;
 }
 
+type PendingTagOp =
+  | { kind: 'add'; itemId: number; labelText: string; bbox: Bbox }
+  | { kind: 'edit'; tagId: number; itemId: number; labelText: string; bbox: Bbox };
+
 const getCurrentUserId = (): number | null => {
   const raw = localStorage.getItem(USER_ID_STORAGE_KEY);
   const parsed = raw ? Number(raw) : NaN;
@@ -91,6 +102,13 @@ const OotdDetailPage = () => {
   const [resultExpanded, setResultExpanded] = useState(false);
   const collapsedDragStartYRef = useRef<number | null>(null);
   const expandedDragStartYRef = useRef<number | null>(null);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  // 완료를 누르기 전까지는 서버에 반영하지 않는 임시(로컬) 태그 상태.
+  // 뒤로가기/취소 시 API 호출 없이 그대로 버리면 되므로 "원래대로 복구"가 저절로 보장된다.
+  const [draftTags, setDraftTags] = useState<TaggedItem[]>([]);
+  const pendingOpsRef = useRef<Map<number, PendingTagOp>>(new Map());
+  const tempTagIdRef = useRef(-1);
 
   const [closetItems, setClosetItems] = useState<ClosetItem[]>([]);
   const [closetItemsLoading, setClosetItemsLoading] = useState(false);
@@ -105,6 +123,7 @@ const OotdDetailPage = () => {
   useEffect(() => clearAnalyzeTimeout, []);
 
   const { message: toastMessage, show: showToast, hide: hideToast } = useToast();
+  const { goToDetail } = useTagNavigation();
 
   const initialToastRef = useRef((location.state as { toast?: string } | null)?.toast ?? null);
 
@@ -228,7 +247,7 @@ const OotdDetailPage = () => {
   };
 
   const handleEditPhotoPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!post || post.taggedItems.length >= MAX_TAGGED_ITEMS) {
+    if (!post || draftTags.length >= MAX_TAGGED_ITEMS) {
       showToast(`태그는 최대 ${MAX_TAGGED_ITEMS}개까지 가능해요.`);
       return;
     }
@@ -291,6 +310,9 @@ const OotdDetailPage = () => {
     setSelectedClosetItemId(null);
     setPendingBbox(null);
     setEditTagsVisible(true);
+    setDraftTags(post.taggedItems);
+    pendingOpsRef.current = new Map();
+    tempTagIdRef.current = -1;
     setMode('edit');
     setShowMoreMenu(false);
 
@@ -301,8 +323,10 @@ const OotdDetailPage = () => {
       .finally(() => setClosetItemsLoading(false));
   };
 
-  const handleCancelEdit = () => {
+  const resetEditState = () => {
     clearAnalyzeTimeout();
+    pendingOpsRef.current = new Map();
+    setDraftTags([]);
     setMode('view');
     setEditTarget(null);
     setIsAnalyzingTag(false);
@@ -312,54 +336,134 @@ const OotdDetailPage = () => {
     setChangeCount(0);
   };
 
-  const handleEditSubmit = async () => {
+  const handleCancelEdit = () => {
+    if (pendingOpsRef.current.size > 0) {
+      setShowDiscardConfirm(true);
+      return;
+    }
+    resetEditState();
+  };
+
+  const handleDiscardConfirm = () => {
+    setShowDiscardConfirm(false);
+    resetEditState();
+  };
+
+  const getPreviewStatus = (closetItem: ClosetItem): ItemStatus =>
+    closetItem.purchaseOfferEnabled ? '미판매_제안가능' : '미판매_제안불가';
+
+  const bboxToPosition = (bbox: Bbox) => ({
+    x: (bbox.x + bbox.width / 2) * 100,
+    y: (bbox.y + bbox.height / 2) * 100,
+  });
+
+  const handleEditSubmit = () => {
     if (!editTarget || selectedClosetItemId === null || !post) return;
 
     const closetItem = closetItems.find((item) => item.id === selectedClosetItemId);
     if (!closetItem) return;
     const labelText = `${closetItem.brand} / ${closetItem.name}`;
+    const previewStatus = getPreviewStatus(closetItem);
 
-    try {
-      if (editTarget.type === 'edit') {
-        const existingTag = post.taggedItems.find((tag) => tag.id === editTarget.tagId);
-        if (!existingTag) return;
-        await updateTag(editTarget.tagId, {
+    if (editTarget.type === 'edit') {
+      const existingTag = draftTags.find((tag) => tag.id === editTarget.tagId);
+      if (!existingTag) return;
+      const isUnsavedTag = existingTag.id < 0;
+
+      setDraftTags((prev) =>
+        prev.map((tag) =>
+          tag.id === existingTag.id
+            ? {
+                ...tag,
+                itemId: selectedClosetItemId,
+                brand: closetItem.brand,
+                name: closetItem.name,
+                status: previewStatus,
+                imageUrl: closetItem.imageUrl ?? tag.imageUrl,
+              }
+            : tag,
+        ),
+      );
+
+      if (isUnsavedTag) {
+        // 이번 편집 세션에서 방금 추가한 태그를 다시 고친 것 -> 'add' 예약을 그대로 갱신한다.
+        const prevOp = pendingOpsRef.current.get(existingTag.id);
+        pendingOpsRef.current.set(existingTag.id, {
+          kind: 'add',
           itemId: selectedClosetItemId,
-          bbox: existingTag.bbox,
           labelText,
+          bbox: prevOp?.kind === 'add' ? prevOp.bbox : existingTag.bbox,
         });
-        showToast('수정되었습니다.');
       } else {
-        if (post.taggedItems.length >= MAX_TAGGED_ITEMS || !pendingBbox) return;
-        await createTag(post.id, {
+        pendingOpsRef.current.set(existingTag.id, {
+          kind: 'edit',
+          tagId: existingTag.id,
           itemId: selectedClosetItemId,
-          bbox: pendingBbox,
           labelText,
-          status: 'CONFIRMED',
+          bbox: existingTag.bbox,
         });
-        showToast('추가되었습니다.');
       }
-      setChangeCount((c) => c + 1);
-      setEditTarget(null);
-      setSelectedClosetItemId(null);
-      setPendingBbox(null);
-      setResultExpanded(false);
-      await refreshPost();
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : '처리 중 오류가 발생했어요.');
+      showToast('수정되었습니다.');
+    } else {
+      if (draftTags.length >= MAX_TAGGED_ITEMS || !pendingBbox) return;
+      const localId = tempTagIdRef.current--;
+      const newTag: TaggedItem = {
+        id: localId,
+        itemId: selectedClosetItemId,
+        brand: closetItem.brand,
+        name: closetItem.name,
+        category: '',
+        status: previewStatus,
+        imageUrl: closetItem.imageUrl ?? undefined,
+        wished: false,
+        position: bboxToPosition(pendingBbox),
+        bbox: pendingBbox,
+      };
+      setDraftTags((prev) => [...prev, newTag]);
+      pendingOpsRef.current.set(localId, {
+        kind: 'add',
+        itemId: selectedClosetItemId,
+        labelText,
+        bbox: pendingBbox,
+      });
+      showToast('추가되었습니다.');
     }
+
+    setChangeCount(pendingOpsRef.current.size);
+    setEditTarget(null);
+    setSelectedClosetItemId(null);
+    setPendingBbox(null);
+    setResultExpanded(false);
   };
 
   const handleComplete = async () => {
     if (!post) return;
+    if (pendingOpsRef.current.size === 0) {
+      setMode('view');
+      setTagsVisible(true);
+      return;
+    }
     setIsSaving(true);
     try {
+      for (const op of pendingOpsRef.current.values()) {
+        if (op.kind === 'add') {
+          await createTag(post.id, {
+            itemId: op.itemId,
+            bbox: op.bbox,
+            labelText: op.labelText,
+            status: 'CONFIRMED',
+          });
+        } else {
+          await updateTag(op.tagId, { itemId: op.itemId, bbox: op.bbox, labelText: op.labelText });
+        }
+      }
       await confirmTags(post.id).catch(() => undefined);
       await refreshPost();
       showToast('게시물이 수정되었습니다.');
     } catch (e) {
       showToast(e instanceof Error ? e.message : '처리 중 오류가 발생했어요.');
     } finally {
+      pendingOpsRef.current = new Map();
       setIsSaving(false);
       setMode('view');
       setTagsVisible(true);
@@ -487,8 +591,17 @@ const OotdDetailPage = () => {
     );
   }
 
-  const visibleTags = post.taggedItems;
+  const visibleTags = mode === 'edit' ? draftTags : post.taggedItems;
   const showTags = mode === 'view' ? tagsVisible : editTagsVisible;
+
+  // 같은 아이템이 두 번 태그되지 않도록, 현재 편집 중인 태그 자신을 제외한 나머지가
+  // 이미 물고 있는 itemId는 옷장 목록에서 골라낸다.
+  const alreadyTaggedItemIds = new Set(
+    draftTags
+      .filter((tag) => !(editTarget?.type === 'edit' && tag.id === editTarget.tagId))
+      .map((tag) => tag.itemId),
+  );
+  const availableClosetItems = closetItems.filter((item) => !alreadyTaggedItemIds.has(item.id));
 
   return (
     <div className="bg-bg-white relative flex min-h-screen flex-col">
@@ -531,12 +644,15 @@ const OotdDetailPage = () => {
 
         {mode === 'edit' && dragBoxRect && (
           <div
-            className="border-brand bg-brand/10 pointer-events-none absolute border-2"
+            className="pointer-events-none absolute border-2 border-white"
             style={{
               left: `${Math.min(dragBoxRect.x1, dragBoxRect.x2)}%`,
               top: `${Math.min(dragBoxRect.y1, dragBoxRect.y2)}%`,
               width: `${Math.abs(dragBoxRect.x2 - dragBoxRect.x1)}%`,
               height: `${Math.abs(dragBoxRect.y2 - dragBoxRect.y1)}%`,
+              // 선택한 영역만 밝게 남기고 나머지를 어둡게: 부모의 overflow-hidden 경계로 잘리는
+              // 초대형 box-shadow를 이용해 별도 마스크 레이어 없이 구현한다.
+              boxShadow: '0 0 0 100vmax rgba(0, 0, 0, 0.55)',
             }}
           />
         )}
@@ -555,7 +671,14 @@ const OotdDetailPage = () => {
                       setPendingBbox(null);
                       beginTagAnalysis({ type: 'edit', tagId: tag.id }, tag.itemId);
                     }
-                  : undefined
+                  : tag.status === '미판매_제안가능' || tag.status === '미판매_제안불가'
+                    ? // 판매 전환 이력이 없는 미판매 태그는 이동할 상세 화면이 없어 탭해도 아무 동작을 하지 않는다.
+                      () => {}
+                    : () => goToDetail(tag)
+              }
+              interactive={
+                mode === 'edit' ||
+                !(tag.status === '미판매_제안가능' || tag.status === '미판매_제안불가')
               }
             />
           ))}
@@ -633,10 +756,10 @@ const OotdDetailPage = () => {
           <EditTagSheet
             target={editTarget}
             isAnalyzing={isAnalyzingTag || closetItemsLoading}
-            closetItems={closetItems}
+            closetItems={availableClosetItems}
             selectedClosetItemId={selectedClosetItemId}
             onSelectClosetItem={(item) => setSelectedClosetItemId(item.id)}
-            onRegisterNewItem={() => showToast('새 아이템 등록은 추후 지원될 예정이에요.')}
+            onRegisterNewItem={() => navigate('/mypage/items/new')}
             onSubmit={handleEditSubmit}
           />
         </div>
@@ -655,10 +778,10 @@ const OotdDetailPage = () => {
           <EditTagSheet
             target={editTarget}
             isAnalyzing={isAnalyzingTag || closetItemsLoading}
-            closetItems={closetItems}
+            closetItems={availableClosetItems}
             selectedClosetItemId={selectedClosetItemId}
             onSelectClosetItem={(item) => setSelectedClosetItemId(item.id)}
-            onRegisterNewItem={() => showToast('새 아이템 등록은 추후 지원될 예정이에요.')}
+            onRegisterNewItem={() => navigate('/mypage/items/new')}
             onSubmit={handleEditSubmit}
           />
         </BottomSheet>
@@ -692,6 +815,7 @@ const OotdDetailPage = () => {
         open={showTaggedSheet}
         onClose={() => setShowTaggedSheet(false)}
         items={post.taggedItems}
+        isOwner={post.isOwner}
         dragProgressPx={sheetDragPx}
         onViewRelatedOotd={() => navigate(`/ootd/${targetId}/related`)}
         onToggleWish={toggleTagWish}
@@ -713,6 +837,16 @@ const OotdDetailPage = () => {
         confirmLabel="삭제하기"
         onCancel={() => setShowDeleteConfirm(false)}
         onConfirm={handleDeleteConfirm}
+      />
+
+      <ConfirmModal
+        open={showDiscardConfirm}
+        title="수정 중인 내용이 있어요"
+        description="완료를 누르지 않고 나가면 수정한 내용이 저장되지 않아요."
+        confirmLabel="나가기"
+        cancelLabel="계속 수정"
+        onCancel={() => setShowDiscardConfirm(false)}
+        onConfirm={handleDiscardConfirm}
       />
 
       {isSaving && (

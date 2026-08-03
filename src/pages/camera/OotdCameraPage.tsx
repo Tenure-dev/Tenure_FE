@@ -84,7 +84,7 @@ const OotdCameraPage = () => {
 
           {/* [임시] 선택된 카메라 렌즈 표시 — 확인 끝나면 삭제 */}
           {debugLabel && (
-            <div className="absolute inset-x-0 top-0 bg-black/60 px-2 py-1 text-[11px] leading-tight break-all text-white">
+            <div className="fixed inset-x-0 top-16 z-50 max-h-60 overflow-auto bg-black/70 px-2 py-1 text-[10px] leading-tight break-all whitespace-pre-line text-white">
               {debugLabel}
             </div>
           )}

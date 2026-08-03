@@ -33,12 +33,23 @@ export const useCamera = () => {
   const pickBackMainDeviceId = useCallback(async (): Promise<string | undefined> => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
-      const cams = devices.filter((d) => d.kind === 'videoinput');
-      const back = cams.filter((d) => /back|rear|후면|environment/i.test(d.label));
-      const pool = back.length ? back : cams;
-      // 초광각/망원/심도 라벨이 없는 후면 렌즈 우선
-      const main = pool.find((d) => d.label && !NON_MAIN_LENS.test(d.label));
-      return (main ?? pool[0])?.deviceId || undefined;
+      const back = devices.filter(
+        (d) => d.kind === 'videoinput' && /back|rear|후면|environment/i.test(d.label),
+      );
+      if (!back.length) return undefined;
+
+      // 안드로이드: 라벨이 "camera N" 인덱스 형태 → 후면 중 N이 가장 낮은 게 메인(보통 0)
+      const indexed = back
+        .map((d) => ({ d, idx: Number(d.label.match(/camera\s*(\d+)/i)?.[1] ?? NaN) }))
+        .filter((x) => !Number.isNaN(x.idx));
+      if (indexed.length) {
+        indexed.sort((a, b) => a.idx - b.idx);
+        return indexed[0].d.deviceId;
+      }
+
+      // iOS 등: 초광각/망원/심도가 아닌 후면 렌즈 우선
+      const main = back.find((d) => !NON_MAIN_LENS.test(d.label));
+      return (main ?? back[0]).deviceId;
     } catch {
       return undefined;
     }
@@ -58,15 +69,21 @@ export const useCamera = () => {
           audio: false,
         });
 
-        // 2) 후면인데 초광각/망원 등으로 잡혔으면 메인 렌즈 deviceId로 교체 시도
+        // 2) 후면이 메인 렌즈가 아니면 메인 deviceId로 교체
+        //    - iOS: 라벨에 초광각/망원(NON_MAIN_LENS)일 때
+        //    - 안드로이드: 라벨이 "camera N" 인덱스식이면 최저 인덱스(메인)로 맞춤
         if (!cancelled && facingMode === 'environment') {
-          const currentLabel = stream.getVideoTracks()[0]?.label ?? '';
-          if (NON_MAIN_LENS.test(currentLabel)) {
-            const deviceId = await pickBackMainDeviceId();
-            if (deviceId) {
-              stream.getTracks().forEach((track) => track.stop());
+          const track = stream.getVideoTracks()[0];
+          const currentId = track?.getSettings?.().deviceId;
+          const currentLabel = track?.label ?? '';
+          const isAndroidLabel = /camera\s*\d+/i.test(currentLabel);
+          const isNonMain = NON_MAIN_LENS.test(currentLabel);
+          if (isNonMain || isAndroidLabel) {
+            const mainId = await pickBackMainDeviceId();
+            if (mainId && mainId !== currentId) {
+              stream.getTracks().forEach((t) => t.stop());
               stream = await navigator.mediaDevices.getUserMedia({
-                video: { deviceId: { exact: deviceId }, ...RESOLUTION },
+                video: { deviceId: { exact: mainId }, ...RESOLUTION },
                 audio: false,
               });
             }
@@ -81,13 +98,24 @@ export const useCamera = () => {
         if (videoRef.current) videoRef.current.srcObject = stream;
         setError(null);
 
-        // [임시 디버그] 실제 선택된 카메라 렌즈를 화면에 표시 — 확인 끝나면 삭제
+        // [임시 디버그] 활성 렌즈 + 모든 비디오 입력(후면 렌즈 목록) 표시 — 확인 끝나면 삭제
         const activeTrack = stream.getVideoTracks()[0];
         const settings = activeTrack?.getSettings?.() ?? {};
         const zoom = (settings as { zoom?: number }).zoom;
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const vids = devices.filter((d) => d.kind === 'videoinput');
+        const list = vids
+          .map((d, i) => {
+            const cap = (d as InputDeviceInfo).getCapabilities?.();
+            const res = cap?.width?.max ? `${cap.width.max}x${cap.height?.max}` : '?';
+            const active = d.deviceId === settings.deviceId ? '★' : ' ';
+            return `${active}${i}:${d.label || '(no label)'} [${res}]`;
+          })
+          .join('\n');
         setDebugLabel(
-          `${activeTrack?.label || '(라벨없음)'} | ${settings.width}x${settings.height}` +
-            (zoom != null ? ` | zoom:${zoom}` : ''),
+          `활성: ${activeTrack?.label || '?'} ${settings.width}x${settings.height}` +
+            (zoom != null ? ` z:${zoom}` : '') +
+            `\n${list}`,
         );
       } catch {
         setError('카메라를 사용할 수 없어요. 브라우저 권한을 확인해주세요.');

@@ -20,7 +20,7 @@ const RATIOS = [
 
 const OotdCameraPage = () => {
   const navigate = useNavigate();
-  const { videoRef, facingMode, error, switchCamera, capture } = useCamera();
+  const { videoRef, facingMode, error, switchCamera, capture, debugLabel } = useCamera();
   const [captured, setCaptured] = useState<string | null>(null);
   const [ratioIndex, setRatioIndex] = useState(0);
   const ratio = RATIOS[ratioIndex];
@@ -56,19 +56,38 @@ const OotdCameraPage = () => {
 
       {/* 프리뷰 영역: 남은 공간에 맞춰 최대 높이 제한 (화면 밖으로 안 넘침) */}
       <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
-        <div className={cn('relative max-h-full w-full overflow-hidden bg-black', ratio.aspect)}>
+        <div
+          className="relative w-full overflow-hidden bg-black"
+          // iOS Safari는 flex 아이템의 aspect-ratio를 종종 무시해서,
+          // padding-bottom 퍼센트(= 100/(가로/세로))로 높이를 확실히 만든다.
+          style={{ height: 0, paddingBottom: `${100 / ratio.value}%` }}
+        >
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
             className={cn(
-              'size-full object-cover',
+              // 비율 박스를 꽉 채우고 넘치는 부분은 중앙 크롭 → 촬영 결과와 일치(WYSIWYG)
+              'absolute inset-0 size-full object-cover',
               facingMode === 'user' && '-scale-x-100',
               captured && 'hidden',
             )}
           />
-          {captured && <img src={captured} alt="촬영한 사진" className="size-full object-cover" />}
+          {captured && (
+            <img
+              src={captured}
+              alt="촬영한 사진"
+              className="absolute inset-0 size-full object-cover"
+            />
+          )}
+
+          {/* [임시] 선택된 카메라 렌즈 표시 — 확인 끝나면 삭제 */}
+          {debugLabel && (
+            <div className="absolute inset-x-0 top-0 bg-black/60 px-2 py-1 text-[11px] leading-tight break-all text-white">
+              {debugLabel}
+            </div>
+          )}
 
           {error && !captured && (
             <p className="text-body-3 absolute inset-x-0 bottom-4 px-4 text-center text-white/80">

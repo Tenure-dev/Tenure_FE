@@ -7,8 +7,9 @@ import {
 } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Bookmark, Eye, EyeOff, Heart } from 'lucide-react';
-import { BottomSheet, FollowButton, Toast } from '@/shared/components';
+import { BottomSheet, FollowButton, SpotlightBox, Toast } from '@/shared/components';
 import { useToast } from '@/shared/hooks/useToast';
+import { useTapBox } from '@/shared/hooks/useTapBox';
 import { USER_ID_STORAGE_KEY } from '@/shared/lib/api';
 import {
   MAX_TAGGED_ITEMS,
@@ -54,19 +55,11 @@ const INTRO_SEEN_KEY = 'ootd-intro-seen';
 const SHEET_DRAG_OPEN_THRESHOLD = 80;
 const TAG_ANALYZE_DELAY_MS = 700;
 const RESULT_EXPAND_RATIO = 0.8;
-const MIN_DRAG_BOX_PERCENT = 4;
 // 사진 컨테이너가 항상 aspect-[3/4](세로가 가로의 4/3배)라서, 픽셀상 가로가 넓고 세로가 짧은
 // 직사각형으로 보이려면 width/height 퍼센트를 1:1이 아니라 이 비율만큼 크게 벌려야 한다.
 // 실제 픽셀 비율 = (width% / height%) * (3/4)
 const DEFAULT_TAP_BOX_WIDTH_PERCENT = 45;
 const DEFAULT_TAP_BOX_HEIGHT_PERCENT = 8;
-
-interface DragBoxRect {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-}
 
 type PendingTagOp =
   | { kind: 'add'; itemId: number; labelText: string; bbox: Bbox }
@@ -105,8 +98,6 @@ const OotdDetailPage = () => {
   const [isAnalyzingTag, setIsAnalyzingTag] = useState(false);
   const [selectedClosetItemId, setSelectedClosetItemId] = useState<number | null>(null);
   const [pendingBbox, setPendingBbox] = useState<Bbox | null>(null);
-  const [dragBoxRect, setDragBoxRect] = useState<DragBoxRect | null>(null);
-  const dragBoxStartRef = useRef<{ x: number; y: number } | null>(null);
   const analyzeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [resultExpanded, setResultExpanded] = useState(false);
   const collapsedDragStartYRef = useRef<number | null>(null);
@@ -249,78 +240,24 @@ const OotdDetailPage = () => {
     if (e.clientY - startY > SHEET_DRAG_OPEN_THRESHOLD) setResultExpanded(false);
   };
 
-  const getPercentPoint = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100));
-    const y = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100));
-    return { x, y };
-  };
+  // 탭한 자리에 고정 크기 박스가 바로 뜨는 인터랙션(드래그 리사이즈 없음)은
+  // src/shared/hooks/useTapBox로 공용화되어 있다. 확정(추가하기) 전까지 박스를 계속 보여줘야
+  // 하므로 tapBox.rect는 여기서 지우지 않는다 — handleEditSubmit/resetEditState/태그 선택 시 지운다.
+  const tapBox = useTapBox({
+    widthPercent: DEFAULT_TAP_BOX_WIDTH_PERCENT,
+    heightPercent: DEFAULT_TAP_BOX_HEIGHT_PERCENT,
+    onPlace: (bbox) => {
+      setPendingBbox(bbox);
+      beginTagAnalysis({ type: 'add' }, null);
+    },
+  });
 
   const handleEditPhotoPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!post || draftTags.length >= MAX_TAGGED_ITEMS) {
       showToast(`태그는 최대 ${MAX_TAGGED_ITEMS}개까지 가능해요.`);
       return;
     }
-    const point = getPercentPoint(e);
-    dragBoxStartRef.current = point;
-    // 탭한 순간부터 태그 기본 크기(가로로 약간 긴 직사각형)만한 사각형을 바로 보여준다.
-    // 드래그로 크기를 직접 지정하면 handleEditPhotoPointerMove가 이 값을 덮어쓴다.
-    const halfWidth = DEFAULT_TAP_BOX_WIDTH_PERCENT / 2;
-    const halfHeight = DEFAULT_TAP_BOX_HEIGHT_PERCENT / 2;
-    setDragBoxRect({
-      x1: point.x - halfWidth,
-      y1: point.y - halfHeight,
-      x2: point.x + halfWidth,
-      y2: point.y + halfHeight,
-    });
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handleEditPhotoPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const start = dragBoxStartRef.current;
-    if (!start) return;
-    const point = getPercentPoint(e);
-    const width = Math.abs(point.x - start.x);
-    const height = Math.abs(point.y - start.y);
-    // 탭 오차 수준의 작은 움직임까지 반영하면 박스가 다시 점처럼 작아지므로,
-    // 실제로 드래그해서 크기를 그린 경우에만 시작점-현재점 사각형으로 전환한다.
-    if (width < MIN_DRAG_BOX_PERCENT && height < MIN_DRAG_BOX_PERCENT) return;
-    setDragBoxRect({ x1: start.x, y1: start.y, x2: point.x, y2: point.y });
-  };
-
-  const handleEditPhotoPointerUp = () => {
-    const start = dragBoxStartRef.current;
-    const rect = dragBoxRect;
-    dragBoxStartRef.current = null;
-    if (!start || !rect) return;
-
-    const width = Math.abs(rect.x2 - rect.x1);
-    const height = Math.abs(rect.y2 - rect.y1);
-
-    let box: { x: number; y: number; width: number; height: number };
-    if (width < MIN_DRAG_BOX_PERCENT || height < MIN_DRAG_BOX_PERCENT) {
-      const halfWidth = DEFAULT_TAP_BOX_WIDTH_PERCENT / 2;
-      const halfHeight = DEFAULT_TAP_BOX_HEIGHT_PERCENT / 2;
-      box = {
-        x: Math.max(0, Math.min(100 - DEFAULT_TAP_BOX_WIDTH_PERCENT, start.x - halfWidth)),
-        y: Math.max(0, Math.min(100 - DEFAULT_TAP_BOX_HEIGHT_PERCENT, start.y - halfHeight)),
-        width: DEFAULT_TAP_BOX_WIDTH_PERCENT,
-        height: DEFAULT_TAP_BOX_HEIGHT_PERCENT,
-      };
-    } else {
-      box = { x: Math.min(rect.x1, rect.x2), y: Math.min(rect.y1, rect.y2), width, height };
-    }
-
-    // 추가하기를 눌러 확정하기 전까지는 선택 영역을 계속 밝게 보여줘야 하므로 여기서 지우지 않는다.
-    setDragBoxRect({ x1: box.x, y1: box.y, x2: box.x + box.width, y2: box.y + box.height });
-
-    setPendingBbox({
-      x: box.x / 100,
-      y: box.y / 100,
-      width: box.width / 100,
-      height: box.height / 100,
-    });
-    beginTagAnalysis({ type: 'add' }, null);
+    tapBox.handlers.onPointerDown(e);
   };
 
   const handleStartEdit = () => {
@@ -373,7 +310,7 @@ const OotdDetailPage = () => {
     setResultExpanded(false);
     setSelectedClosetItemId(null);
     setPendingBbox(null);
-    setDragBoxRect(null);
+    tapBox.clear();
     setNewItemSheetOpen(false);
     setChangeCount(0);
   };
@@ -475,7 +412,7 @@ const OotdDetailPage = () => {
     setEditTarget(null);
     setSelectedClosetItemId(null);
     setPendingBbox(null);
-    setDragBoxRect(null);
+    tapBox.clear();
     setResultExpanded(false);
   };
 
@@ -666,9 +603,6 @@ const OotdDetailPage = () => {
           className="relative aspect-[3/4] w-full shrink-0 overflow-hidden bg-black"
           onClick={mode === 'view' ? handlePhotoClick : undefined}
           onPointerDown={mode === 'edit' ? handleEditPhotoPointerDown : undefined}
-          onPointerMove={mode === 'edit' ? handleEditPhotoPointerMove : undefined}
-          onPointerUp={mode === 'edit' ? handleEditPhotoPointerUp : undefined}
-          onPointerCancel={mode === 'edit' ? handleEditPhotoPointerUp : undefined}
         >
           <img src={post.imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
 
@@ -689,20 +623,7 @@ const OotdDetailPage = () => {
             </button>
           )}
 
-          {mode === 'edit' && dragBoxRect && (
-            <div
-              className="pointer-events-none absolute rounded-md border-2 border-black"
-              style={{
-                left: `${Math.min(dragBoxRect.x1, dragBoxRect.x2)}%`,
-                top: `${Math.min(dragBoxRect.y1, dragBoxRect.y2)}%`,
-                width: `${Math.abs(dragBoxRect.x2 - dragBoxRect.x1)}%`,
-                height: `${Math.abs(dragBoxRect.y2 - dragBoxRect.y1)}%`,
-                // 선택한 영역만 밝게 남기고 나머지를 어둡게: 부모의 overflow-hidden 경계로 잘리는
-                // 초대형 box-shadow를 이용해 별도 마스크 레이어 없이 구현한다.
-                boxShadow: '0 0 0 100vmax rgba(0, 0, 0, 0.55)',
-              }}
-            />
-          )}
+          {mode === 'edit' && tapBox.rect && <SpotlightBox rect={tapBox.rect} />}
 
           {showTags &&
             visibleTags.map((tag) => (
@@ -716,7 +637,7 @@ const OotdDetailPage = () => {
                   mode === 'edit'
                     ? () => {
                         setPendingBbox(null);
-                        setDragBoxRect(null);
+                        tapBox.clear();
                         beginTagAnalysis({ type: 'edit', tagId: tag.id }, tag.itemId);
                       }
                     : tag.status === '미판매_제안가능' || tag.status === '미판매_제안불가'

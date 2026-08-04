@@ -21,7 +21,6 @@ export const useCamera = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const [facingMode, setFacingMode] = useState<FacingMode>('user');
   const [error, setError] = useState<string | null>(null);
-  const [debugLabel, setDebugLabel] = useState<string>(''); // [임시] 화면에 렌즈 라벨 표시
 
   const stop = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -97,26 +96,6 @@ export const useCamera = () => {
         streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
         setError(null);
-
-        // [임시 디버그] 활성 렌즈 + 모든 비디오 입력(후면 렌즈 목록) 표시 — 확인 끝나면 삭제
-        const activeTrack = stream.getVideoTracks()[0];
-        const settings = activeTrack?.getSettings?.() ?? {};
-        const zoom = (settings as { zoom?: number }).zoom;
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const vids = devices.filter((d) => d.kind === 'videoinput');
-        const list = vids
-          .map((d, i) => {
-            const cap = (d as InputDeviceInfo).getCapabilities?.();
-            const res = cap?.width?.max ? `${cap.width.max}x${cap.height?.max}` : '?';
-            const active = d.deviceId === settings.deviceId ? '★' : ' ';
-            return `${active}${i}:${d.label || '(no label)'} [${res}]`;
-          })
-          .join('\n');
-        setDebugLabel(
-          `활성: ${activeTrack?.label || '?'} ${settings.width}x${settings.height}` +
-            (zoom != null ? ` z:${zoom}` : '') +
-            `\n${list}`,
-        );
       } catch {
         setError('카메라를 사용할 수 없어요. 브라우저 권한을 확인해주세요.');
       }
@@ -171,7 +150,7 @@ export const useCamera = () => {
     [facingMode],
   );
 
-  return { videoRef, facingMode, error, switchCamera, capture, stop, debugLabel };
+  return { videoRef, facingMode, error, switchCamera, capture, stop };
 };
 
 export default useCamera;

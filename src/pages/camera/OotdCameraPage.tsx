@@ -20,7 +20,7 @@ const RATIOS = [
 
 const OotdCameraPage = () => {
   const navigate = useNavigate();
-  const { videoRef, facingMode, error, switchCamera, capture, debugLabel } = useCamera();
+  const { videoRef, facingMode, error, switchCamera, capture } = useCamera();
   const [captured, setCaptured] = useState<string | null>(null);
   const [ratioIndex, setRatioIndex] = useState(0);
   const ratio = RATIOS[ratioIndex];
@@ -80,13 +80,6 @@ const OotdCameraPage = () => {
               alt="촬영한 사진"
               className="absolute inset-0 size-full object-cover"
             />
-          )}
-
-          {/* [임시] 선택된 카메라 렌즈 표시 — 확인 끝나면 삭제 */}
-          {debugLabel && (
-            <div className="fixed inset-x-0 top-16 z-50 max-h-60 overflow-auto bg-black/70 px-2 py-1 text-[10px] leading-tight break-all whitespace-pre-line text-white">
-              {debugLabel}
-            </div>
           )}
 
           {error && !captured && (

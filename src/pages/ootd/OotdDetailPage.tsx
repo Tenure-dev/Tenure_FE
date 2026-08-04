@@ -42,6 +42,11 @@ import ConfirmModal from '@/features/ootd/ui/ConfirmModal';
 import TaggedItemsSheet from '@/features/ootd/ui/TaggedItemsSheet';
 import EditTagSheet, { type EditTagTarget } from '@/features/ootd/ui/EditTagSheet';
 import MoreMenu from '@/features/ootd/ui/MoreMenu';
+import type { OotdItem } from '@/features/ootd/model/item';
+// 카메라 플로우(새 OOTD 작성 시 태그 추가)의 "새 아이템 등록" 시트를 OOTD상세 전용으로 로컬 포크.
+// camera/component/NewItemSheet를 직접 쓰지 않는 이유: 이미지 업로드 등 이 화면 전용 수정이
+// 카메라 페이지(다른 담당자 영역)에 그대로 번지는 걸 막기 위함.
+import NewItemSheet from '@/features/ootd/ui/NewItemSheet';
 import ViewHeader from './components/ViewHeader';
 import EditHeader from './components/EditHeader';
 
@@ -50,7 +55,11 @@ const SHEET_DRAG_OPEN_THRESHOLD = 80;
 const TAG_ANALYZE_DELAY_MS = 700;
 const RESULT_EXPAND_RATIO = 0.8;
 const MIN_DRAG_BOX_PERCENT = 4;
-const DEFAULT_TAP_BOX_PERCENT = 16;
+// 사진 컨테이너가 항상 aspect-[3/4](세로가 가로의 4/3배)라서, 픽셀상 가로가 넓고 세로가 짧은
+// 직사각형으로 보이려면 width/height 퍼센트를 1:1이 아니라 이 비율만큼 크게 벌려야 한다.
+// 실제 픽셀 비율 = (width% / height%) * (3/4)
+const DEFAULT_TAP_BOX_WIDTH_PERCENT = 45;
+const DEFAULT_TAP_BOX_HEIGHT_PERCENT = 8;
 
 interface DragBoxRect {
   x1: number;
@@ -112,6 +121,7 @@ const OotdDetailPage = () => {
 
   const [closetItems, setClosetItems] = useState<ClosetItem[]>([]);
   const [closetItemsLoading, setClosetItemsLoading] = useState(false);
+  const [newItemSheetOpen, setNewItemSheetOpen] = useState(false);
 
   const clearAnalyzeTimeout = () => {
     if (analyzeTimeoutRef.current !== null) {
@@ -253,26 +263,35 @@ const OotdDetailPage = () => {
     }
     const point = getPercentPoint(e);
     dragBoxStartRef.current = point;
-    setDragBoxRect({ x1: point.x, y1: point.y, x2: point.x, y2: point.y });
+    // 탭한 순간부터 태그 기본 크기(가로로 약간 긴 직사각형)만한 사각형을 바로 보여준다.
+    // 드래그로 크기를 직접 지정하면 handleEditPhotoPointerMove가 이 값을 덮어쓴다.
+    const halfWidth = DEFAULT_TAP_BOX_WIDTH_PERCENT / 2;
+    const halfHeight = DEFAULT_TAP_BOX_HEIGHT_PERCENT / 2;
+    setDragBoxRect({
+      x1: point.x - halfWidth,
+      y1: point.y - halfHeight,
+      x2: point.x + halfWidth,
+      y2: point.y + halfHeight,
+    });
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const handleEditPhotoPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!dragBoxStartRef.current) return;
+    const start = dragBoxStartRef.current;
+    if (!start) return;
     const point = getPercentPoint(e);
-    setDragBoxRect({
-      x1: dragBoxStartRef.current.x,
-      y1: dragBoxStartRef.current.y,
-      x2: point.x,
-      y2: point.y,
-    });
+    const width = Math.abs(point.x - start.x);
+    const height = Math.abs(point.y - start.y);
+    // 탭 오차 수준의 작은 움직임까지 반영하면 박스가 다시 점처럼 작아지므로,
+    // 실제로 드래그해서 크기를 그린 경우에만 시작점-현재점 사각형으로 전환한다.
+    if (width < MIN_DRAG_BOX_PERCENT && height < MIN_DRAG_BOX_PERCENT) return;
+    setDragBoxRect({ x1: start.x, y1: start.y, x2: point.x, y2: point.y });
   };
 
   const handleEditPhotoPointerUp = () => {
     const start = dragBoxStartRef.current;
     const rect = dragBoxRect;
     dragBoxStartRef.current = null;
-    setDragBoxRect(null);
     if (!start || !rect) return;
 
     const width = Math.abs(rect.x2 - rect.x1);
@@ -280,16 +299,20 @@ const OotdDetailPage = () => {
 
     let box: { x: number; y: number; width: number; height: number };
     if (width < MIN_DRAG_BOX_PERCENT || height < MIN_DRAG_BOX_PERCENT) {
-      const half = DEFAULT_TAP_BOX_PERCENT / 2;
+      const halfWidth = DEFAULT_TAP_BOX_WIDTH_PERCENT / 2;
+      const halfHeight = DEFAULT_TAP_BOX_HEIGHT_PERCENT / 2;
       box = {
-        x: Math.max(0, Math.min(100 - DEFAULT_TAP_BOX_PERCENT, start.x - half)),
-        y: Math.max(0, Math.min(100 - DEFAULT_TAP_BOX_PERCENT, start.y - half)),
-        width: DEFAULT_TAP_BOX_PERCENT,
-        height: DEFAULT_TAP_BOX_PERCENT,
+        x: Math.max(0, Math.min(100 - DEFAULT_TAP_BOX_WIDTH_PERCENT, start.x - halfWidth)),
+        y: Math.max(0, Math.min(100 - DEFAULT_TAP_BOX_HEIGHT_PERCENT, start.y - halfHeight)),
+        width: DEFAULT_TAP_BOX_WIDTH_PERCENT,
+        height: DEFAULT_TAP_BOX_HEIGHT_PERCENT,
       };
     } else {
       box = { x: Math.min(rect.x1, rect.x2), y: Math.min(rect.y1, rect.y2), width, height };
     }
+
+    // 추가하기를 눌러 확정하기 전까지는 선택 영역을 계속 밝게 보여줘야 하므로 여기서 지우지 않는다.
+    setDragBoxRect({ x1: box.x, y1: box.y, x2: box.x + box.width, y2: box.y + box.height });
 
     setPendingBbox({
       x: box.x / 100,
@@ -323,6 +346,23 @@ const OotdDetailPage = () => {
       .finally(() => setClosetItemsLoading(false));
   };
 
+  // 새 아이템 등록 시트에서 등록 완료 시 호출됨. 페이지 이동 없이 옷장 목록에 바로 추가하고
+  // 선택 상태로 만들어서, 등록 직후 이어서 "추가하기"를 누를 수 있게 한다.
+  const handleRegisterNewItem = (item: OotdItem) => {
+    const newClosetItem: ClosetItem = {
+      id: Number(item.id),
+      brand: item.brand,
+      name: item.name,
+      imageUrl: item.thumbnail ?? null,
+      lastWornDaysAgo: null,
+      verifiedCount: 0,
+      purchaseOfferEnabled: false,
+    };
+    setClosetItems((prev) => [newClosetItem, ...prev]);
+    setSelectedClosetItemId(newClosetItem.id);
+    setNewItemSheetOpen(false);
+  };
+
   const resetEditState = () => {
     clearAnalyzeTimeout();
     pendingOpsRef.current = new Map();
@@ -333,6 +373,8 @@ const OotdDetailPage = () => {
     setResultExpanded(false);
     setSelectedClosetItemId(null);
     setPendingBbox(null);
+    setDragBoxRect(null);
+    setNewItemSheetOpen(false);
     setChangeCount(0);
   };
 
@@ -433,6 +475,7 @@ const OotdDetailPage = () => {
     setEditTarget(null);
     setSelectedClosetItemId(null);
     setPendingBbox(null);
+    setDragBoxRect(null);
     setResultExpanded(false);
   };
 
@@ -615,177 +658,192 @@ const OotdDetailPage = () => {
         />
       )}
 
-      <div
-        className="relative aspect-[3/4] w-full shrink-0 overflow-hidden bg-black"
-        onClick={mode === 'view' ? handlePhotoClick : undefined}
-        onPointerDown={mode === 'edit' ? handleEditPhotoPointerDown : undefined}
-        onPointerMove={mode === 'edit' ? handleEditPhotoPointerMove : undefined}
-        onPointerUp={mode === 'edit' ? handleEditPhotoPointerUp : undefined}
-        onPointerCancel={mode === 'edit' ? handleEditPhotoPointerUp : undefined}
-      >
-        <img src={post.imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
+      {/* 헤더 아래 영역을 감싸는 relative 컨테이너.
+          새 아이템 등록 시트가 이 안에서만 absolute inset-0로 딤 처리되도록 해서
+          위쪽 헤더(취소/완료 버튼)까지 검게 덮이지 않게 한다. */}
+      <div className="relative flex flex-1 flex-col">
+        <div
+          className="relative aspect-[3/4] w-full shrink-0 overflow-hidden bg-black"
+          onClick={mode === 'view' ? handlePhotoClick : undefined}
+          onPointerDown={mode === 'edit' ? handleEditPhotoPointerDown : undefined}
+          onPointerMove={mode === 'edit' ? handleEditPhotoPointerMove : undefined}
+          onPointerUp={mode === 'edit' ? handleEditPhotoPointerUp : undefined}
+          onPointerCancel={mode === 'edit' ? handleEditPhotoPointerUp : undefined}
+        >
+          <img src={post.imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
 
-        {mode === 'edit' && (
-          <button
-            type="button"
-            onPointerDown={(e) => e.stopPropagation()}
-            onPointerMove={(e) => e.stopPropagation()}
-            onPointerUp={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              setEditTagsVisible((v) => !v);
-            }}
-            aria-label="태그 표시 전환"
-            className="absolute top-3 right-3 flex size-9 items-center justify-center rounded-full bg-black/50 text-white"
-          >
-            {editTagsVisible ? <Eye size={18} /> : <EyeOff size={18} />}
-          </button>
-        )}
-
-        {mode === 'edit' && dragBoxRect && (
-          <div
-            className="pointer-events-none absolute border-2 border-white"
-            style={{
-              left: `${Math.min(dragBoxRect.x1, dragBoxRect.x2)}%`,
-              top: `${Math.min(dragBoxRect.y1, dragBoxRect.y2)}%`,
-              width: `${Math.abs(dragBoxRect.x2 - dragBoxRect.x1)}%`,
-              height: `${Math.abs(dragBoxRect.y2 - dragBoxRect.y1)}%`,
-              // 선택한 영역만 밝게 남기고 나머지를 어둡게: 부모의 overflow-hidden 경계로 잘리는
-              // 초대형 box-shadow를 이용해 별도 마스크 레이어 없이 구현한다.
-              boxShadow: '0 0 0 100vmax rgba(0, 0, 0, 0.55)',
-            }}
-          />
-        )}
-
-        {showTags &&
-          visibleTags.map((tag) => (
-            <TagPin
-              key={tag.id}
-              item={tag}
-              selected={
-                mode === 'edit' && editTarget?.type === 'edit' && editTarget.tagId === tag.id
-              }
-              onClick={
-                mode === 'edit'
-                  ? () => {
-                      setPendingBbox(null);
-                      beginTagAnalysis({ type: 'edit', tagId: tag.id }, tag.itemId);
-                    }
-                  : tag.status === '미판매_제안가능' || tag.status === '미판매_제안불가'
-                    ? // 판매 전환 이력이 없는 미판매 태그는 이동할 상세 화면이 없어 탭해도 아무 동작을 하지 않는다.
-                      () => {}
-                    : () => goToDetail(tag)
-              }
-              interactive={
-                mode === 'edit' ||
-                !(tag.status === '미판매_제안가능' || tag.status === '미판매_제안불가')
-              }
-            />
-          ))}
-      </div>
-
-      {mode === 'view' && (
-        <>
-          <div className="flex items-center gap-4 px-4 pt-3">
-            <button type="button" onClick={toggleHeart} className="flex items-center gap-1">
-              <Heart
-                size={20}
-                className={post.liked ? 'fill-brand text-brand' : 'text-text-tertiary'}
-              />
-              <span className="text-body-3 text-text-secondary">{post.likeCount}</span>
-            </button>
-            <button type="button" onClick={toggleBookmark} className="flex items-center gap-1">
-              <Bookmark
-                size={20}
-                className={
-                  post.bookmarked ? 'fill-text-primary text-text-primary' : 'text-text-tertiary'
-                }
-              />
-              <span className="text-body-3 text-text-secondary">{post.bookmarkCount}</span>
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between px-4 py-3">
+          {mode === 'edit' && (
             <button
               type="button"
-              onClick={() => navigate(`/users/${post.author.id}`)}
-              className="flex items-center gap-2"
+              onPointerDown={(e) => e.stopPropagation()}
+              onPointerMove={(e) => e.stopPropagation()}
+              onPointerUp={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditTagsVisible((v) => !v);
+              }}
+              aria-label="태그 표시 전환"
+              className="absolute top-3 right-3 flex size-9 items-center justify-center rounded-full bg-black/50 text-white"
             >
-              <div className="bg-gray-bg size-9 overflow-hidden rounded-full">
-                {post.author.avatarUrl && (
-                  <img src={post.author.avatarUrl} alt="" className="size-full object-cover" />
-                )}
-              </div>
-              <p className="text-body-2 text-text-primary font-semibold">{post.author.name}</p>
+              {editTagsVisible ? <Eye size={18} /> : <EyeOff size={18} />}
             </button>
-            {!post.isOwner && <FollowButton following={post.isFollowing} onToggle={toggleFollow} />}
-          </div>
+          )}
 
-          <button
-            type="button"
-            onClick={() => setShowTaggedSheet(true)}
-            onPointerDown={handlePeekPointerDown}
-            onPointerMove={handlePeekPointerMove}
-            onPointerUp={handlePeekPointerEnd}
-            onPointerCancel={handlePeekPointerEnd}
-            className="border-border-secondary mt-auto flex touch-none flex-col items-center gap-2 border-t px-4 pt-2 pb-6"
-          >
-            <span className="bg-gray-bg h-1 w-9 rounded-full" />
-            <span className="w-full text-left">
-              <span className="text-body-1 text-text-primary block font-semibold">
-                태그된 아이템
-              </span>
-              <span className="text-body-3 text-text-tertiary">
-                사진 속에서 태그된 것만 모아봅니다.
-              </span>
-            </span>
-          </button>
-        </>
-      )}
+          {mode === 'edit' && dragBoxRect && (
+            <div
+              className="pointer-events-none absolute rounded-md border-2 border-black"
+              style={{
+                left: `${Math.min(dragBoxRect.x1, dragBoxRect.x2)}%`,
+                top: `${Math.min(dragBoxRect.y1, dragBoxRect.y2)}%`,
+                width: `${Math.abs(dragBoxRect.x2 - dragBoxRect.x1)}%`,
+                height: `${Math.abs(dragBoxRect.y2 - dragBoxRect.y1)}%`,
+                // 선택한 영역만 밝게 남기고 나머지를 어둡게: 부모의 overflow-hidden 경계로 잘리는
+                // 초대형 box-shadow를 이용해 별도 마스크 레이어 없이 구현한다.
+                boxShadow: '0 0 0 100vmax rgba(0, 0, 0, 0.55)',
+              }}
+            />
+          )}
 
-      {mode === 'edit' && !resultExpanded && (
-        <div className="bg-bg-white flex h-60 shrink-0 flex-col overflow-hidden rounded-t-2xl shadow-[0_-8px_24px_rgba(0,0,0,0.12)]">
-          <div
-            className="flex cursor-grab touch-none justify-center py-2 active:cursor-grabbing"
-            onClick={() => setResultExpanded(true)}
-            onPointerDown={handleCollapsedHandlePointerDown}
-            onPointerUp={handleCollapsedHandlePointerUp}
-          >
-            <span className="bg-border-secondary h-1 w-10 rounded-full" />
-          </div>
-          <EditTagSheet
-            target={editTarget}
-            isAnalyzing={isAnalyzingTag || closetItemsLoading}
-            closetItems={availableClosetItems}
-            selectedClosetItemId={selectedClosetItemId}
-            onSelectClosetItem={(item) => setSelectedClosetItemId(item.id)}
-            onRegisterNewItem={() => navigate('/mypage/items/new')}
-            onSubmit={handleEditSubmit}
-          />
+          {showTags &&
+            visibleTags.map((tag) => (
+              <TagPin
+                key={tag.id}
+                item={tag}
+                selected={
+                  mode === 'edit' && editTarget?.type === 'edit' && editTarget.tagId === tag.id
+                }
+                onClick={
+                  mode === 'edit'
+                    ? () => {
+                        setPendingBbox(null);
+                        setDragBoxRect(null);
+                        beginTagAnalysis({ type: 'edit', tagId: tag.id }, tag.itemId);
+                      }
+                    : tag.status === '미판매_제안가능' || tag.status === '미판매_제안불가'
+                      ? // 판매 전환 이력이 없는 미판매 태그는 이동할 상세 화면이 없어 탭해도 아무 동작을 하지 않는다.
+                        () => {}
+                      : () => goToDetail(tag)
+                }
+                interactive={
+                  mode === 'edit' ||
+                  !(tag.status === '미판매_제안가능' || tag.status === '미판매_제안불가')
+                }
+              />
+            ))}
         </div>
-      )}
 
-      {mode === 'edit' && (
-        <BottomSheet
-          open={resultExpanded}
-          onClose={() => setResultExpanded(false)}
-          variant="plain"
-          heightPx={getResultExpandedHeightPx()}
-          onHandlePointerDown={handleExpandedHandlePointerDown}
-          onHandlePointerUp={handleExpandedHandlePointerUp}
-          className="flex flex-col"
-        >
-          <EditTagSheet
-            target={editTarget}
-            isAnalyzing={isAnalyzingTag || closetItemsLoading}
-            closetItems={availableClosetItems}
-            selectedClosetItemId={selectedClosetItemId}
-            onSelectClosetItem={(item) => setSelectedClosetItemId(item.id)}
-            onRegisterNewItem={() => navigate('/mypage/items/new')}
-            onSubmit={handleEditSubmit}
+        {mode === 'view' && (
+          <>
+            <div className="flex items-center gap-4 px-4 pt-3">
+              <button type="button" onClick={toggleHeart} className="flex items-center gap-1">
+                <Heart
+                  size={20}
+                  className={post.liked ? 'fill-brand text-brand' : 'text-text-tertiary'}
+                />
+                <span className="text-body-3 text-text-secondary">{post.likeCount}</span>
+              </button>
+              <button type="button" onClick={toggleBookmark} className="flex items-center gap-1">
+                <Bookmark
+                  size={20}
+                  className={
+                    post.bookmarked ? 'fill-text-primary text-text-primary' : 'text-text-tertiary'
+                  }
+                />
+                <span className="text-body-3 text-text-secondary">{post.bookmarkCount}</span>
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between px-4 py-3">
+              <button
+                type="button"
+                onClick={() => navigate(`/users/${post.author.id}`)}
+                className="flex items-center gap-2"
+              >
+                <div className="bg-gray-bg size-9 overflow-hidden rounded-full">
+                  {post.author.avatarUrl && (
+                    <img src={post.author.avatarUrl} alt="" className="size-full object-cover" />
+                  )}
+                </div>
+                <p className="text-body-2 text-text-primary font-semibold">{post.author.name}</p>
+              </button>
+              {!post.isOwner && (
+                <FollowButton following={post.isFollowing} onToggle={toggleFollow} />
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowTaggedSheet(true)}
+              onPointerDown={handlePeekPointerDown}
+              onPointerMove={handlePeekPointerMove}
+              onPointerUp={handlePeekPointerEnd}
+              onPointerCancel={handlePeekPointerEnd}
+              className="border-border-secondary mt-auto flex touch-none flex-col items-center gap-2 border-t px-4 pt-2 pb-6"
+            >
+              <span className="bg-gray-bg h-1 w-9 rounded-full" />
+              <span className="w-full text-left">
+                <span className="text-body-1 text-text-primary block font-semibold">
+                  태그된 아이템
+                </span>
+                <span className="text-body-3 text-text-tertiary">
+                  사진 속에서 태그된 것만 모아봅니다.
+                </span>
+              </span>
+            </button>
+          </>
+        )}
+
+        {mode === 'edit' && !resultExpanded && (
+          <div className="bg-bg-white flex h-60 shrink-0 flex-col overflow-hidden rounded-t-2xl shadow-[0_-8px_24px_rgba(0,0,0,0.12)]">
+            <div
+              className="flex cursor-grab touch-none justify-center py-2 active:cursor-grabbing"
+              onClick={() => setResultExpanded(true)}
+              onPointerDown={handleCollapsedHandlePointerDown}
+              onPointerUp={handleCollapsedHandlePointerUp}
+            >
+              <span className="bg-border-secondary h-1 w-10 rounded-full" />
+            </div>
+            <EditTagSheet
+              target={editTarget}
+              isAnalyzing={isAnalyzingTag || closetItemsLoading}
+              closetItems={availableClosetItems}
+              selectedClosetItemId={selectedClosetItemId}
+              onSelectClosetItem={(item) => setSelectedClosetItemId(item.id)}
+              onRegisterNewItem={() => setNewItemSheetOpen(true)}
+              onSubmit={handleEditSubmit}
+            />
+          </div>
+        )}
+
+        {mode === 'edit' && (
+          <BottomSheet
+            open={resultExpanded}
+            onClose={() => setResultExpanded(false)}
+            variant="plain"
+            heightPx={getResultExpandedHeightPx()}
+            onHandlePointerDown={handleExpandedHandlePointerDown}
+            onHandlePointerUp={handleExpandedHandlePointerUp}
+            className="flex flex-col"
+          >
+            <EditTagSheet
+              target={editTarget}
+              isAnalyzing={isAnalyzingTag || closetItemsLoading}
+              closetItems={availableClosetItems}
+              selectedClosetItemId={selectedClosetItemId}
+              onSelectClosetItem={(item) => setSelectedClosetItemId(item.id)}
+              onRegisterNewItem={() => setNewItemSheetOpen(true)}
+              onSubmit={handleEditSubmit}
+            />
+          </BottomSheet>
+        )}
+
+        {mode === 'edit' && newItemSheetOpen && (
+          <NewItemSheet
+            onBack={() => setNewItemSheetOpen(false)}
+            onSubmit={handleRegisterNewItem}
           />
-        </BottomSheet>
-      )}
+        )}
+      </div>
 
       <IntroTagModal
         open={showIntro}

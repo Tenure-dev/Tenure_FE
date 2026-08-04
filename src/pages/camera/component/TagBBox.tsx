@@ -133,14 +133,18 @@ const TagBBox = ({ bbox, label, active, onActivate, onChange, onSettle }: Props)
         </>
       )}
 
-      {/* 말풍선(태그): 아이템이 설정된 박스만 표시, 누르면 활성화(=bbox 표시) */}
+      {/* 말풍선(태그): 아이템 설정된 박스만. bbox 중심 기준으로 그 위에 배치(게시글과 동일) */}
       {label && (
         <button
           type="button"
           onClick={onActivate}
-          className="absolute bottom-full left-0 z-10 mb-1"
+          className="absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-full"
         >
-          <TagMessage title={label} side="left" variant="black" />
+          <TagMessage
+            title={label}
+            side={bbox.x + bbox.width / 2 > 0.5 ? 'right' : 'left'}
+            variant="black"
+          />
         </button>
       )}
     </div>

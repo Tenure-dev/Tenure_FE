@@ -26,7 +26,7 @@ const TagPin = ({ item, selected = false, onClick }: TagPinProps) => {
 
   const style = { left: `${item.position.x}%`, top: `${item.position.y}%` };
   const className = cn(
-    'absolute max-w-[170px] -translate-1/2 rounded-lg bg-bg-white/95 px-3 py-1.5 text-left shadow-md',
+    'absolute max-w-[170px] -translate-x-1/2 -translate-y-full rounded-lg bg-bg-white/95 px-3 py-1.5 text-left shadow-md',
     selected && 'ring-2 ring-brand',
   );
 

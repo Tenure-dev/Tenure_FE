@@ -78,12 +78,15 @@ const OotdPreviewPage = () => {
         {tags.map((tag) => (
           <div
             key={tag.itemId}
-            className="absolute"
-            style={{ left: `${tag.bbox.x * 100}%`, top: `${tag.bbox.y * 100}%` }}
+            className="absolute -translate-x-1/2 -translate-y-full"
+            style={{
+              left: `${(tag.bbox.x + tag.bbox.width / 2) * 100}%`,
+              top: `${(tag.bbox.y + tag.bbox.height / 2) * 100}%`,
+            }}
           >
             <TagMessage
               title={tag.labelText}
-              side={tag.bbox.x > 0.5 ? 'right' : 'left'}
+              side={tag.bbox.x + tag.bbox.width / 2 > 0.5 ? 'right' : 'left'}
               variant="black"
             />
           </div>
@@ -96,7 +99,7 @@ const OotdPreviewPage = () => {
       <div className="mt-auto flex gap-2 px-5 pb-6">
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/ootd/tag', { state: { photo, tags } })}
           className="bg-gray-bg text-btn-2 text-text-primary flex-1 rounded-md py-3.5 font-medium"
         >
           태그 수정

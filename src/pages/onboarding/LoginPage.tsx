@@ -87,7 +87,7 @@ const LoginPage = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="mt-[48px] flex flex-col gap-3">
         <input
           type="email"
-          placeholder="아이디를 입력해주세요"
+          placeholder="이메일을 입력해주세요"
           className={inputClassName}
           {...register('email')}
         />

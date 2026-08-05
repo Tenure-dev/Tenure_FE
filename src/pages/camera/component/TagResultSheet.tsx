@@ -17,6 +17,7 @@ type Props = {
   onSearchOpen: () => void;
   onSearchClose: () => void;
   onNewItem: () => void;
+  onBbox: () => void;
 };
 
 const SearchIcon = () => (
@@ -43,6 +44,7 @@ const TagResultSheet = ({
   onSearchOpen,
   onSearchClose,
   onNewItem,
+  onBbox,
 }: Props) => {
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
@@ -195,7 +197,10 @@ const TagResultSheet = ({
         <button
           type="button"
           disabled={count === 0}
-          onClick={() => setHeight(COLLAPSED)}
+          onClick={() => {
+            setHeight(COLLAPSED);
+            onBbox();
+          }}
           className={cn(
             'text-btn-2 w-full rounded-md py-3.5 font-medium',
             count > 0 && !collapsed

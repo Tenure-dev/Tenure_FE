@@ -1,4 +1,4 @@
-import { useMemo, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import chevon from '@/shared/assets/chevron-left.svg';
@@ -32,6 +32,8 @@ const boxAt = (cx: number, cy: number): Bbox => ({
 
 let boxSeq = 0;
 const newBoxId = () => `box-${Date.now()}-${boxSeq++}`;
+
+const ANALYSIS_DEBOUNCE_MS = 350; // 박스 생성/이동/리사이즈가 잠잠해진 뒤 한 번만 분석
 
 const OotdTagPage = () => {
   const navigate = useNavigate();
@@ -67,6 +69,29 @@ const OotdTagPage = () => {
     return it ? `${it.brand} / ${it.name}` : '아이템 선택';
   };
 
+  // 박스 생성/이동/리사이즈가 연달아 일어나도, 멈춘 뒤 한 번만 분석 API 호출(디바운스)
+  const analysisTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleAnalysis = () => {
+    if (analysisTimer.current) clearTimeout(analysisTimer.current);
+    analysisTimer.current = setTimeout(() => void refetch(), ANALYSIS_DEBOUNCE_MS);
+  };
+  useEffect(
+    () => () => {
+      if (analysisTimer.current) clearTimeout(analysisTimer.current);
+    },
+    [],
+  );
+
+  // 활성 전환: 나가는 활성 박스가 아이템 미선택이면 제거 (미완성 박스 방치 방지)
+  const activateBox = (nextId: string | null) => {
+    setBoxes((prev) =>
+      activeBoxId && activeBoxId !== nextId
+        ? prev.filter((b) => b.id !== activeBoxId || b.itemId)
+        : prev,
+    );
+    setActiveBoxId(nextId);
+  };
+
   // 이미지 빈 곳 탭 → 그 위치에 박스 생성 + 활성화 + 분석 API 호출
   const handleAreaClick = (e: MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).dataset.tagArea !== 'true') return; // 박스/버튼 클릭은 무시
@@ -74,9 +99,10 @@ const OotdTagPage = () => {
     const cx = (e.clientX - rect.left) / rect.width;
     const cy = (e.clientY - rect.top) / rect.height;
     const id = newBoxId();
-    setBoxes((prev) => [...prev, { id, bbox: boxAt(cx, cy) }]);
+    // 아이템 미선택 박스는 제거하고 새 박스 추가
+    setBoxes((prev) => [...prev.filter((b) => b.itemId), { id, bbox: boxAt(cx, cy) }]);
     setActiveBoxId(id);
-    void refetch(); // bbox 확정 → 분석
+    scheduleAnalysis(); // bbox 확정 → 분석(디바운스)
   };
 
   const updateBox = (id: string, bbox: Bbox) =>
@@ -166,7 +192,7 @@ const OotdTagPage = () => {
               type="button"
               onClick={() => setShowBox((v) => !v)}
               aria-label={showBox ? '태그 박스 숨기기' : '태그 박스 보기'}
-              className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-black/60"
+              className="absolute top-4 right-4 z-30 flex size-10 items-center justify-center rounded-full bg-black/60"
             >
               {showBox ? (
                 <Eye size={20} className="text-white" />
@@ -183,9 +209,9 @@ const OotdTagPage = () => {
                   bbox={b.bbox}
                   label={b.label ?? ''}
                   active={activeBoxId === b.id}
-                  onActivate={() => setActiveBoxId((cur) => (cur === b.id ? null : b.id))}
+                  onActivate={() => activateBox(activeBoxId === b.id ? null : b.id)}
                   onChange={(bb) => updateBox(b.id, bb)}
-                  onSettle={() => void refetch()}
+                  onSettle={scheduleAnalysis}
                 />
               ))}
           </div>
@@ -206,6 +232,7 @@ const OotdTagPage = () => {
               setQuery('');
             }}
             onNewItem={() => setNewItemOpen(true)}
+            onBbox={() => activateBox(null)}
           />
 
           {/* 새 아이템 등록 시트 */}

@@ -3,13 +3,12 @@ import { cn } from '@/shared/lib/cn';
 
 export interface EditHeaderProps {
   changeCount: number;
+  canComplete: boolean; // 변경 있음 + 태그 최소 1개 (빈 목록은 저장 불가)
   onCancel: () => void;
   onComplete: () => void;
 }
 
-const EditHeader = ({ changeCount, onCancel, onComplete }: EditHeaderProps) => {
-  const canComplete = changeCount > 0;
-
+const EditHeader = ({ changeCount, canComplete, onCancel, onComplete }: EditHeaderProps) => {
   return (
     <div className="bg-bg-white sticky top-0 z-30 flex items-center justify-between px-4 py-3">
       <button type="button" onClick={onCancel} aria-label="취소">

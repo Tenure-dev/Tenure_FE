@@ -14,8 +14,7 @@ import { USER_ID_STORAGE_KEY } from '@/shared/lib/api';
 import { type Bbox, type OotdPost, type TaggedItem } from '@/features/ootd/model/types';
 import { useTagNavigation } from '@/features/ootd/lib/useTagNavigation';
 import {
-  confirmTags,
-  createTag,
+  createTagsBatch,
   deleteOotd,
   followUser,
   getOotdDetail,
@@ -25,7 +24,6 @@ import {
   unheartOotd,
   unsaveOotd,
   unwishItem,
-  updateTag,
   wishItem,
 } from '@/features/ootd/api/ootdApi';
 import { toOotdPost } from '@/features/ootd/lib/mappers';
@@ -135,10 +133,11 @@ const OotdDetailPage = () => {
 
   const targetId = post?.id ?? ootdId;
 
-  // 원본 대비 변경 수(신규 + 수정). 삭제는 deleteTag API가 없어 카운트/반영하지 않음.
+  // 원본 대비 변경 수(신규 + 수정 + 삭제). 저장은 배치(전체 교체)라 삭제도 반영된다.
   const changeCount = useMemo(() => {
     if (!post) return 0;
     const origById = new Map(post.taggedItems.map((t) => [t.id, t]));
+    const editedTagIds = new Set(editorTags.filter((t) => t.tagId != null).map((t) => t.tagId));
     let n = 0;
     for (const t of editorTags) {
       if (t.tagId == null) {
@@ -148,8 +147,15 @@ const OotdDetailPage = () => {
       const o = origById.get(t.tagId);
       if (!o || o.itemId !== t.itemId || !bboxEq(o.bbox, t.bbox)) n += 1;
     }
+    // 제거된 태그(원본엔 있는데 편집 결과엔 없음)도 변경으로 카운트
+    for (const o of post.taggedItems) {
+      if (!editedTagIds.has(o.id)) n += 1;
+    }
     return n;
   }, [post, editorTags]);
+
+  // 완료 버튼 활성: 변경이 있을 때. 태그 0개면 눌렀을 때 토스트로 막는다(handleComplete).
+  const canComplete = changeCount > 0;
 
   const handlePeekPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
     dragStartYRef.current = e.clientY;
@@ -202,7 +208,7 @@ const OotdDetailPage = () => {
     resetEditState();
   };
 
-  // 완료 → 원본과 diff: 신규는 createTag, 바뀐 기존 태그는 updateTag. 삭제는 API 없어 미지원.
+  // 완료 → 배치(전체 교체) 한 번으로 추가·수정·삭제 반영. confirm 불필요(배치가 CONFIRMED 저장).
   const handleComplete = async () => {
     if (!post) return;
     if (changeCount === 0) {
@@ -210,25 +216,15 @@ const OotdDetailPage = () => {
       setTagsVisible(true);
       return;
     }
+    if (editorTags.length === 0) {
+      showToast('1개 이상의 태그가 필요합니다.');
+      return;
+    }
     setIsSaving(true);
     try {
-      const origById = new Map(post.taggedItems.map((t) => [t.id, t]));
-      for (const t of editorTags) {
-        if (t.tagId == null) {
-          await createTag(post.id, {
-            itemId: t.itemId,
-            bbox: t.bbox,
-            labelText: t.labelText,
-            status: 'CONFIRMED',
-          });
-        } else {
-          const o = origById.get(t.tagId);
-          if (!o || o.itemId !== t.itemId || !bboxEq(o.bbox, t.bbox)) {
-            await updateTag(t.tagId, { itemId: t.itemId, bbox: t.bbox, labelText: t.labelText });
-          }
-        }
-      }
-      await confirmTags(post.id).catch(() => undefined);
+      await createTagsBatch(post.id, {
+        tags: editorTags.map((t) => ({ itemId: t.itemId, bbox: t.bbox, labelText: t.labelText })),
+      });
       await refreshPost();
       showToast('게시물이 수정되었습니다.');
     } catch (e) {
@@ -372,6 +368,7 @@ const OotdDetailPage = () => {
       ) : (
         <EditHeader
           changeCount={changeCount}
+          canComplete={canComplete}
           onCancel={handleCancelEdit}
           onComplete={handleComplete}
         />

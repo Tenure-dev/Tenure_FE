@@ -5,6 +5,8 @@ import type {
   ItemListPage,
   OotdDetailResponse,
   OotdRelatedResponse,
+  OotdTagBatchRequest,
+  OotdTagBatchResponse,
   OotdTagConfirmResponse,
   OotdTagCreateRequest,
   OotdTagResponse,
@@ -39,6 +41,13 @@ export const updateTag = (tagId: number, request: OotdTagUpdateRequest): Promise
 
 export const confirmTags = (ootdId: number): Promise<OotdTagConfirmResponse> =>
   api.post(`/ootds/${ootdId}/tags/confirm`);
+
+// 태그 일괄 교체: 기존 태그를 모두 삭제하고 요청 목록으로 대체(모두 CONFIRMED).
+// 추가·수정·삭제를 한 번에 처리한다. 목록은 최소 1개 이상이어야 한다(빈 목록은 400).
+export const createTagsBatch = (
+  ootdId: number,
+  request: OotdTagBatchRequest,
+): Promise<OotdTagBatchResponse> => api.post(`/ootds/${ootdId}/tags/batch`, request);
 
 export interface GetMyItemsParams {
   query?: string;

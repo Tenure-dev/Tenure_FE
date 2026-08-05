@@ -461,6 +461,8 @@ const OotdDetailPage = () => {
             onChange={setEditorTags}
             // 원격 이미지(post.imageUrl)는 canvas 크롭 시 CORS로 tainted될 수 있어 대표이미지 크롭 비활성.
             enableNewItemCrop={false}
+            // 손 안 댄 기존 태그는 게시글처럼 흰색 말풍선, 누르거나 새로 추가한 것만 검정.
+            untouchedVariant="default"
             className="flex-1"
           />
         )}

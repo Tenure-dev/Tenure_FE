@@ -7,19 +7,29 @@ import TagLoading from '@/pages/camera/component/TagLoading';
 import TagResultSheet from '@/pages/camera/component/TagResultSheet';
 import NewItemSheet from '@/pages/camera/component/NewItemSheet';
 import TagBBox from '@/pages/camera/component/TagBBox';
+import type { TagBubbleVariant } from './TagBubble';
 
 // 외부(부모)와 주고받는 태그 형태. tagId가 있으면 기존(서버) 태그, 없으면 새로 추가한 태그.
 export type EditorTag = { tagId?: number; itemId: number; bbox: Bbox; labelText: string };
 
 // 이미지 위에 그리는 태그 박스. 박스가 먼저 생기고, 나중에 아이템(itemId)이 붙는다.
 // tagId: 기존 태그에서 복원된 박스면 원본 서버 tagId를 보존(저장 시 수정/삭제 판별용).
-type Box = { id: string; bbox: Bbox; itemId?: string; label?: string; tagId?: number };
+// touched: 이번 편집에서 새로 추가했거나 편집하려고 활성화한 박스 → 검정 말풍선 유지.
+type Box = {
+  id: string;
+  bbox: Bbox;
+  itemId?: string;
+  label?: string;
+  tagId?: number;
+  touched?: boolean;
+};
 
 type Props = {
   photo: string | null;
   initialTags?: EditorTag[]; // 기존 태그 복원(상세 편집). 없으면 빈 편집(생성).
   onChange?: (tags: EditorTag[]) => void; // 완성된 태그 셋이 바뀔 때마다 통지(부모가 완료/저장에 사용)
   enableNewItemCrop?: boolean; // 새 아이템 대표이미지 bbox 크롭. 원격 이미지 CORS 이슈 시 false. 기본 true.
+  untouchedVariant?: TagBubbleVariant; // 손 안 댄 기존 태그 말풍선 색(기본 black). 상세 편집은 default(흰색).
   className?: string;
 };
 
@@ -47,6 +57,7 @@ const OotdTagEditor = ({
   initialTags,
   onChange,
   enableNewItemCrop = true,
+  untouchedVariant = 'black',
   className,
 }: Props) => {
   // 유사 아이템 분석 결과(현재 API는 bbox/이미지 안 받으므로 목록은 동일하게 옴)
@@ -122,11 +133,14 @@ const OotdTagEditor = ({
 
   // 활성 전환: 나가는 활성 박스가 아이템 미선택이면 제거 (미완성 박스 방치 방지)
   const activateBox = (nextId: string | null) => {
-    setBoxes((prev) =>
-      activeBoxId && activeBoxId !== nextId
-        ? prev.filter((b) => b.id !== activeBoxId || b.itemId)
-        : prev,
-    );
+    setBoxes((prev) => {
+      const cleaned =
+        activeBoxId && activeBoxId !== nextId
+          ? prev.filter((b) => b.id !== activeBoxId || b.itemId)
+          : prev;
+      // 편집하려고 활성화한 태그는 '손 댄' 것으로 표시 → 이후 검정 말풍선 유지
+      return nextId ? cleaned.map((b) => (b.id === nextId ? { ...b, touched: true } : b)) : cleaned;
+    });
     setActiveBoxId(nextId);
   };
 
@@ -137,8 +151,11 @@ const OotdTagEditor = ({
     const cx = (e.clientX - rect.left) / rect.width;
     const cy = (e.clientY - rect.top) / rect.height;
     const id = newBoxId();
-    // 아이템 미선택 박스는 제거하고 새 박스 추가
-    setBoxes((prev) => [...prev.filter((b) => b.itemId), { id, bbox: boxAt(cx, cy) }]);
+    // 아이템 미선택 박스는 제거하고 새 박스 추가 (새로 추가하는 박스 → touched)
+    setBoxes((prev) => [
+      ...prev.filter((b) => b.itemId),
+      { id, bbox: boxAt(cx, cy), touched: true },
+    ]);
     setActiveBoxId(id);
     scheduleAnalysis(); // bbox 확정 → 분석(디바운스)
   };
@@ -214,6 +231,7 @@ const OotdTagEditor = ({
               bbox={b.bbox}
               label={b.label ?? ''}
               active={activeBoxId === b.id}
+              variant={b.touched ? 'black' : untouchedVariant}
               onActivate={() => activateBox(activeBoxId === b.id ? null : b.id)}
               onChange={(bb) => updateBox(b.id, bb)}
               onSettle={scheduleAnalysis}

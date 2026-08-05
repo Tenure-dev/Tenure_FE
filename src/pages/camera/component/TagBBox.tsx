@@ -1,6 +1,6 @@
 import { useRef, type PointerEvent } from 'react';
 import type { Bbox } from '@/features/ootd/model/item';
-import TagBubble, { type TagBubbleTail } from '@/features/ootd/ui/TagBubble';
+import TagBubble, { type TagBubbleTail, type TagBubbleVariant } from '@/features/ootd/ui/TagBubble';
 
 type Props = {
   bbox: Bbox; // 0~1 정규화
@@ -9,6 +9,7 @@ type Props = {
   onActivate: () => void; // 말풍선 클릭 시
   onChange: (bbox: Bbox) => void;
   onSettle?: () => void; // 이동/리사이즈 끝(pointerup) 시 — 분석 API 트리거용
+  variant?: TagBubbleVariant; // 말풍선 색(기본 black). 손 안 댄 기존 태그는 default(흰색)
 };
 
 type Corner = 'nw' | 'ne' | 'sw' | 'se';
@@ -19,7 +20,15 @@ const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min)
 
 // 이미지 위 태그: 말풍선은 항상 표시, 누르면 활성화되어 박스(+스포트라이트)가 뜨고
 // 가운데를 잡으면 이동, 모서리 핸들을 잡으면 크기 조절.
-const TagBBox = ({ bbox, label, active, onActivate, onChange, onSettle }: Props) => {
+const TagBBox = ({
+  bbox,
+  label,
+  active,
+  onActivate,
+  onChange,
+  onSettle,
+  variant = 'black',
+}: Props) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // 공통 드래그: pointerdown 시점 bbox 기준으로 dx,dy(정규화)를 compute에 넘겨 새 bbox 생성
@@ -151,7 +160,7 @@ const TagBBox = ({ bbox, label, active, onActivate, onChange, onSettle }: Props)
           className="absolute top-1/2 left-1/2 z-10"
           style={{ transform: `translate(${flipX ? '-100%' : '0%'}, ${flipY ? '0%' : '-100%'})` }}
         >
-          <TagBubble title={label} tail={tail} variant="black" />
+          <TagBubble title={label} tail={tail} variant={variant} />
         </button>
       )}
     </div>

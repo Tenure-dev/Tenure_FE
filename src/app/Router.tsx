@@ -17,6 +17,7 @@ import SettingsPage from '@/pages/mypage/SettingsPage';
 import NotificationSettingsPage from '@/pages/mypage/NotificationSettingsPage';
 import AccountVisibilityPage from '@/pages/mypage/AccountVisibilityPage';
 import WithdrawPage from '@/pages/mypage/WithdrawPage';
+import AddressManagePage from '@/pages/mypage/AddressManagePage';
 import ProductDetailPage from '@/pages/product/ProductDetailPage';
 import ProductEditPage from '@/pages/product/ProductEditPage';
 import ProductReportPage from '@/pages/product/ProductReportPage';
@@ -106,6 +107,7 @@ export const router = createBrowserRouter([
           { path: 'settings/notifications', element: <NotificationSettingsPage /> },
           { path: 'settings/visibility', element: <AccountVisibilityPage /> },
           { path: 'settings/withdraw', element: <WithdrawPage /> },
+          { path: 'settings/addresses', element: <AddressManagePage /> },
           { path: 'test', element: <TestPage /> },
           { path: 'ootd/camera', element: <OotdCameraPage /> },
           { path: 'ootd/create', element: <OotdCreatePage /> },

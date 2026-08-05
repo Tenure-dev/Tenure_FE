@@ -58,7 +58,7 @@ const SettingsPage = () => {
     {
       title: '거래',
       items: [
-        { label: '배송지 관리', onClick: () => {} },
+        { label: '배송지 관리', onClick: () => navigate('/settings/addresses') },
         { label: '정산 계좌 관리', onClick: () => {} },
         { label: '기본 배송비', onClick: () => {} },
         { label: '수수료 부담 기본값', onClick: () => {} },

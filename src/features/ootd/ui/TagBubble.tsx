@@ -22,7 +22,7 @@ const CORNER: Record<TagBubbleTail, string> = {
   tr: 'rounded-tl-lg rounded-bl-lg rounded-br-lg',
 };
 
-// TagPin(게시글 상세)과 TagMessage(카메라 플로우)가 공유하는 말풍선 비주얼.
+// 게시글 상세(TagPin)·태그 편집(TagBBox)·미리보기(OotdPreviewPage)가 공유하는 말풍선 비주얼.
 // 모양은 완전히 동일하고 variant로 색만 다르다. 위치·상호작용은 사용하는 쪽이 담당한다.
 const TagBubble = ({
   title,

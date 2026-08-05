@@ -24,7 +24,11 @@ const RegisteredItemsPage = () => {
       <BackHeader
         title="등록한 아이템"
         rightActions={
-          <button type="button" aria-label="아이템 추가">
+          <button
+            type="button"
+            aria-label="아이템 추가"
+            onClick={() => navigate('/mypage/items/new')}
+          >
             <img src={plus} className="size-5.5" alt="" />
           </button>
         }
@@ -47,8 +51,8 @@ const RegisteredItemsPage = () => {
         <>
           <RegisteredItemListSection
             items={items}
-            onItemClick={(id) => navigate(`/mypage/items/${id}`)}
-            onSaleConvert={(id) => navigate(`/mypage/items/${id}/sell`)}
+            onItemClick={(id) => navigate(`/items/${id}`)}
+            onSaleConvert={(id) => navigate(`/items/${id}/sell`)}
           />
           <div ref={sentinelRef} />
         </>

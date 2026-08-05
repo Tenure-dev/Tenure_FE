@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, BellRing } from 'lucide-react';
 import { BottomSheet, CTAButton } from '@/shared/components';
 import { cn } from '@/shared/lib/cn';
+import { useTagNavigation } from '@/features/ootd/lib/useTagNavigation';
 import type { TaggedItem } from '@/features/ootd/model/types';
 
 export interface TaggedItemsSheetProps {
   open: boolean;
   onClose: () => void;
   items: TaggedItem[];
+  isOwner: boolean;
   onViewRelatedOotd: () => void;
   onToggleWish: (itemId: number, currentlyWished: boolean) => void;
   dragProgressPx?: number;
@@ -29,23 +31,42 @@ const STATUS_LABEL: Record<TaggedItem['status'], string> = {
 
 interface TaggedItemRowProps {
   item: TaggedItem;
+  isOwner: boolean;
   onToggleWish: (itemId: number, currentlyWished: boolean) => void;
 }
 
-const TaggedItemRow = ({ item, onToggleWish }: TaggedItemRowProps) => {
+const TaggedItemRow = ({ item, isOwner, onToggleWish }: TaggedItemRowProps) => {
   const navigate = useNavigate();
-  const hasAction = item.status === '판매중' || item.status === '미판매_제안가능';
+  const { goToDetail, goToCheckout } = useTagNavigation();
+  // 작성자 본인 글에서는 구매/구매제안/미판매 액션이 필요 없어 슬라이드 자체를 막는다.
+  const hasAction = !isOwner && (item.status === '판매중' || item.status === '미판매_제안가능');
   const isDeleted = item.status === '삭제됨';
   const isDimmed = isDeleted || item.status === '판매완료';
+  // 판매 전환 이력이 없는 미판매 아이템은 productId가 없어 이동할 상세 화면이 없으므로
+  // 일반 클릭은 막고, 슬라이드로 드러나는 "구매제안" 버튼으로만 이동할 수 있게 한다.
+  const isUnsold = item.status === '미판매_제안가능' || item.status === '미판매_제안불가';
   const [swipePx, setSwipePx] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; startSwipe: number } | null>(null);
+  const draggedRef = useRef(false);
 
-  const goToItem = () => navigate(`/item/${item.itemId}`);
+  const handlePurchaseAction = () => {
+    if (item.status === '판매중') {
+      goToCheckout(item.itemId);
+    } else {
+      navigate(`/items/${item.itemId}`);
+    }
+  };
+
+  const handleRowClick = () => {
+    if (isDeleted || isUnsold || draggedRef.current) return;
+    goToDetail(item);
+  };
 
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!hasAction) return;
     dragStartRef.current = { x: e.clientX, startSwipe: swipePx };
+    draggedRef.current = false;
     setIsDragging(true);
     e.currentTarget.setPointerCapture(e.pointerId);
   };
@@ -53,6 +74,7 @@ const TaggedItemRow = ({ item, onToggleWish }: TaggedItemRowProps) => {
   const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!dragStartRef.current) return;
     const draggedLeft = dragStartRef.current.x - e.clientX;
+    if (Math.abs(draggedLeft) > 5) draggedRef.current = true;
     const next = Math.min(ACTION_WIDTH, Math.max(0, dragStartRef.current.startSwipe + draggedLeft));
     setSwipePx(next);
   };
@@ -74,7 +96,7 @@ const TaggedItemRow = ({ item, onToggleWish }: TaggedItemRowProps) => {
           >
             <button
               type="button"
-              onClick={goToItem}
+              onClick={handlePurchaseAction}
               className={cn(
                 'text-btn-4 h-10 w-full rounded-md font-semibold',
                 item.status === '판매중'
@@ -92,8 +114,10 @@ const TaggedItemRow = ({ item, onToggleWish }: TaggedItemRowProps) => {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerEnd}
           onPointerCancel={handlePointerEnd}
+          onClick={handleRowClick}
           className={cn(
             'bg-bg-white flex touch-pan-y items-center gap-3',
+            !isDeleted && !isUnsold && 'cursor-pointer active:opacity-70',
             !isDragging && 'transition-transform duration-200 ease-out',
             isDimmed && 'opacity-50',
           )}
@@ -150,6 +174,7 @@ const TaggedItemsSheet = ({
   open,
   onClose,
   items,
+  isOwner,
   onViewRelatedOotd,
   onToggleWish,
   dragProgressPx,
@@ -173,7 +198,12 @@ const TaggedItemsSheet = ({
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {items.map((item) => (
-              <TaggedItemRow key={`${item.id}-${open}`} item={item} onToggleWish={onToggleWish} />
+              <TaggedItemRow
+                key={`${item.id}-${open}`}
+                item={item}
+                isOwner={isOwner}
+                onToggleWish={onToggleWish}
+              />
             ))}
           </ul>
         )}

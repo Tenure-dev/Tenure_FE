@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import cn from '@/shared/lib/cn';
 
 export interface FollowButtonProps {
   following: boolean;
@@ -9,21 +10,6 @@ export interface FollowButtonProps {
 const FollowButton = ({ following, onToggle, disabled = false }: FollowButtonProps) => {
   const [pressed, setPressed] = useState(false);
 
-  const getClassName = () => {
-    if (following) {
-      if (pressed) {
-        return 'bg-gray-press text-text-primary';
-      }
-      return 'bg-bg-200 text-text-primary';
-    }
-
-    if (disabled) {
-      return 'bg-brand-light text-text-inverse';
-    }
-
-    return 'bg-brand text-text-inverse';
-  };
-
   return (
     <button
       type="button"
@@ -33,7 +19,16 @@ const FollowButton = ({ following, onToggle, disabled = false }: FollowButtonPro
       onPointerUp={() => setPressed(false)}
       onPointerLeave={() => setPressed(false)}
       onPointerCancel={() => setPressed(false)}
-      className={`inline-flex h-[28px] w-[62px] items-center justify-center rounded-[8px] font-sans text-[12px] font-semibold ${getClassName()} ${disabled && !following ? 'cursor-not-allowed' : ''}`}
+      className={cn(
+        'inline-flex h-[32px] w-[69px] items-center justify-center rounded-[8px] font-sans text-[12px] font-semibold',
+        following
+          ? pressed
+            ? 'border-text-tertiary bg-gray-press text-text-primary border-2'
+            : 'bg-bg-200 border-text-tertiary text-text-primary border-1'
+          : disabled
+            ? 'bg-brand-light text-text-inverse cursor-not-allowed'
+            : 'bg-brand text-text-inverse',
+      )}
     >
       {following ? '✓ 팔로잉' : '+ 팔로우'}
     </button>

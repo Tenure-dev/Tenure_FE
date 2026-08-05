@@ -1,6 +1,6 @@
 export type ItemStatus = 'OWNED' | 'ON_SALE' | 'SOLD' | 'TRANSFERRED' | 'ARCHIVED';
 
-export type RegisteredItem = {
+export type Item = {
   itemId: number;
   brandName: string;
   itemName: string;
@@ -12,7 +12,7 @@ export type RegisteredItem = {
 };
 
 export type RegisteredItemListResponse = {
-  content: RegisteredItem[];
+  content: Item[];
   page: number;
   size: number;
   totalElements: number;
@@ -47,9 +47,24 @@ export type ItemHistoryListResponse = {
   hasNext: boolean;
 };
 
+export type HistoryOotdItem = {
+  ootdId: number;
+  imageUrl: string;
+  createdAt: string;
+};
+
+export type HistoryOotdsResponse = {
+  content: HistoryOotdItem[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+};
+
 export type WearingTarget = 'MENSWEAR' | 'WOMENSWEAR' | 'UNISEX';
 
-export type RegisteredItemDetailResponse = {
+export type ItemDetailResponse = {
   itemId: number;
   ownerUserId: number;
   brandName: string;
@@ -63,13 +78,24 @@ export type RegisteredItemDetailResponse = {
   itemStatus: ItemStatus;
   ootdVerifiedWearCount: number;
   lastWornAt: string | null;
-  firstOwnedAt: string;
+  firstOwnedAt: string | null;
   wishCount: number;
   purchaseOfferEnabled: boolean;
+  productId?: number | null;
+  price?: number | null;
+  saleStatus?: string | null;
 };
 
-export type RegisteredItemDetail = RegisteredItemDetailResponse & {
-  frequentlyWornWith: string[];
+export type FrequentlyWornItem = {
+  itemId: number;
+  brandName: string;
+  itemName: string;
+  representativeImageUrl: string;
+  togetherCount: number;
+};
+
+export type ItemDetail = ItemDetailResponse & {
+  frequentlyWornWith: FrequentlyWornItem[];
 };
 
 export type ItemUpdateRequest = {
@@ -90,6 +116,18 @@ export type ItemUpdateResponse = ItemUpdateRequest & {
   itemStatus: ItemStatus;
 };
 
+export type CreateProductResponse = {
+  productId: number;
+  itemId: number;
+  sellerUserId: number;
+  price: number;
+  shippingFee: number;
+  feePolicy: string;
+  productStatus: string;
+  itemStatus: string;
+  attachedOotdIds: number[];
+};
+
 export type OfferSettingRequest = {
   purchaseOfferEnabled: boolean;
 };
@@ -98,3 +136,30 @@ export type OfferSettingResponse = {
   itemId: number;
   purchaseOfferEnabled: boolean;
 };
+
+export interface CreateItemRequest {
+  brandName: string;
+  itemName: string;
+  wearingTarget: WearingTarget;
+  categoryLarge: string;
+  categorySmall?: string;
+  sizeSystem: 'KR';
+  sizeValue?: string;
+  firstOwnedAt?: string;
+  representativeImageUrl?: string;
+}
+
+export interface CreateItemResponse {
+  itemId: number;
+  ownerUserId: number;
+  brandName: string;
+  itemName: string;
+  categoryLarge: string;
+  categorySmall: string | null;
+  wearingTarget: WearingTarget;
+  sizeSystem: string;
+  sizeValue: string | null;
+  representativeImageUrl: string | null;
+  itemStatus: string;
+  firstOwnedAt: string | null;
+}

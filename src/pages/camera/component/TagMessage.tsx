@@ -32,7 +32,8 @@ const TagMessage = ({ title, status, side = 'right', variant = 'default', classN
 
   return (
     <div className={cn('relative inline-block', className)}>
-      <img src={src} alt="" className="block" />
+      {/* max-w-none: 부모(작은 bbox 박스) 폭에 맞춰 줄어들지 않게 → 항상 원본 크기 고정 */}
+      <img src={src} alt="" className="block max-w-none" />
       <div className="absolute inset-0 flex flex-col justify-center px-4">
         <p
           className={cn(

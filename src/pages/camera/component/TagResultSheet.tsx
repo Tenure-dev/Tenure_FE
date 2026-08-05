@@ -7,8 +7,10 @@ import TagItemRow from './TagItemRow';
 
 type Props = {
   items: OotdItem[];
-  selectedIds: Set<string>;
-  onToggle: (id: string) => void;
+  activeItemId?: string; // 활성 박스에 부착된 아이템 id
+  onSelect: (id: string) => void; // 아이템 선택 → 활성 박스에 부착/해제
+  active: boolean; // 활성 박스 존재 여부 (없으면 빈 상태)
+  count: number; // 완성된 태그(아이템 부착된 박스) 수
   searchMode: boolean;
   query: string;
   onQueryChange: (v: string) => void;
@@ -31,8 +33,10 @@ const TOP_GAP = 48; // 끝까지 올렸을 때 헤더 아래로 남기는 여백
 
 const TagResultSheet = ({
   items,
-  selectedIds,
-  onToggle,
+  activeItemId,
+  onSelect,
+  active,
+  count,
   searchMode,
   query,
   onQueryChange,
@@ -45,7 +49,6 @@ const TagResultSheet = ({
   const [height, setHeight] = useState(MIDDLE);
   const [dragging, setDragging] = useState(false);
 
-  const count = selectedIds.size;
   const collapsed = height <= COLLAPSED; // 접힌 상태면 버튼 닫힌 색
 
   const filtered = items.filter((item) => {
@@ -103,7 +106,15 @@ const TagResultSheet = ({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5">
-        {searchMode ? (
+        {!active ? (
+          <div className="flex h-full flex-col items-center justify-center pb-8 text-center">
+            <p className="text-body-2 text-text-secondary leading-relaxed">
+              이미지에서 아이템을 탭해
+              <br />
+              태그를 추가하세요.
+            </p>
+          </div>
+        ) : searchMode ? (
           <div className="flex items-center gap-2 pb-3">
             <div className="border-border-secondary bg-bg-white flex h-11 flex-1 items-center gap-2 rounded-md border px-3.5">
               <span className="text-text-tertiary shrink-0">
@@ -152,29 +163,31 @@ const TagResultSheet = ({
           </div>
         )}
 
-        <div className="pt-3 pb-2">
-          {/* 새 아이템 등록 */}
-          <button
-            type="button"
-            onClick={onNewItem}
-            className="bg-bg-quaternary flex h-20 w-full items-center gap-2.5 rounded-xl px-3"
-          >
-            <img src={imageUpload} width={48} height={48} alt="" className="shrink-0" />
-            <span className="text-body-2 font-semibold">새 아이템 등록</span>
-          </button>
+        {active && (
+          <div className="pt-3 pb-2">
+            {/* 새 아이템 등록 */}
+            <button
+              type="button"
+              onClick={onNewItem}
+              className="bg-bg-quaternary flex h-20 w-full items-center gap-2.5 rounded-xl px-3"
+            >
+              <img src={imageUpload} width={48} height={48} alt="" className="shrink-0" />
+              <span className="text-body-2 font-semibold">새 아이템 등록</span>
+            </button>
 
-          <h3 className="text-body-2 mt-5 mb-2 font-semibold">기존 아이템</h3>
-          <div className="flex flex-col gap-2">
-            {filtered.map((item) => (
-              <TagItemRow
-                key={item.id}
-                item={item}
-                selected={selectedIds.has(item.id)}
-                onToggle={onToggle}
-              />
-            ))}
+            <h3 className="text-body-2 mt-5 mb-2 font-semibold">기존 아이템</h3>
+            <div className="flex flex-col gap-2">
+              {filtered.map((item) => (
+                <TagItemRow
+                  key={item.id}
+                  item={item}
+                  selected={item.id === activeItemId}
+                  onToggle={onSelect}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* 선택 완료 → 시트 접기 (게시물 미리보기 이동은 헤더 '완료' 버튼만) */}

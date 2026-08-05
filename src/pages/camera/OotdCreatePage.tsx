@@ -8,6 +8,7 @@ const OotdCreatePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const photo = (location.state as { photo?: string } | null)?.photo ?? null;
+  /*------------------------------------------------------------- */
   const { mutate: createOotd, isPending } = useCreateOotd();
 
   const handlePost = () => {
@@ -22,7 +23,7 @@ const OotdCreatePage = () => {
       },
     });
   };
-
+  /*------------------------------------------------------------- */
   if (isPending) {
     return (
       <div className="bg-bg-white flex h-dvh w-full flex-col">

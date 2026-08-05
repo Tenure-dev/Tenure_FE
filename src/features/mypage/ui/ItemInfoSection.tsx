@@ -1,9 +1,9 @@
 import { formatDate } from '../lib/formatDate';
 import { WEARING_TARGET_LABEL } from '../lib/wearingTargetLabel';
-import type { RegisteredItemDetail } from '../model/items';
+import type { ItemDetail } from '../model/items';
 
 interface ItemInfoSectionProps {
-  item: RegisteredItemDetail;
+  item: ItemDetail;
   allowProposal: boolean;
 }
 
@@ -35,7 +35,7 @@ const ItemInfoSection = ({ item, allowProposal }: ItemInfoSectionProps) => {
           {item.lastWornAt ? formatDate(item.lastWornAt) : '기록 없음'}
         </p>
         <p className="text-body-3 font-regular text-text-secondary">
-          최초 보유 날짜 {formatDate(item.firstOwnedAt)}
+          최초 보유 날짜 {item.firstOwnedAt ? formatDate(item.firstOwnedAt) : '기록 없음'}
         </p>
         {isForSale ? (
           <span className="text-body-1 text-info font-semibold">판매 중</span>

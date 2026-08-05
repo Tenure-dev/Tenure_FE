@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ChatRoomHeader from './component/ChatRoomHeader';
 import ChatProductBar from './component/ChatProductBar';
@@ -7,16 +7,15 @@ import ChatInput from './component/ChatInput';
 import ChatMoreSheet from './component/ChatMoreSheet';
 import { Toast } from '@/shared/components';
 import { useVisualViewportHeight } from '@/shared/hooks/useVisualViewport';
-import { chatProduct, chatMessages, chatDate, partnerName, partnerAvatar } from './roomMock';
-import type { ChatMessage, ChatRole, SaleStatus, TradeStatus } from '@/features/chat/model/types';
-
-// 현재 시각을 '오전/오후 H:MM' 형식으로
-const nowTime = () => {
-  const d = new Date();
-  const ampm = d.getHours() < 12 ? '오전' : '오후';
-  const hh = d.getHours() % 12 === 0 ? 12 : d.getHours() % 12;
-  return `${ampm} ${hh}:${d.getMinutes().toString().padStart(2, '0')}`;
-};
+import profileDefault from '@/shared/assets/profileDefault.svg';
+import type { ChatRole, SaleStatus, TradeStatus } from '@/features/chat/model/types';
+import { useParams } from 'react-router-dom';
+import { useChatSocket } from '@/features/chat/api/useChatSocket';
+import { toChatMessage } from '@/features/chat/api/chatMessage';
+import { useChatMessages } from '@/features/chat/api/useChatMessages';
+import { uploadChatImages } from '@/features/chat/api/messages';
+import { useMarkChatRead } from '@/features/chat/api/useMarkChatRead';
+import { useChatRoom } from '@/features/chat/api/useChatRoom';
 
 // role: 'buyer' | 'seller' (내 입장)
 // saleStatus: 'onSale' 판매중 / 'unlisted' 미판매
@@ -32,29 +31,67 @@ const ChatRoomPage = ({
   tradeStatus?: TradeStatus;
   offerEnabled?: boolean;
 }) => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const vvHeight = useVisualViewportHeight();
   const [menuOpen, setMenuOpen] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [toast, setToast] = useState<ReactNode>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>(chatMessages);
+  const roomId = Number(id);
+  const { messages: socketMessages, sendMessage } = useChatSocket(roomId);
+  const { data: history, fetchNextPage, hasNextPage, isFetchingNextPage } = useChatMessages(roomId);
+  const { mutate: markRead } = useMarkChatRead();
+  const { data: room } = useChatRoom(roomId);
 
-  // 이미지 첨부 → 내 이미지 메시지로 추가 (로컬)
-  const handleSendImages = (files: FileList) => {
-    const images = Array.from(files).map((file) => URL.createObjectURL(file));
-    setMessages((prev) => [...prev, { id: Date.now(), mine: true, images, time: nowTime() }]);
+  // 방 진입 시 읽음 처리 (내 unreadCount 0 → 목록 뱃지 제거)
+  useEffect(() => {
+    if (Number.isFinite(roomId)) markRead(roomId);
+  }, [roomId, markRead]);
+
+  // 서버 값 우선, 아직 로딩 전이면 빈 값/기본 아바타
+  const roleView = room?.role ?? role;
+  const saleStatusView = room?.saleStatus ?? saleStatus;
+  const tradeStatusView = room?.tradeStatus ?? tradeStatus;
+  const partnerNameView = room?.opponentName ?? '';
+  const partnerAvatarView = room?.opponentAvatar || profileDefault;
+
+  const messages = useMemo(() => {
+    // 각 page는 최신순. page 배열도 최신 페이지가 먼저.
+    // → 페이지 순서 뒤집고, 페이지 안도 뒤집어서 전체 오래된→최신 순으로
+    const past = history
+      ? [...history.pages].reverse().flatMap((p) => [...p.chatMessages].reverse())
+      : [];
+    const merged = [...past, ...socketMessages];
+    const seen = new Set<number>();
+    return merged
+      .filter((m) => {
+        if (seen.has(m.messageId)) return false;
+        seen.add(m.messageId);
+        return true;
+      })
+      .map(toChatMessage);
+  }, [history, socketMessages]);
+
+  // 이미지 첨부
+  const handleSendImages = async (files: FileList) => {
+    try {
+      // 여러 장을 한 번에 업로드하고, 받은 URL들을 하나의 메시지로 전송(묶음 표시)
+      const { imageUrls } = await uploadChatImages(roomId, Array.from(files));
+      sendMessage({ messageType: 'IMAGE', imageUrls });
+    } catch {
+      // 업로드 실패 시 조용히 무시 (TODO: 사용자 피드백 토스트 연동)
+    }
   };
-
   // 텍스트 전송 → 내 메시지로 추가 (로컬)
   const handleSendText = (text: string) => {
-    setMessages((prev) => [...prev, { id: Date.now(), mine: true, text, time: nowTime() }]);
+    sendMessage({ messageType: 'TEXT', content: text });
   };
 
   const handleBlock = () => {
     setBlocked(true);
     setToast(
       <>
-        <b className="font-semibold">{partnerName}</b> 님이 차단되었습니다
+        <b className="font-semibold">{partnerNameView}</b> 님이 차단되었습니다
       </>,
     );
     setMenuOpen(false);
@@ -78,23 +115,29 @@ const ChatRoomPage = ({
       className="bg-bg-white text-text-primary relative mx-auto flex h-dvh max-w-md flex-col overflow-hidden"
     >
       <ChatRoomHeader
-        name={partnerName}
+        name={partnerNameView}
         onBack={() => navigate(-1)}
         onMenuClick={() => setMenuOpen(true)}
       />
-      <ChatProductBar
-        product={chatProduct}
-        role={role}
-        saleStatus={saleStatus}
-        tradeStatus={tradeStatus}
-        offerEnabled={offerEnabled}
-      />
+      {room && (
+        <ChatProductBar
+          product={room.product}
+          role={roleView}
+          saleStatus={saleStatusView}
+          tradeStatus={tradeStatusView}
+          offerEnabled={offerEnabled}
+          tradeId={room.tradeId}
+          productId={room.productId}
+        />
+      )}
       <ChatMessages
         messages={messages}
-        date={chatDate}
-        avatar={partnerAvatar}
-        name={partnerName}
+        avatar={partnerAvatarView}
+        name={partnerNameView}
         scrollTrigger={vvHeight}
+        hasOlder={hasNextPage}
+        isLoadingOlder={isFetchingNextPage}
+        onLoadOlder={fetchNextPage}
       />
       <ChatInput onSendImages={handleSendImages} onSendText={handleSendText} />
 

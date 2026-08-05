@@ -59,3 +59,6 @@ export { default as BackHeader } from './BackHeader';
 export type { BackHeaderProps } from './BackHeader';
 export { default as Toast } from './Toast';
 export type { ToastProps } from './Toast';
+
+export { default as SpotlightBox } from './SpotlightBox';
+export type { SpotlightBoxProps } from './SpotlightBox';

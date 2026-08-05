@@ -1,7 +1,8 @@
 export interface FollowedUser {
-  id: string;
-  name: string;
-  avatarUrl?: string;
+  userId: number;
+  username: string;
+  profileImageUrl?: string;
+  following: boolean;
 }
 
 export type FeedTab = '모두' | '팔로우';

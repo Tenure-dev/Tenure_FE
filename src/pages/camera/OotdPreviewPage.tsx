@@ -7,7 +7,7 @@ import { usePublishOotd } from '@/features/ootd/api/usePublishOotd';
 import { Toast } from '@/shared/components';
 import { useToast } from '@/shared/hooks/useToast';
 import TagLoading from './component/TagLoading';
-import TagMessage from './component/TagMessage';
+import TagBubble, { type TagBubbleTail } from '@/features/ootd/ui/TagBubble';
 
 type Phase = 'loading' | 'preview';
 
@@ -74,23 +74,28 @@ const OotdPreviewPage = () => {
       <div className="relative w-full">
         {photo && <img src={photo} alt="촬영한 사진" className="block w-full" />}
 
-        {/* 태그작성에서 지정한 실제 bbox 위치에 말풍선 표시 */}
-        {tags.map((tag) => (
-          <div
-            key={tag.itemId}
-            className="absolute -translate-x-1/2 -translate-y-full"
-            style={{
-              left: `${(tag.bbox.x + tag.bbox.width / 2) * 100}%`,
-              top: `${(tag.bbox.y + tag.bbox.height / 2) * 100}%`,
-            }}
-          >
-            <TagMessage
-              title={tag.labelText}
-              side={tag.bbox.x + tag.bbox.width / 2 > 0.5 ? 'right' : 'left'}
-              variant="black"
-            />
-          </div>
-        ))}
+        {/* 태그작성에서 지정한 실제 bbox 위치에 말풍선 표시.
+            게시글(TagPin)·편집(TagBBox)과 동일하게 태그 지점에 꼬리를 붙이고 가장자리 반대로 펼친다. */}
+        {tags.map((tag) => {
+          const cxPct = (tag.bbox.x + tag.bbox.width / 2) * 100;
+          const cyPct = (tag.bbox.y + tag.bbox.height / 2) * 100;
+          const flipX = cxPct > 65;
+          const flipY = cyPct < 25;
+          const tail: TagBubbleTail = !flipY ? (flipX ? 'br' : 'bl') : flipX ? 'tr' : 'tl';
+          return (
+            <div
+              key={tag.itemId}
+              className="absolute"
+              style={{
+                left: `${cxPct}%`,
+                top: `${cyPct}%`,
+                transform: `translate(${flipX ? '-100%' : '0%'}, ${flipY ? '0%' : '-100%'})`,
+              }}
+            >
+              <TagBubble title={tag.labelText} tail={tail} variant="black" />
+            </div>
+          );
+        })}
       </div>
       {/* 여백을 위해 추가, 사진과 버튼 붙는걸 방지*/}
       <p className="text-body-3 text-warning p-4 text-center font-medium"></p>

@@ -9,7 +9,6 @@ export interface NotificationRowProps {
   onRead: (id: number) => void;
 }
 
-// PURCHASE_INTENT/PURCHASE_OFFER는 이동할 화면이 불명확해 BE 확인 전까지 매핑하지 않는다.
 const TARGET_PATH: Partial<Record<NotificationItem['targetType'], (id: number) => string>> = {
   ITEM: (id) => `/item/${id}`,
   PRODUCT: (id) => `/item/${id}`,
@@ -18,6 +17,8 @@ const TARGET_PATH: Partial<Record<NotificationItem['targetType'], (id: number) =
   CHAT: (id) => `/chat/${id}`,
   USER: (id) => `/users/${id}`,
   FOLLOW: (id) => `/users/${id}`,
+  PURCHASE_OFFER: (id) => `/purchase/offer/${id}`,
+  PURCHASE_INTENT: (id) => `/purchase/intent/${id}`,
 };
 
 const NotificationRow = ({ item, onRead }: NotificationRowProps) => {

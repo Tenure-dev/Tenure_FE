@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -26,12 +26,22 @@ const inputClassName =
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const setUser = useUserStore((state) => state.setUser);
   const [showPassword, setShowPassword] = useState(false);
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const loginMutation = useMutation({ mutationFn: login });
   const { message: toastMessage, show: showToast, hide: hideToast } = useToast();
+
+  useEffect(() => {
+    const toastOnArrival = (location.state as { toast?: string } | null)?.toast;
+    if (toastOnArrival) {
+      showToast(toastOnArrival);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const {
     register,
@@ -59,7 +69,7 @@ const LoginPage = () => {
         } catch (error) {
           console.error(error);
         }
-        navigate('/feed');
+        navigate('/loading');
       },
       onError: (error) => {
         console.error(error);
@@ -77,7 +87,7 @@ const LoginPage = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="mt-[48px] flex flex-col gap-3">
         <input
           type="email"
-          placeholder="아이디를 입력해주세요"
+          placeholder="이메일을 입력해주세요"
           className={inputClassName}
           {...register('email')}
         />
@@ -109,7 +119,11 @@ const LoginPage = () => {
             />
             로그인 상태 유지
           </label>
-          <button type="button" onClick={() => {}} className="text-[13px] text-[#767676]">
+          <button
+            type="button"
+            onClick={() => navigate('/find-password')}
+            className="text-[13px] text-[#767676]"
+          >
             비밀번호 찾기
           </button>
         </div>

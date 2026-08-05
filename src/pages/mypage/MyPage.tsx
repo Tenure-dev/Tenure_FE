@@ -44,7 +44,7 @@ const MyPage = () => {
     });
   }, [myPage, setProfile]);
 
-  // 탭 상태를 여기서 들고 탭바·피드에 함께 내려준다.
+  // 탭 상태를 여기서 들고 탭바·피드에 함께 내려준다
   const [activeTab, setActiveTab] = useState<FeedTab>('게시물');
 
   return (

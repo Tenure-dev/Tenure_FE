@@ -3,15 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Camera, ChevronLeft, Search } from 'lucide-react';
+import { useKakaoPostcodePopup, type Address } from 'react-daum-postcode';
 import { Button, DoubleButton } from '@/shared/components';
-import { login, sendEmailVerification, signup, verifyEmailCode } from '@/features/auth/api/authApi';
-import { createAddress } from '@/features/auth/api/addressApi';
-import { getMyInfo } from '@/features/auth/api/userApi';
+import {
+  checkUsernameAvailable,
+  login,
+  sendEmailVerification,
+  signup,
+  verifyEmailCode,
+} from '@/features/auth/api/authApi';
+import { getMyInfo, uploadProfileImage } from '@/features/auth/api/userApi';
 import { toApiGender } from '@/features/auth/lib/gender';
 import { ACCESS_TOKEN_STORAGE_KEY, ApiError, USER_ID_STORAGE_KEY } from '@/shared/lib/api';
 import { useUserStore } from '@/store/userStore';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+
+// TODO(#100): 백엔드 SMTP(Gmail)가 Render 포트 차단으로 발송 불가 상태라 임시로 이메일 인증을 스킵.
+// 백엔드가 SendGrid/Mailgun 등으로 전환 완료하면 false로 되돌릴 것.
+const SKIP_EMAIL_VERIFICATION = true;
 
 const TOTAL_STEPS = 4;
 type Step = 1 | 2 | 3 | 4;
@@ -43,14 +54,6 @@ const TERMS: {
   { key: 'privacy', label: '개인정보처리방침 동의', required: true },
   { key: 'marketing', label: '마케팅 정보 수신 동의', required: false },
   { key: 'thirdParty', label: '개인정보 제3자 제공 동의', required: false },
-];
-
-const MOCK_ADDRESSES = [
-  { addressLine1: '서울특별시 강남구 테헤란로 123', postalCode: '06134' },
-  { addressLine1: '서울특별시 마포구 월드컵로 45', postalCode: '03925' },
-  { addressLine1: '경기도 성남시 분당구 판교역로 235', postalCode: '13494' },
-  { addressLine1: '서울특별시 종로구 종로 100', postalCode: '03159' },
-  { addressLine1: '부산광역시 해운대구 센텀중앙로 55', postalCode: '48058' },
 ];
 
 const PHONE_PATTERN = /^010-\d{4}-\d{4}$/;
@@ -168,7 +171,7 @@ const SignupPage = () => {
       : null;
 
   const canProceedStep1 =
-    emailVerifyState === 'verified' &&
+    (SKIP_EMAIL_VERIFICATION || emailVerifyState === 'verified') &&
     !errors.password &&
     password.length >= 8 &&
     passwordConfirm.length > 0 &&
@@ -198,95 +201,118 @@ const SignupPage = () => {
   // Step 3 — 주소 등록
   const [receiverName, setReceiverName] = useState('');
   const [phone, setPhone] = useState('');
-  const [addressQuery, setAddressQuery] = useState('');
   const [selectedAddress, setSelectedAddress] = useState('');
   const [selectedPostalCode, setSelectedPostalCode] = useState('');
   const [addressDetail, setAddressDetail] = useState('');
-  const filteredAddresses = addressQuery.trim()
-    ? MOCK_ADDRESSES.filter((addr) => addr.addressLine1.includes(addressQuery.trim()))
-    : MOCK_ADDRESSES;
   const isPhoneValid = PHONE_PATTERN.test(phone);
   const canProceedStep3 =
     receiverName.trim().length > 0 && isPhoneValid && selectedAddress.length > 0;
 
-  const addressMutation = useMutation({ mutationFn: createAddress });
+  const openPostcodePopup = useKakaoPostcodePopup();
+  const handleAddressSearch = () => {
+    openPostcodePopup({
+      onComplete: (data: Address) => {
+        setSelectedAddress(data.address);
+        setSelectedPostalCode(data.zonecode);
+      },
+    });
+  };
 
   const handleAddressNext = () => {
-    addressMutation.mutate(
-      {
-        receiverName,
-        phone,
-        addressLine1: selectedAddress,
-        addressLine2: addressDetail,
-        postalCode: selectedPostalCode,
-        requestNote: '',
-        isDefault: true,
-      },
-      { onError: (error) => console.error(error) },
-    );
     setStep(4);
   };
 
   // Step 4 — 프로필 작성
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [nickname, setNickname] = useState('');
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [height, setHeight] = useState(170);
   const [weight, setWeight] = useState(60);
   const [signupError, setSignupError] = useState<string | null>(null);
-  const canComplete = nickname.trim().length > 0;
+
+  const debouncedNickname = useDebouncedValue(nickname.trim(), 500);
+  const usernameCheckQuery = useQuery({
+    queryKey: ['auth', 'username-check', debouncedNickname],
+    queryFn: () => checkUsernameAvailable(debouncedNickname),
+    enabled: debouncedNickname.length > 0,
+  });
+  const isNicknameTaken = usernameCheckQuery.data?.available === false;
+
+  const canComplete = nickname.trim().length > 0 && !isNicknameTaken;
 
   const [isPhotoSheetOpen, setIsPhotoSheetOpen] = useState(false);
   const [pendingPhotoPreview, setPendingPhotoPreview] = useState<string | null>(null);
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
 
   const setUser = useUserStore((state) => state.setUser);
+  const uploadPhotoMutation = useMutation({ mutationFn: uploadProfileImage });
   const signupMutation = useMutation({ mutationFn: signup });
 
-  const handleSignupComplete = () => {
+  const handleSignupComplete = async () => {
     setSignupError(null);
-    signupMutation.mutate(
-      {
+
+    let userId: number;
+    try {
+      // signup은 이미지 파일 자체가 아니라 업로드된 URL만 받으므로, 사진을 골랐다면
+      // 먼저 업로드해 URL을 받아온 뒤 그 URL을 profileImageUrl로 실어 보낸다.
+      const profileImageUrl = photoFile
+        ? (await uploadPhotoMutation.mutateAsync(photoFile)).imageUrl
+        : undefined;
+
+      ({ userId } = await signupMutation.mutateAsync({
         email,
         password,
-        nickname,
+        passwordConfirm,
+        termsOfServiceAgreed: agreements.service,
+        privacyPolicyAgreed: agreements.privacy,
+        thirdPartyAgreed: agreements.thirdParty,
+        addressLine1: selectedAddress,
+        addressLine2: addressDetail,
+        postalCode: selectedPostalCode,
+        username: nickname,
         gender: toApiGender(gender),
-        height,
-        weight,
-      },
-      {
-        onSuccess: async ({ userId }) => {
-          localStorage.setItem(USER_ID_STORAGE_KEY, String(userId));
-          try {
-            // 회원가입 응답에는 accessToken이 포함되지 않으므로, 동일 자격증명으로 로그인해 토큰을 발급받는다.
-            const { accessToken } = await login({ email, password });
-            localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
-            setUser(await getMyInfo());
-          } catch (error) {
-            console.error(error);
-          }
-          navigate('/feed');
-        },
-        onError: (error) => {
-          console.error(error);
-          setSignupError('회원가입에 실패했습니다. 다시 시도해주세요.');
-        },
-      },
-    );
+        heightCm: height,
+        weightKg: weight,
+        profileImageUrl,
+      }));
+    } catch (error) {
+      console.error(error);
+      setSignupError('회원가입에 실패했습니다. 다시 시도해주세요.');
+      return;
+    }
+
+    localStorage.setItem(USER_ID_STORAGE_KEY, String(userId));
+    try {
+      // 회원가입 응답에는 accessToken이 포함되지 않으므로, 동일 자격증명으로 로그인해 토큰을 발급받는다.
+      const { accessToken } = await login({ email, password });
+      localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
+      setUser(await getMyInfo());
+    } catch (error) {
+      console.error(error);
+    }
+    navigate('/loading');
   };
 
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setPendingPhotoFile(file);
       setPendingPhotoPreview(URL.createObjectURL(file));
     }
     e.target.value = '';
   };
 
-  const handleCancelPendingPhoto = () => setPendingPhotoPreview(null);
+  const handleCancelPendingPhoto = () => {
+    setPendingPhotoFile(null);
+    setPendingPhotoPreview(null);
+  };
 
   const handleConfirmPendingPhoto = () => {
+    setPhotoFile(pendingPhotoFile);
     setPhotoPreview(pendingPhotoPreview);
+    setPendingPhotoFile(null);
     setPendingPhotoPreview(null);
   };
 
@@ -473,43 +499,23 @@ const SignupPage = () => {
             )}
           </div>
 
-          <div className="relative mt-3">
+          <button
+            type="button"
+            onClick={handleAddressSearch}
+            className={`relative flex items-center ${inputClassName} pl-[44px] text-left`}
+          >
             <Search
               size={18}
               className="absolute top-1/2 left-[14px] -translate-y-1/2 text-[#767676]"
             />
-            <input
-              type="text"
-              value={addressQuery}
-              onChange={(e) => setAddressQuery(e.target.value)}
-              placeholder="도로명, 지번, 건물명으로 검색"
-              className={`${inputClassName} pl-[44px]`}
-            />
-          </div>
-
-          <ul className="mt-3 flex flex-col">
-            {filteredAddresses.map((addr) => (
-              <li key={addr.addressLine1}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedAddress(addr.addressLine1);
-                    setSelectedPostalCode(addr.postalCode);
-                  }}
-                  className={`flex h-[52px] w-full items-center border-b border-[#F0F0F0] px-[4px] text-left text-[14px] ${
-                    selectedAddress === addr.addressLine1
-                      ? 'font-semibold text-[#00AAFF]'
-                      : 'text-[#111111]'
-                  }`}
-                >
-                  {addr.addressLine1}
-                </button>
-              </li>
-            ))}
-            {filteredAddresses.length === 0 && (
-              <p className="py-4 text-center text-[13px] text-[#767676]">검색 결과가 없습니다</p>
+            {selectedAddress ? (
+              <span className="text-[#111111]">
+                [{selectedPostalCode}] {selectedAddress}
+              </span>
+            ) : (
+              <span className="text-[#767676]">도로명, 지번, 건물명으로 검색</span>
             )}
-          </ul>
+          </button>
 
           <input
             type="text"
@@ -565,8 +571,11 @@ const SignupPage = () => {
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             placeholder="닉네임을 입력해주세요"
-            className={`${inputClassName} mt-6`}
+            className={`${inputClassName} mt-6 ${isNicknameTaken ? '!border-[#FF3B30]' : ''}`}
           />
+          {isNicknameTaken && (
+            <p className="mt-2 text-[13px] text-[#FF3B30]">중복된 닉네임입니다</p>
+          )}
 
           <div className="mt-4 flex gap-2">
             <button
@@ -627,7 +636,7 @@ const SignupPage = () => {
               variant="filled"
               size="54"
               className="!w-full"
-              disabled={!canComplete || signupMutation.isPending}
+              disabled={!canComplete || signupMutation.isPending || uploadPhotoMutation.isPending}
               onClick={handleSignupComplete}
             >
               완료
@@ -658,6 +667,7 @@ const SignupPage = () => {
             <button
               type="button"
               onClick={() => {
+                setPhotoFile(null);
                 setPhotoPreview(null);
                 setIsPhotoSheetOpen(false);
               }}
@@ -706,14 +716,15 @@ const SignupPage = () => {
         </div>
       )}
 
-      {/* TODO: 개발 확인용 임시 버튼 — 나중에 제거 */}
-      <button
-        type="button"
-        onClick={() => setStep((prev) => (prev < TOTAL_STEPS ? ((prev + 1) as Step) : prev))}
-        className="mx-[20px] mb-[20px] h-[40px] shrink-0 rounded-[8px] border border-dashed border-[#FF9500] bg-[#FFF4E5] text-[13px] font-medium text-[#FF9500]"
-      >
-        [DEV] 다음 단계
-      </button>
+      {import.meta.env.DEV && (
+        <button
+          type="button"
+          onClick={() => setStep((prev) => (prev < TOTAL_STEPS ? ((prev + 1) as Step) : prev))}
+          className="mx-[20px] mb-[20px] h-[40px] shrink-0 rounded-[8px] border border-dashed border-[#FF9500] bg-[#FFF4E5] text-[13px] font-medium text-[#FF9500]"
+        >
+          [DEV] 다음 단계
+        </button>
+      )}
     </div>
   );
 };

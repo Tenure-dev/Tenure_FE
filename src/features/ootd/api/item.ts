@@ -16,6 +16,9 @@ export interface TagDraftItemRequest {
   itemName: string;
   wearingTarget: WearingTarget;
   firstOwnedAt?: string; // 'YYYY-MM-DD'
+  // BE의 ItemTagDraftCreateRequest가 아직 이 필드를 받지 않아 (2026-08-04 기준) 지금은 무시됨.
+  // BE에 필드가 추가되면 별도 FE 변경 없이 그대로 반영된다.
+  representativeImageUrl?: string;
 }
 
 export interface TagDraftItemResponse {

@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { chevon, close } from '@/shared/assets';
 import { BottomSheet, DoubleButton, Input } from '@/shared/components';
 import cn from '@/shared/lib/cn';
-import { CATEGORY_GROUPS, CATEGORY_SIZES, getSizeSystem } from '../lib/itemSizeData';
+import { CATEGORY_GROUPS, CATEGORY_SIZES, getSizeSystem } from '@/shared/lib/itemSizeData';
 import { WEARING_TARGET_LABEL } from '../lib/wearingTargetLabel';
-import type { ItemUpdateRequest, RegisteredItemDetail, WearingTarget } from '../model/items';
+import type { ItemUpdateRequest, ItemDetail, WearingTarget } from '../model/items';
 
 const CATEGORIES = CATEGORY_GROUPS.map((g) => g.name);
 const WEARING_TARGETS: WearingTarget[] = ['MENSWEAR', 'WOMENSWEAR', 'UNISEX'];
@@ -67,7 +67,7 @@ const SelectChip = ({
 
 export interface ItemEditSheetProps {
   open: boolean;
-  item: RegisteredItemDetail;
+  item: ItemDetail;
   onClose: () => void;
   onApply: (body: ItemUpdateRequest) => void;
 }
@@ -80,7 +80,7 @@ const ItemEditSheet = ({ open, item, onClose, onApply }: ItemEditSheetProps) => 
     categorySmall: item.categorySmall,
     sizeValue: item.sizeValue,
     wearingTarget: item.wearingTarget,
-    firstOwnedAt: item.firstOwnedAt.slice(0, 10),
+    firstOwnedAt: item.firstOwnedAt?.slice(0, 10) ?? '',
   });
 
   const [form, setForm] = useState<ItemEditForm>(toForm);

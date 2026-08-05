@@ -11,25 +11,19 @@ const ChatActions = ({
   tradeStatus,
   offerEnabled = true,
   tradeId = null,
-  itemId,
+  productId = null,
 }: {
   role: ChatRole;
   saleStatus: SaleStatus;
   tradeStatus: TradeStatus;
   offerEnabled?: boolean;
   tradeId?: number | null;
-  itemId: number;
+  productId?: number | null;
 }) => {
   const navigate = useNavigate();
   // 거래 생성 이후(생성~완료): 3번째 버튼 '거래 상세', 판매 전환 비활성
   const tradeStarted = tradeStatus === 'created' || tradeStatus === 'done';
   // 거래 상세로 이동 (tradeId 있을 때만). 다른 버튼 목적지는 주변 페이지 구현 후 연결 예정.
-
-  const goItemDetail = () => navigate(`/item/${itemId}`); // 상품 상세(구매자)
-  const goPurchase = () => navigate(`/item/${itemId}/purchase/price`); // 구매하기(구매자)
-  const goManageItem = () => navigate(`/mypage/items/${itemId}`); // 상품/아이템 관리(판매자)
-  const goPurchaseHistory = () => navigate('/purchase-history');
-
   const goTradeDetail = () => {
     if (tradeId != null) navigate(`/trade/${tradeId}?role=${role}`);
   };
@@ -41,12 +35,7 @@ const ChatActions = ({
     const proposalDisabled = isUnlisted && !offerEnabled && !tradeStarted;
     return (
       <div className="flex gap-2">
-        <Button
-          variant="solid"
-          size="36"
-          className="text-body-2 font-regular w-full! flex-1"
-          onClick={goManageItem}
-        >
+        <Button variant="solid" size="36" className="text-body-2 font-regular w-full! flex-1">
           {isUnlisted ? '아이템 관리' : '상품 관리'}
         </Button>
         <Button
@@ -62,15 +51,17 @@ const ChatActions = ({
     );
   }
 
-  let right: { label: string; filled?: boolean; onClick?: () => void };
-  if (tradeStarted) right = { label: '거래 상세', onClick: goTradeDetail };
-  else if (tradeStatus === 'waiting')
-    right = { label: '보낸 요청 보기', onClick: goPurchaseHistory };
-  else
+  // 구매자 — 거래 단계에 따라 오른쪽 버튼 전환
+  let right: { label: string; filled?: boolean };
+  if (tradeStarted) {
+    right = { label: '거래 상세' };
+  } else if (tradeStatus === 'waiting') {
+    right = { label: '보낸 요청 보기' };
+  } else {
+    // none: 판매중이면 바로 구매, 미판매면 요청부터
     right =
-      saleStatus === 'onSale'
-        ? { label: '구매하기', filled: true, onClick: goPurchase }
-        : { label: '보낸 요청 보기', onClick: goPurchaseHistory };
+      saleStatus === 'onSale' ? { label: '구매하기', filled: true } : { label: '보낸 요청 보기' };
+  }
 
   return (
     <div className="flex gap-2">
@@ -78,7 +69,7 @@ const ChatActions = ({
         variant="solid"
         size="36"
         className="text-body-2 font-regular w-full! flex-1"
-        onClick={goItemDetail}
+        onClick={productId != null ? () => navigate(`/product/${productId}`) : undefined}
       >
         상품 상세
       </Button>
@@ -86,7 +77,14 @@ const ChatActions = ({
         variant={right.filled ? 'filled' : 'solid'}
         size="36"
         className="text-body-2 font-regular w-full! flex-1"
-        onClick={right.onClick}
+        onClick={
+          tradeStarted
+            ? goTradeDetail
+            : right.label === '구매하기' && productId != null
+              ? () =>
+                  navigate(`/product/${productId}/purchase/checkout`, { state: { direct: true } })
+              : undefined
+        }
       >
         {right.label}
       </Button>
@@ -101,7 +99,7 @@ const ChatProductBar = ({
   tradeStatus = 'none',
   offerEnabled = true,
   tradeId = null,
-  itemId,
+  productId = null,
 }: {
   product: ChatProduct;
   role: ChatRole;
@@ -109,7 +107,7 @@ const ChatProductBar = ({
   tradeStatus?: TradeStatus;
   offerEnabled?: boolean;
   tradeId?: number | null;
-  itemId: number;
+  productId?: number | null;
 }) => (
   <div className="border-border-secondary flex flex-col gap-4 border-b px-5 py-2">
     <div className="flex items-center gap-2">
@@ -147,7 +145,7 @@ const ChatProductBar = ({
       tradeStatus={tradeStatus}
       offerEnabled={offerEnabled}
       tradeId={tradeId}
-      itemId={itemId}
+      productId={productId}
     />
   </div>
 );

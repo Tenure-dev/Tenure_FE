@@ -3,6 +3,10 @@ import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 import type { ChatProduct, ChatRole, SaleStatus, TradeStatus } from '../model/types';
 import type { ChatRoomDetailResponse, ProductStatus } from './dto';
 
+// 채팅방 생성 또는 조회 (아이템 상세 페이지 채팅하기 버튼)
+export const createOrGetChatRoom = (itemId: number) =>
+  api.post<{ chatRoomId: number }>('/chats', { itemId });
+
 // 채팅방 상세 조회 (프로덕트 바 데이터)
 export const getChatRoom = (chatRoomId: number) => {
   return api.get<ChatRoomDetailResponse>(`/chats/${chatRoomId}`);

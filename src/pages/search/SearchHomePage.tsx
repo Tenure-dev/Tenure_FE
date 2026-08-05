@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { useSearchUiStore } from '@/store/useSearchUiStore';
 import SearchTopBar from '@/features/search/ui/SearchTopBar';
 import SearchSuggestionsOverlay from '@/features/search/ui/SearchSuggestionsOverlay';
 import CarouselSection from '@/features/search/ui/CarouselSection';
 import PopularUsersSection from '@/features/search/ui/PopularUsersSection';
 import FilterBottomSheet from '@/features/search/ui/FilterBottomSheet';
 import { getSearchHome } from '@/features/search/api/searchApi';
-import type { SearchHomeData } from '@/features/search/api/types';
 import { getCurrentUserId } from '@/features/search/lib/currentUser';
 import { useRecentSearchData } from '@/features/search/lib/useRecentSearchData';
 import { useScrollToTop } from '@/features/search/lib/useScrollToTop';
@@ -21,14 +22,17 @@ const SearchHomePage = () => {
   const navigate = useNavigate();
   const [active, setActive] = useState(false);
   const [query, setQuery] = useState('');
-  const [home, setHome] = useState<SearchHomeData | null>(null);
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const recentData = useRecentSearchData();
+  const setInputActive = useSearchUiStore((state) => state.setInputActive);
+
+  const { data: home } = useQuery({ queryKey: ['search', 'home'], queryFn: getSearchHome });
 
   useEffect(() => {
-    getSearchHome().then(setHome);
-  }, []);
+    setInputActive(active || filterSheetOpen);
+    return () => setInputActive(false);
+  }, [active, filterSheetOpen, setInputActive]);
 
   const goToResult = (keyword: string, nextFilters: SearchFilters) => {
     const trimmed = keyword.trim();
@@ -53,7 +57,7 @@ const SearchHomePage = () => {
   };
 
   return (
-    <div className="bg-bg-white mx-auto flex min-h-screen w-full max-w-md flex-col">
+    <div className="bg-bg-white flex min-h-screen flex-col">
       <SearchTopBar
         value={query}
         onChange={setQuery}

@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useSearchUiStore } from '@/store/useSearchUiStore';
 import {
   feedActive,
   feedInactive,
@@ -51,12 +52,16 @@ const RIGHT_ITEMS: NavItem[] = [
 const HIDDEN_PATHS = [
   '/login',
   '/signup',
+  '/loading',
   '/test',
   '/trade',
-  '/search',
   '/mypage/edit',
   '/mypage/items',
   '/item',
+  '/settings',
+  '/purchase',
+  '/product',
+  '/trade',
 ];
 
 const NavLink = ({ item, pathname }: { item: NavItem; pathname: string }) => {
@@ -77,8 +82,10 @@ const NavLink = ({ item, pathname }: { item: NavItem; pathname: string }) => {
 
 const BottomNavBar = () => {
   const { pathname } = useLocation();
+  const searchInputActive = useSearchUiStore((state) => state.inputActive);
 
   if (HIDDEN_PATHS.some((p) => pathname.startsWith(p))) return null;
+  if (pathname === '/search' && searchInputActive) return null;
 
   return (
     <nav className="fixed bottom-6 left-1/2 z-50 w-[calc(100vw-3rem)] max-w-[calc(768px-3rem)] -translate-x-1/2">

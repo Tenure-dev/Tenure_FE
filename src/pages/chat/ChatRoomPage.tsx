@@ -132,6 +132,7 @@ const ChatRoomPage = ({
           offerEnabled={room.offerEnabled}
           tradeId={room.tradeId}
           productId={room.productId}
+          itemId={room.itemId}
         />
       )}
       <ChatMessages

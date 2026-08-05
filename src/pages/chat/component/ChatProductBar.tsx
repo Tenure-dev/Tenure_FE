@@ -12,6 +12,7 @@ const ChatActions = ({
   offerEnabled = true,
   tradeId = null,
   productId = null,
+  itemId = null,
 }: {
   role: ChatRole;
   saleStatus: SaleStatus;
@@ -19,6 +20,7 @@ const ChatActions = ({
   offerEnabled?: boolean;
   tradeId?: number | null;
   productId?: number | null;
+  itemId?: number | null;
 }) => {
   const navigate = useNavigate();
   // 거래 생성 이후(생성~완료): 3번째 버튼 '거래 상세', 판매 전환 비활성
@@ -43,7 +45,13 @@ const ChatActions = ({
           size="36"
           className="text-body-2 font-regular w-full! flex-1"
           disabled={proposalDisabled}
-          onClick={tradeStarted ? goTradeDetail : undefined}
+          onClick={
+            tradeStarted
+              ? goTradeDetail
+              : itemId != null
+                ? () => navigate(`/items/${itemId}/offers`)
+                : undefined
+          }
         >
           {tradeStarted ? '거래 상세' : isUnlisted ? '제안 확인' : '요청 확인'}
         </Button>
@@ -100,6 +108,7 @@ const ChatProductBar = ({
   offerEnabled = true,
   tradeId = null,
   productId = null,
+  itemId = null,
 }: {
   product: ChatProduct;
   role: ChatRole;
@@ -108,6 +117,7 @@ const ChatProductBar = ({
   offerEnabled?: boolean;
   tradeId?: number | null;
   productId?: number | null;
+  itemId?: number | null;
 }) => (
   <div className="border-border-secondary flex flex-col gap-4 border-b px-5 py-2">
     <div className="flex items-center gap-2">
@@ -146,6 +156,7 @@ const ChatProductBar = ({
       offerEnabled={offerEnabled}
       tradeId={tradeId}
       productId={productId}
+      itemId={itemId}
     />
   </div>
 );

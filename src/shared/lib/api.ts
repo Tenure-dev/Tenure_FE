@@ -20,6 +20,17 @@ export const clearAuthStorage = () => {
   useUserStore.getState().clearUser();
 };
 
+// JWT payload의 exp(초 단위)를 파싱해 만료 여부를 반환한다.
+// 파싱 실패(비표준 토큰, 손상 등)는 만료로 간주 -> 로그인 페이지로 리다이렉트
+export const isTokenExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return typeof payload.exp === 'number' && payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+};
+
 // BaseResponse.code(예: AUTH_1001)를 보존해 호출부가 실패 사유를 분기할 수 있게 한다.
 export class ApiError extends Error {
   code?: string;

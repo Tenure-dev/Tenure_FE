@@ -26,7 +26,7 @@ const TagMessage = ({ title, status, side = 'right', variant = 'default', classN
       className={cn(
         'inline-flex max-h-[72px] min-h-[52px] w-[168px] flex-col justify-center px-3 py-1.5 text-left shadow-md',
         cornerClass,
-        isBlack ? 'border-brand-primary border bg-black/60' : 'bg-bg-white/95',
+        isBlack ? 'border-brand-primary border bg-black/60' : 'bg-bg-white/60',
         className,
       )}
     >

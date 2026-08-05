@@ -45,6 +45,8 @@ const OotdTagPage = () => {
   const { data: recommended = [], isPending, refetch } = useSimilarItems();
   const [addedItems, setAddedItems] = useState<OotdItem[]>([]); // 새로 등록한 아이템
   const items = useMemo(() => [...addedItems, ...recommended], [addedItems, recommended]);
+  // 태그된 아이템 객체 보관 — 추천 목록이 갱신돼도 활성 박스 아이템이 목록에서 사라지지 않게
+  const [tagged, setTagged] = useState<Record<string, OotdItem>>({});
 
   // '태그 수정'으로 돌아온 경우 기존 태그를 박스로 복원 (label 함께 보존)
   const [boxes, setBoxes] = useState<Box[]>(() =>
@@ -63,6 +65,18 @@ const OotdTagPage = () => {
 
   const activeBox = boxes.find((b) => b.id === activeBoxId) ?? null;
   const tagCount = boxes.filter((b) => b.itemId).length; // 아이템 부착된 박스 = 완성 태그
+
+  // 다른 박스에 이미 태그된 아이템은 추천 목록에서 숨긴다 (활성 박스 자신의 아이템은 유지)
+  const usedByOthers = new Set(
+    boxes.filter((b) => b.id !== activeBoxId && b.itemId).map((b) => b.itemId),
+  );
+  const filteredItems = items.filter((it) => !usedByOthers.has(it.id));
+  // 활성 박스의 태그 아이템이 추천 목록에 없으면(추천 갱신으로 빠졌을 때) 맨 앞에 넣어 해제 가능하게
+  const activeItem = activeBox?.itemId ? tagged[activeBox.itemId] : undefined;
+  const sheetItems =
+    activeItem && !filteredItems.some((it) => it.id === activeItem.id)
+      ? [activeItem, ...filteredItems]
+      : filteredItems;
 
   const itemLabel = (id?: string) => {
     const it = items.find((i) => i.id === id);
@@ -111,6 +125,8 @@ const OotdTagPage = () => {
   // 활성 박스에 아이템 부착/해제 (같은 아이템 다시 누르면 해제)
   const assignItem = (itemId: string) => {
     if (!activeBoxId) return;
+    const it = items.find((i) => i.id === itemId);
+    if (it) setTagged((prev) => ({ ...prev, [itemId]: it })); // 객체 보관
     setBoxes((prev) =>
       prev.map((b) => {
         if (b.id !== activeBoxId) return b;
@@ -123,6 +139,7 @@ const OotdTagPage = () => {
   // 새 아이템 등록 → 활성 박스에 바로 부착
   const handleRegister = (item: OotdItem) => {
     setAddedItems((prev) => [item, ...prev]);
+    setTagged((prev) => ({ ...prev, [item.id]: item })); // 객체 보관
     if (activeBoxId) {
       setBoxes((prev) =>
         prev.map((b) =>
@@ -218,7 +235,7 @@ const OotdTagPage = () => {
 
           {/* 분석 결과 바텀시트 (활성 박스 기준) */}
           <TagResultSheet
-            items={items}
+            items={sheetItems}
             activeItemId={activeBox?.itemId}
             onSelect={assignItem}
             active={!!activeBox}

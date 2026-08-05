@@ -134,8 +134,8 @@ const TagBBox = ({ bbox, label, active, onActivate, onChange, onSettle }: Props)
         </>
       )}
 
-      {/* 말풍선(태그): 아이템 설정된 박스만. bbox 중심 기준으로 그 위에 배치(게시글과 동일) */}
-      {label && (
+      {/* 말풍선(태그): 아이템 설정 + 비활성일 때만. 누르면 활성화되어 bbox 편집 UI로 전환 */}
+      {!active && label && (
         <button
           type="button"
           onClick={onActivate}

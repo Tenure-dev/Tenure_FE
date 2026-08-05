@@ -54,8 +54,6 @@ export interface OotdPost {
   bookmarked: boolean;
   isOwner: boolean;
   isFollowing: boolean;
-  // 차단 API가 아직 없어(BE 요청 목록 참고) 로컬 상태로만 토글된다.
-  isBlocked: boolean;
   taggedItems: TaggedItem[];
 }
 

@@ -68,7 +68,6 @@ export const mockOotdPost: OotdPost = {
   bookmarked: false,
   isOwner: true,
   isFollowing: true,
-  isBlocked: false,
   taggedItems: [
     {
       id: 1,

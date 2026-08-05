@@ -26,6 +26,9 @@ export const followUser = (userId: number): Promise<FollowResponse> =>
 export const unfollowUser = (userId: number): Promise<FollowResponse> =>
   api.delete(`/users/${userId}/follow`);
 
+export const blockUser = (userId: number): Promise<void> => api.post(`/users/${userId}/block`);
+export const unblockUser = (userId: number): Promise<void> => api.delete(`/users/${userId}/block`);
+
 export const getRelatedOotds = (ootdId: number): Promise<OotdRelatedResponse> =>
   api.get(`/ootds/${ootdId}/related`);
 

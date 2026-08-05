@@ -5,10 +5,9 @@ export interface MoreMenuProps {
   open: boolean;
   onClose: () => void;
   isOwner: boolean;
-  isBlocked: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  onBlockToggle: () => void;
+  onBlock: () => void;
   onReport: () => void;
 }
 
@@ -16,10 +15,9 @@ const MoreMenu = ({
   open,
   onClose,
   isOwner,
-  isBlocked,
   onEdit,
   onDelete,
-  onBlockToggle,
+  onBlock,
   onReport,
 }: MoreMenuProps) => {
   return (
@@ -31,11 +29,7 @@ const MoreMenu = ({
         </>
       ) : (
         <>
-          <MenuRow
-            icon={<Ban size={16} />}
-            label={isBlocked ? '차단해제' : '차단하기'}
-            onClick={onBlockToggle}
-          />
+          <MenuRow icon={<Ban size={16} />} label="차단하기" onClick={onBlock} />
           <MenuRow icon={<Flag size={16} />} label="신고하기" danger onClick={onReport} />
         </>
       )}

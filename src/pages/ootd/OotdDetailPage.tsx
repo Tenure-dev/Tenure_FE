@@ -20,6 +20,7 @@ import {
 } from '@/features/ootd/model/types';
 import { useTagNavigation } from '@/features/ootd/lib/useTagNavigation';
 import {
+  blockUser,
   confirmTags,
   createTag,
   deleteOotd,
@@ -141,7 +142,7 @@ const OotdDetailPage = () => {
 
   const refreshPost = useCallback(async () => {
     const detail = await getOotdDetail(ootdId);
-    setPost((prev) => toOotdPost(detail, currentUserId, prev ?? undefined));
+    setPost(toOotdPost(detail, currentUserId));
     return detail;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ootdId]);
@@ -478,7 +479,7 @@ const OotdDetailPage = () => {
     }
   };
 
-  // 차단/신고는 아직 BE API가 없어(요청 목록 참고) 화면상으로만 동작한다.
+  // 신고는 아직 BE reasonType enum이 OOTD 게시물용이 아니라(채팅 신고용 재활용) 화면상으로만 동작한다.
   const toggleFollow = async () => {
     if (!post) return;
     const next = !post.isFollowing;
@@ -532,18 +533,18 @@ const OotdDetailPage = () => {
 
   const handleBlockMenuClick = () => {
     setShowMoreMenu(false);
-    if (post?.isBlocked) {
-      setPost((p) => (p ? { ...p, isBlocked: false } : p));
-      showToast('이 사용자의 게시글을 다시 볼 수 있어요.');
-    } else {
-      setShowBlockConfirm(true);
-    }
+    setShowBlockConfirm(true);
   };
 
-  const handleBlockConfirm = () => {
+  const handleBlockConfirm = async () => {
+    if (!post) return;
     setShowBlockConfirm(false);
-    setPost((p) => (p ? { ...p, isBlocked: true } : p));
-    showToast('이 사용자의 게시글이 더 이상 표시되지 않아요.');
+    try {
+      await blockUser(post.author.id);
+      navigate('/', { state: { toast: '이 사용자의 게시글이 더 이상 표시되지 않아요.' } });
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : '처리 중 오류가 발생했어요.');
+    }
   };
 
   const handleReportClick = () => {
@@ -780,13 +781,12 @@ const OotdDetailPage = () => {
         open={showMoreMenu}
         onClose={() => setShowMoreMenu(false)}
         isOwner={post.isOwner}
-        isBlocked={post.isBlocked}
         onEdit={handleStartEdit}
         onDelete={() => {
           setShowMoreMenu(false);
           setShowDeleteConfirm(true);
         }}
-        onBlockToggle={handleBlockMenuClick}
+        onBlock={handleBlockMenuClick}
         onReport={handleReportClick}
       />
 

@@ -26,11 +26,7 @@ export const toTaggedItem = (tag: TagInfoResponse): TaggedItem => ({
   bbox: { x: tag.bboxX, y: tag.bboxY, width: tag.bboxWidth, height: tag.bboxHeight },
 });
 
-export const toOotdPost = (
-  detail: OotdDetailResponse,
-  currentUserId: number | null,
-  prev?: Pick<OotdPost, 'isBlocked'>,
-): OotdPost => ({
+export const toOotdPost = (detail: OotdDetailResponse, currentUserId: number | null): OotdPost => ({
   id: detail.ootdId,
   imageUrl: resolveImageUrl(detail.imageUrl),
   author: {
@@ -46,7 +42,6 @@ export const toOotdPost = (
   bookmarked: detail.saved,
   isOwner: currentUserId !== null && currentUserId === detail.author.userId,
   isFollowing: detail.author.following,
-  isBlocked: prev?.isBlocked ?? false,
   taggedItems: detail.tags.map(toTaggedItem),
 });
 

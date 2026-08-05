@@ -39,7 +39,9 @@ const TagBubble = ({
       className={cn(
         'inline-flex max-h-[72px] min-h-[52px] w-[168px] flex-col justify-center px-3 py-1.5 text-left shadow-md',
         CORNER[tail],
-        isBlack ? 'border-brand-primary border bg-black/60' : 'bg-bg-white/60',
+        isBlack
+          ? 'border-brand-primary border bg-black/60'
+          : 'border-border-primary bg-bg-white/60 border',
         selected && 'ring-brand ring-2',
         className,
       )}

@@ -23,6 +23,7 @@ export interface TradeDetailResponse {
   sellerServiceFee: number | null;
   paymentAmount: number;
   settlementAmount: number | null;
+  tradeRequestNote: string | null;
   shippedAt: string | null;
   deliveredAt: string | null;
   confirmedAt: string | null;

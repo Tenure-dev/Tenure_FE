@@ -33,3 +33,16 @@ export interface TagDraftItemResponse {
 // 태그 작성용 간편 아이템 등록 (카테고리는 백엔드가 자동 분류)
 export const createTagDraftItem = (payload: TagDraftItemRequest) =>
   api.post<TagDraftItemResponse>('/items/tag-draft', payload);
+
+export interface ItemImageUploadResponse {
+  imageUrl: string; // 저장된 대표 이미지 URL (representativeImageUrl로 사용)
+}
+
+// 아이템 대표 이미지 업로드 → 저장된 URL 반환 (bbox 크롭 이미지를 올리는 데 사용)
+export const uploadItemImage = (image: File) => {
+  const formData = new FormData();
+  formData.append('image', image);
+  return api.post<ItemImageUploadResponse>('/images/items', formData, {
+    headers: { 'Content-Type': undefined },
+  });
+};

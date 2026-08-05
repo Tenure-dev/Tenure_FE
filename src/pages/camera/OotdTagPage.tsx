@@ -254,7 +254,12 @@ const OotdTagPage = () => {
 
           {/* 새 아이템 등록 시트 */}
           {newItemOpen && (
-            <NewItemSheet onBack={() => setNewItemOpen(false)} onSubmit={handleRegister} />
+            <NewItemSheet
+              photo={photo}
+              bbox={activeBox?.bbox}
+              onBack={() => setNewItemOpen(false)}
+              onSubmit={handleRegister}
+            />
           )}
         </div>
       )}

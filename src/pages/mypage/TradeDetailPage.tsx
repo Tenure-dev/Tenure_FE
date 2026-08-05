@@ -31,9 +31,8 @@ const TRADE_STATUS_LABEL: Record<TradeStatus, string> = {
   TRANSFERRED: '거래 완료',
 };
 
-// availableActions에 담기는 정확한 문자열은 실제 BE 응답으로 아직 확인되지 않아 추정값이다.
-// 실제 응답을 받으면 이 두 상수를 맞는 값으로 교체해야 한다.
-const ACTION_REGISTER_SHIPPING = 'REGISTER_SHIPPING';
+// BE TradeAction enum(com.tenure.domain.trade.enums.TradeAction)과 값이 일치해야 한다.
+const ACTION_REGISTER_SHIPMENT = 'REGISTER_SHIPMENT';
 const ACTION_MARK_DELIVERED = 'MARK_DELIVERED';
 const ACTION_CONFIRM_PURCHASE = 'CONFIRM_PURCHASE';
 
@@ -111,7 +110,7 @@ const TradeDetailPage = () => {
   const isBuyer = trade.viewerMode === 'BUYER';
   const { steps: timelineSteps, currentStepIndex } = buildTradeTimeline(trade);
   const canRegisterShipping =
-    !trade.trackingNumber && trade.availableActions.includes(ACTION_REGISTER_SHIPPING);
+    !trade.trackingNumber && trade.availableActions.includes(ACTION_REGISTER_SHIPMENT);
   const canConfirmPurchase = trade.availableActions.includes(ACTION_CONFIRM_PURCHASE);
   const canMarkDelivered = !isBuyer && trade.availableActions.includes(ACTION_MARK_DELIVERED);
   const deliveryCarrierLabel = trade.customDeliveryCarrierName ?? trade.deliveryCarrier ?? '-';
@@ -213,15 +212,6 @@ const TradeDetailPage = () => {
                     <span className={`text-[14px] ${textClass}`}>{step.label}</span>
                     {step.date && <span className="text-[12px] text-[#767676]">{step.date}</span>}
                   </div>
-                  {step.label === '상품 발송' && canRegisterShipping && (
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/trade/${trade.tradeId}/shipping`)}
-                      className="text-[13px] text-[#00AAFF]"
-                    >
-                      운송 번호 입력
-                    </button>
-                  )}
                   {step.label === '상품 발송' && trade.trackingNumber && (
                     <span className="text-[12px] text-[#767676]">
                       {deliveryCarrierLabel} 택배 {trade.trackingNumber}

@@ -9,6 +9,8 @@ export interface ProfileImagePreviewProps {
 
 const CIRCLE_SIZE = 256;
 const OUTPUT_SIZE = 512;
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 3;
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
@@ -20,9 +22,18 @@ const ProfileImagePreview = ({ imageUrl, onCancel, onConfirm }: ProfileImagePrev
     originX: number;
     originY: number;
   } | null>(null);
+  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchRef = useRef<{ distance: number; zoom: number } | null>(null);
 
-  const [imgSize, setImgSize] = useState({ width: CIRCLE_SIZE, height: CIRCLE_SIZE });
+  const [naturalSize, setNaturalSize] = useState({ width: CIRCLE_SIZE, height: CIRCLE_SIZE });
+  const [baseScale, setBaseScale] = useState(1);
+  const [zoom, setZoom] = useState(MIN_ZOOM);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  const imgSize = {
+    width: naturalSize.width * baseScale * zoom,
+    height: naturalSize.height * baseScale * zoom,
+  };
 
   const clampOffset = (x: number, y: number, size: { width: number; height: number }) => {
     const maxX = Math.max(0, (size.width - CIRCLE_SIZE) / 2);
@@ -35,30 +46,67 @@ const ProfileImagePreview = ({ imageUrl, onCancel, onConfirm }: ProfileImagePrev
     if (!img) return;
     const { naturalWidth, naturalHeight } = img;
     const scale = Math.max(CIRCLE_SIZE / naturalWidth, CIRCLE_SIZE / naturalHeight);
-    const nextSize = { width: naturalWidth * scale, height: naturalHeight * scale };
-    setImgSize(nextSize);
+    setNaturalSize({ width: naturalWidth, height: naturalHeight });
+    setBaseScale(scale);
+    setZoom(MIN_ZOOM);
     setOffset({ x: 0, y: 0 });
   };
 
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
-    dragRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      originX: offset.x,
-      originY: offset.y,
-    };
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointersRef.current.size === 2) {
+      dragRef.current = null;
+      const [p1, p2] = Array.from(pointersRef.current.values());
+      pinchRef.current = { distance: Math.hypot(p1.x - p2.x, p1.y - p2.y), zoom };
+    } else if (pointersRef.current.size === 1) {
+      pinchRef.current = null;
+      dragRef.current = {
+        startX: e.clientX,
+        startY: e.clientY,
+        originX: offset.x,
+        originY: offset.y,
+      };
+    }
   };
 
   const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!dragRef.current) return;
-    const dx = e.clientX - dragRef.current.startX;
-    const dy = e.clientY - dragRef.current.startY;
-    setOffset(clampOffset(dragRef.current.originX + dx, dragRef.current.originY + dy, imgSize));
+    if (!pointersRef.current.has(e.pointerId)) return;
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointersRef.current.size === 2 && pinchRef.current) {
+      const [p1, p2] = Array.from(pointersRef.current.values());
+      const distance = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+      const nextZoom = clamp(
+        pinchRef.current.zoom * (distance / pinchRef.current.distance),
+        MIN_ZOOM,
+        MAX_ZOOM,
+      );
+      const nextSize = {
+        width: naturalSize.width * baseScale * nextZoom,
+        height: naturalSize.height * baseScale * nextZoom,
+      };
+      setZoom(nextZoom);
+      setOffset((prev) => clampOffset(prev.x, prev.y, nextSize));
+      return;
+    }
+
+    if (dragRef.current) {
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+      setOffset(clampOffset(dragRef.current.originX + dx, dragRef.current.originY + dy, imgSize));
+    }
   };
 
-  const handlePointerUp = () => {
-    dragRef.current = null;
+  const handlePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    pointersRef.current.delete(e.pointerId);
+    pinchRef.current = null;
+
+    const remaining = Array.from(pointersRef.current.values())[0];
+    dragRef.current = remaining
+      ? { startX: remaining.x, startY: remaining.y, originX: offset.x, originY: offset.y }
+      : null;
   };
 
   const handleConfirm = () => {

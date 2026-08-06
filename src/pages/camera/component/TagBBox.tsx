@@ -13,7 +13,8 @@ type Props = {
 
 type Corner = 'nw' | 'ne' | 'sw' | 'se';
 
-const MIN = 0.06; // 박스 최소 크기(이미지 대비 비율)
+const MIN_W = 0.2; // 박스 최소 가로(이미지 가로 대비 비율)
+const MIN_H = 0.15; // 박스 최소 세로(이미지 세로 대비 비율)
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
 
 // 이미지 위 태그: 말풍선은 항상 표시, 누르면 활성화되어 박스(+스포트라이트)가 뜨고
@@ -67,21 +68,21 @@ const TagBBox = ({ bbox, label, active, onActivate, onChange, onSettle }: Props)
       if (corner === 'se') {
         return {
           ...s,
-          width: clamp(s.width + dx, MIN, 1 - s.x),
-          height: clamp(s.height + dy, MIN, 1 - s.y),
+          width: clamp(s.width + dx, MIN_W, 1 - s.x),
+          height: clamp(s.height + dy, MIN_H, 1 - s.y),
         };
       }
       if (corner === 'sw') {
-        const x = clamp(s.x + dx, 0, right - MIN);
-        return { ...s, x, width: right - x, height: clamp(s.height + dy, MIN, 1 - s.y) };
+        const x = clamp(s.x + dx, 0, right - MIN_W);
+        return { ...s, x, width: right - x, height: clamp(s.height + dy, MIN_H, 1 - s.y) };
       }
       if (corner === 'ne') {
-        const y = clamp(s.y + dy, 0, bottom - MIN);
-        return { ...s, y, width: clamp(s.width + dx, MIN, 1 - s.x), height: bottom - y };
+        const y = clamp(s.y + dy, 0, bottom - MIN_H);
+        return { ...s, y, width: clamp(s.width + dx, MIN_W, 1 - s.x), height: bottom - y };
       }
       // nw
-      const x = clamp(s.x + dx, 0, right - MIN);
-      const y = clamp(s.y + dy, 0, bottom - MIN);
+      const x = clamp(s.x + dx, 0, right - MIN_W);
+      const y = clamp(s.y + dy, 0, bottom - MIN_H);
       return { ...s, x, y, width: right - x, height: bottom - y };
     });
   };
@@ -133,8 +134,8 @@ const TagBBox = ({ bbox, label, active, onActivate, onChange, onSettle }: Props)
         </>
       )}
 
-      {/* 말풍선(태그): 아이템 설정된 박스만. bbox 중심 기준으로 그 위에 배치(게시글과 동일) */}
-      {label && (
+      {/* 말풍선(태그): 아이템 설정 + 비활성일 때만. 누르면 활성화되어 bbox 편집 UI로 전환 */}
+      {!active && label && (
         <button
           type="button"
           onClick={onActivate}

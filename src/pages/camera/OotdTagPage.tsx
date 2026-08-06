@@ -1,4 +1,4 @@
-import { useMemo, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import chevon from '@/shared/assets/chevron-left.svg';
@@ -33,6 +33,8 @@ const boxAt = (cx: number, cy: number): Bbox => ({
 let boxSeq = 0;
 const newBoxId = () => `box-${Date.now()}-${boxSeq++}`;
 
+const ANALYSIS_DEBOUNCE_MS = 350; // 박스 생성/이동/리사이즈가 잠잠해진 뒤 한 번만 분석
+
 const OotdTagPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,6 +45,8 @@ const OotdTagPage = () => {
   const { data: recommended = [], isPending, refetch } = useSimilarItems();
   const [addedItems, setAddedItems] = useState<OotdItem[]>([]); // 새로 등록한 아이템
   const items = useMemo(() => [...addedItems, ...recommended], [addedItems, recommended]);
+  // 태그된 아이템 객체 보관 — 추천 목록이 갱신돼도 활성 박스 아이템이 목록에서 사라지지 않게
+  const [tagged, setTagged] = useState<Record<string, OotdItem>>({});
 
   // '태그 수정'으로 돌아온 경우 기존 태그를 박스로 복원 (label 함께 보존)
   const [boxes, setBoxes] = useState<Box[]>(() =>
@@ -62,9 +66,44 @@ const OotdTagPage = () => {
   const activeBox = boxes.find((b) => b.id === activeBoxId) ?? null;
   const tagCount = boxes.filter((b) => b.itemId).length; // 아이템 부착된 박스 = 완성 태그
 
+  // 다른 박스에 이미 태그된 아이템은 추천 목록에서 숨긴다 (활성 박스 자신의 아이템은 유지)
+  const usedByOthers = new Set(
+    boxes.filter((b) => b.id !== activeBoxId && b.itemId).map((b) => b.itemId),
+  );
+  const filteredItems = items.filter((it) => !usedByOthers.has(it.id));
+  // 활성 박스의 태그 아이템이 추천 목록에 없으면(추천 갱신으로 빠졌을 때) 맨 앞에 넣어 해제 가능하게
+  const activeItem = activeBox?.itemId ? tagged[activeBox.itemId] : undefined;
+  const sheetItems =
+    activeItem && !filteredItems.some((it) => it.id === activeItem.id)
+      ? [activeItem, ...filteredItems]
+      : filteredItems;
+
   const itemLabel = (id?: string) => {
     const it = items.find((i) => i.id === id);
     return it ? `${it.brand} / ${it.name}` : '아이템 선택';
+  };
+
+  // 박스 생성/이동/리사이즈가 연달아 일어나도, 멈춘 뒤 한 번만 분석 API 호출(디바운스)
+  const analysisTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleAnalysis = () => {
+    if (analysisTimer.current) clearTimeout(analysisTimer.current);
+    analysisTimer.current = setTimeout(() => void refetch(), ANALYSIS_DEBOUNCE_MS);
+  };
+  useEffect(
+    () => () => {
+      if (analysisTimer.current) clearTimeout(analysisTimer.current);
+    },
+    [],
+  );
+
+  // 활성 전환: 나가는 활성 박스가 아이템 미선택이면 제거 (미완성 박스 방치 방지)
+  const activateBox = (nextId: string | null) => {
+    setBoxes((prev) =>
+      activeBoxId && activeBoxId !== nextId
+        ? prev.filter((b) => b.id !== activeBoxId || b.itemId)
+        : prev,
+    );
+    setActiveBoxId(nextId);
   };
 
   // 이미지 빈 곳 탭 → 그 위치에 박스 생성 + 활성화 + 분석 API 호출
@@ -74,9 +113,10 @@ const OotdTagPage = () => {
     const cx = (e.clientX - rect.left) / rect.width;
     const cy = (e.clientY - rect.top) / rect.height;
     const id = newBoxId();
-    setBoxes((prev) => [...prev, { id, bbox: boxAt(cx, cy) }]);
+    // 아이템 미선택 박스는 제거하고 새 박스 추가
+    setBoxes((prev) => [...prev.filter((b) => b.itemId), { id, bbox: boxAt(cx, cy) }]);
     setActiveBoxId(id);
-    void refetch(); // bbox 확정 → 분석
+    scheduleAnalysis(); // bbox 확정 → 분석(디바운스)
   };
 
   const updateBox = (id: string, bbox: Bbox) =>
@@ -85,6 +125,8 @@ const OotdTagPage = () => {
   // 활성 박스에 아이템 부착/해제 (같은 아이템 다시 누르면 해제)
   const assignItem = (itemId: string) => {
     if (!activeBoxId) return;
+    const it = items.find((i) => i.id === itemId);
+    if (it) setTagged((prev) => ({ ...prev, [itemId]: it })); // 객체 보관
     setBoxes((prev) =>
       prev.map((b) => {
         if (b.id !== activeBoxId) return b;
@@ -97,6 +139,7 @@ const OotdTagPage = () => {
   // 새 아이템 등록 → 활성 박스에 바로 부착
   const handleRegister = (item: OotdItem) => {
     setAddedItems((prev) => [item, ...prev]);
+    setTagged((prev) => ({ ...prev, [item.id]: item })); // 객체 보관
     if (activeBoxId) {
       setBoxes((prev) =>
         prev.map((b) =>
@@ -166,7 +209,7 @@ const OotdTagPage = () => {
               type="button"
               onClick={() => setShowBox((v) => !v)}
               aria-label={showBox ? '태그 박스 숨기기' : '태그 박스 보기'}
-              className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-black/60"
+              className="absolute top-4 right-4 z-30 flex size-10 items-center justify-center rounded-full bg-black/60"
             >
               {showBox ? (
                 <Eye size={20} className="text-white" />
@@ -183,16 +226,16 @@ const OotdTagPage = () => {
                   bbox={b.bbox}
                   label={b.label ?? ''}
                   active={activeBoxId === b.id}
-                  onActivate={() => setActiveBoxId((cur) => (cur === b.id ? null : b.id))}
+                  onActivate={() => activateBox(activeBoxId === b.id ? null : b.id)}
                   onChange={(bb) => updateBox(b.id, bb)}
-                  onSettle={() => void refetch()}
+                  onSettle={scheduleAnalysis}
                 />
               ))}
           </div>
 
           {/* 분석 결과 바텀시트 (활성 박스 기준) */}
           <TagResultSheet
-            items={items}
+            items={sheetItems}
             activeItemId={activeBox?.itemId}
             onSelect={assignItem}
             active={!!activeBox}
@@ -206,11 +249,17 @@ const OotdTagPage = () => {
               setQuery('');
             }}
             onNewItem={() => setNewItemOpen(true)}
+            onBbox={() => activateBox(null)}
           />
 
           {/* 새 아이템 등록 시트 */}
           {newItemOpen && (
-            <NewItemSheet onBack={() => setNewItemOpen(false)} onSubmit={handleRegister} />
+            <NewItemSheet
+              photo={photo}
+              bbox={activeBox?.bbox}
+              onBack={() => setNewItemOpen(false)}
+              onSubmit={handleRegister}
+            />
           )}
         </div>
       )}

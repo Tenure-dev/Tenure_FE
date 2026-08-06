@@ -80,6 +80,7 @@ export type ItemDetailResponse = {
   lastWornAt: string | null;
   firstOwnedAt: string | null;
   wishCount: number;
+  wished: boolean;
   purchaseOfferEnabled: boolean;
   productId?: number | null;
   price?: number | null;

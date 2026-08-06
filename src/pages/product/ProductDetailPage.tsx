@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Toast } from '@/shared/components';
 import { useToast } from '@/shared/hooks/useToast';
-import { getMeasurementSection } from '@/features/product/lib/measurementUtils';
-import { PRODUCT_STATUS_MAP, CONDITION_LABELS } from '@/features/product/lib/productAdapters';
-import type { ViewerRole, ProductSaleStatus } from '@/features/product/model/types';
+import { buildProductDetailViewModel } from './lib/buildProductDetailViewModel';
 import {
   ItemImageSection,
   ItemTitle,
@@ -23,28 +21,76 @@ import { useDeleteProduct } from '@/features/product/model/useDeleteProduct';
 import { useCompleteProductExternal } from '@/features/product/model/useCompleteProductExternal';
 import { useToggleWish } from '@/features/wishlist/model/useToggleWish';
 import { createOrGetChatRoom } from '@/features/chat/api/room';
+import { useItemDetailQuery } from '@/features/mypage/model/useItemDetailQuery';
+import { useItemOotdCandidatesQuery } from '@/features/mypage/model/useItemOotdCandidatesQuery';
+import { useUserStore } from '@/store/userStore';
 import ItemDetailHeader from './components/ProductDetailHeader';
 
 const ProductDetailPage = () => {
   const { productId = '' } = useParams();
-  return <ProductDetailPageContent key={productId} productId={productId} />;
+  const [searchParams] = useSearchParams();
+  const itemIdFromQuery = Number(searchParams.get('itemId') ?? 0);
+  const key = productId || String(itemIdFromQuery);
+  return (
+    <ProductDetailPageContent key={key} productId={productId} itemIdFromQuery={itemIdFromQuery} />
+  );
 };
 
-const ProductDetailPageContent = ({ productId }: { productId: string }) => {
+const ProductDetailPageContent = ({
+  productId,
+  itemIdFromQuery,
+}: {
+  productId: string;
+  itemIdFromQuery: number;
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const currentUserId = useUserStore((s) => s.user?.userId);
+
   const [isBlocked, setIsBlocked] = useState(false);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [showShareOptions, setShowShareOptions] = useState(false);
   const { message: toastMessage, show: showToast, hide: hideToast } = useToast();
 
-  const { data, isLoading, isError } = useProductDetail(Number(productId));
-  const { mutate: markUnsold } = useDeleteProduct(Number(productId));
-  const { mutate: markSoldOut } = useCompleteProductExternal(Number(productId));
-  const { wished, toggle: toggleWish } = useToggleWish(
-    data?.item.itemId,
-    data?.item.wished ?? false,
+  // productId가 유효한 양의 정수인 경우에만 product API 사용 아니면 item API 사용
+  const productIdNum = productId !== '' ? Number(productId) : NaN;
+  const hasProductId = !isNaN(productIdNum) && productIdNum > 0;
+
+  const {
+    data: productData,
+    isLoading: productLoading,
+    isError: productError,
+  } = useProductDetail(productIdNum);
+
+  // productStatus가 HIDDEN이면 item mode로 전환
+  const isHiddenProduct = hasProductId && productData?.productStatus === 'HIDDEN';
+  const isItemMode = !hasProductId || isHiddenProduct;
+
+  // item mode에서 사용할 itemId: HIDDEN 상품이면 product 응답의 item.itemId, 아니면 query string
+  const itemIdForItemMode = isHiddenProduct ? (productData?.item.itemId ?? 0) : itemIdFromQuery;
+
+  // item mode에서 item API 호출
+  const {
+    data: itemData,
+    isLoading: itemLoading,
+    isError: itemError,
+  } = useItemDetailQuery(itemIdForItemMode, { enabled: isItemMode && itemIdForItemMode > 0 });
+  const { data: taggedOotdsData } = useItemOotdCandidatesQuery(
+    itemIdForItemMode,
+    { size: 3 },
+    { enabled: isItemMode && itemIdForItemMode > 0 },
   );
+
+  // more options에서 판매 상태 변경
+  const { mutate: markUnsold } = useDeleteProduct(productIdNum);
+  const { mutate: markSoldOut } = useCompleteProductExternal(productIdNum);
+
+  // 위시
+  const wishItemId = isItemMode ? itemData?.itemId : productData?.item.itemId;
+  const wishInitial = isItemMode
+    ? (itemData?.wished ?? false)
+    : (productData?.item.wished ?? false);
+  const { wished, toggle: toggleWish } = useToggleWish(wishItemId, wishInitial);
 
   const initialToastRef = useRef((location.state as { toast?: string } | null)?.toast ?? null);
   useEffect(() => {
@@ -56,6 +102,10 @@ const ProductDetailPageContent = ({ productId }: { productId: string }) => {
     }
   }, [location.pathname, navigate, showToast]);
 
+  const isLoading = hasProductId ? productLoading || (isHiddenProduct && itemLoading) : itemLoading;
+
+  const isError = hasProductId ? productError || (isHiddenProduct && itemError) : itemError;
+
   if (isLoading) {
     return (
       <div className="bg-bg-white text-body-3 text-text-secondary flex min-h-screen items-center justify-center">
@@ -64,7 +114,7 @@ const ProductDetailPageContent = ({ productId }: { productId: string }) => {
     );
   }
 
-  if (isError || !data) {
+  if (isError || (isItemMode && !itemData) || (!isItemMode && !productData)) {
     return (
       <div className="bg-bg-white text-body-3 text-text-secondary flex min-h-screen items-center justify-center">
         아이템 정보를 찾을 수 없습니다.
@@ -72,46 +122,31 @@ const ProductDetailPageContent = ({ productId }: { productId: string }) => {
     );
   }
 
-  const role: ViewerRole = data.viewerMode === 'SELLER' ? 'seller' : 'buyer';
-  const saleStatus: ProductSaleStatus = PRODUCT_STATUS_MAP[data.productStatus];
+  // product mode와 item mode를 통합한 view model 생성
+  const {
+    role,
+    saleStatus,
+    brandName,
+    itemName,
+    price,
+    imageUrl,
+    tenureRecord,
+    offerAvailable,
+    conditionChecks,
+    measurementSection,
+    seller,
+    sellerDescription,
+    ootdItems,
+  } = buildProductDetailViewModel({
+    isItemMode,
+    itemData,
+    productData,
+    taggedOotdsData,
+    currentUserId,
+  });
+
   const showListingSections = saleStatus !== 'hidden';
   const showCTA = role === 'buyer' && saleStatus !== 'sold' && saleStatus !== 'trading';
-
-  const seller = {
-    id: String(data.seller.userId),
-    nickname: data.seller.username,
-    followerCount: 0,
-    avatarUrl: data.seller.profileImageUrl ?? undefined,
-  };
-
-  const tenureRecord = {
-    interestCount: data.item.wishCount,
-    ootdVerifiedCount: data.item.ootdVerifiedWearCount,
-    lastWornDate: '-',
-    size: `${data.item.sizeSystem} ${data.item.sizeValue}`,
-    wornFor: '-',
-    category: data.item.categorySmall,
-    firstOwnedDate: '-',
-  };
-
-  const conditionChecks = data.conditionFlags
-    ? (Object.entries(data.conditionFlags) as [string, boolean][]).map(([key, checked]) => ({
-        label: CONDITION_LABELS[key] ?? key,
-        checked,
-      }))
-    : undefined;
-
-  const representativeOOTDs = data.representativeOotds.map((ootd) => ({
-    id: String(ootd.ootdId),
-    imageUrl: ootd.imageUrl,
-  }));
-
-  const measurementSection = getMeasurementSection(
-    data.item.categoryLarge,
-    data.measurements ?? undefined,
-  );
-
-  const offerAvailable = data.availableActions.includes('OFFER');
 
   const handleCopyLink = async () => {
     try {
@@ -130,7 +165,7 @@ const ProductDetailPageContent = ({ productId }: { productId: string }) => {
     }
     try {
       await navigator.share({
-        title: `${data.item.brandName} / ${data.item.itemName}`,
+        title: `${brandName} / ${itemName}`,
         url: window.location.href,
       });
     } catch (error) {
@@ -144,26 +179,21 @@ const ProductDetailPageContent = ({ productId }: { productId: string }) => {
     <div className={`bg-bg-white flex min-h-screen flex-col ${showCTA ? 'pb-[86px]' : ''}`}>
       <ItemDetailHeader
         onShareClick={() => setShowShareOptions(true)}
-        onMoreClick={() => setShowMoreOptions(true)}
+        onMoreClick={isItemMode && role === 'seller' ? undefined : () => setShowMoreOptions(true)}
       />
       <ItemImageSection
-        imageUrls={[data.mainImageUrl]}
+        imageUrls={[imageUrl]}
         dimmed={saleStatus === 'sold'}
         wished={wished}
         onToggleWish={toggleWish}
       >
-        <ItemTitle
-          brand={data.item.brandName}
-          name={data.item.itemName}
-          saleStatus={saleStatus}
-          price={data.price ?? undefined}
-        />
+        <ItemTitle brand={brandName} name={itemName} saleStatus={saleStatus} price={price} />
       </ItemImageSection>
 
-      {showListingSections && <SellerInfoSection seller={seller} />}
+      {showListingSections && seller && <SellerInfoSection seller={seller} />}
 
-      {showListingSections && data.sellerDescription && (
-        <ProductDescriptionSection description={data.sellerDescription} />
+      {showListingSections && sellerDescription && (
+        <ProductDescriptionSection description={sellerDescription} />
       )}
 
       <TenureRecordSection record={tenureRecord} />
@@ -175,8 +205,9 @@ const ProductDetailPageContent = ({ productId }: { productId: string }) => {
       {showListingSections && conditionChecks && <ConditionCheckSection items={conditionChecks} />}
 
       <RepresentativeOOTDSection
-        items={representativeOOTDs}
-        onMoreClick={() => navigate(`/product/${productId}/ootds`)}
+        title={isItemMode ? '태그된 OOTD' : '대표 OOTD'}
+        items={ootdItems}
+        onMoreClick={isItemMode ? undefined : () => navigate(`/product/${productId}/ootds`)}
       />
 
       <ItemDetailCTA
@@ -188,7 +219,8 @@ const ProductDetailPageContent = ({ productId }: { productId: string }) => {
         }
         onOffer={() => navigate(`/product/${productId}/purchase/price`)}
         onChat={async () => {
-          const { chatRoomId } = await createOrGetChatRoom(data.item.itemId);
+          if (!productData) return;
+          const { chatRoomId } = await createOrGetChatRoom(productData.item.itemId);
           navigate(`/chat/${chatRoomId}`);
         }}
       />

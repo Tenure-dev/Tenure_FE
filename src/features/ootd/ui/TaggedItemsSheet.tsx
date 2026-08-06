@@ -1,25 +1,29 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, BellRing } from 'lucide-react';
-import { BottomSheet, CTAButton } from '@/shared/components';
+import { CTAButton } from '@/shared/components';
 import { cn } from '@/shared/lib/cn';
 import { useTagNavigation } from '@/features/ootd/lib/useTagNavigation';
 import type { TaggedItem } from '@/features/ootd/model/types';
 
 export interface TaggedItemsSheetProps {
   open: boolean;
+  onOpen: () => void;
   onClose: () => void;
   items: TaggedItem[];
   isOwner: boolean;
   onViewRelatedOotd: () => void;
   onToggleWish: (itemId: number, currentlyWished: boolean) => void;
-  dragProgressPx?: number;
 }
 
 const formatPrice = (price?: number) => (price ? `${price.toLocaleString()}원` : '');
 
 const ACTION_WIDTH = 84;
 const SWIPE_OPEN_THRESHOLD = ACTION_WIDTH / 2;
+
+// 배경 화면 스크롤과 무관하게 화면 하단에 항상 고정 노출되는 높이(핸들 + 제목 + 부제목).
+export const TAGGED_ITEMS_PEEK_HEIGHT_PX = 96;
+const SHEET_DRAG_THRESHOLD_PX = 80;
 
 const STATUS_LABEL: Record<TaggedItem['status'], string> = {
   판매중: '판매중',
@@ -172,52 +176,122 @@ const TaggedItemRow = ({ item, isOwner, onToggleWish }: TaggedItemRowProps) => {
 
 const TaggedItemsSheet = ({
   open,
+  onOpen,
   onClose,
   items,
   isOwner,
   onViewRelatedOotd,
   onToggleWish,
-  dragProgressPx,
 }: TaggedItemsSheetProps) => {
+  // 드래그 중에만 값이 존재. wasOpen은 드래그 시작 시점의 open 상태(스냅 방향 판단용).
+  const [drag, setDrag] = useState<{ startY: number; wasOpen: boolean; deltaY: number } | null>(
+    null,
+  );
+
+  const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    setDrag({ startY: e.clientY, wasOpen: open, deltaY: 0 });
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    setDrag((prev) => (prev ? { ...prev, deltaY: e.clientY - prev.startY } : prev));
+  };
+
+  const handlePointerUp = () => {
+    if (!drag) return;
+    const { wasOpen, deltaY } = drag;
+    setDrag(null);
+    if (wasOpen) {
+      // 펼쳐진 상태에서 아래로 충분히 내리면 접는다(바깥 탭 닫기와 동일한 결과).
+      if (deltaY > SHEET_DRAG_THRESHOLD_PX) onClose();
+    } else if (deltaY < -SHEET_DRAG_THRESHOLD_PX) {
+      // 접힌(peek) 상태에서 위로 충분히 올리면 펼친다.
+      onOpen();
+    }
+  };
+
+  const handleHeaderClick = () => {
+    if (!open) onOpen();
+  };
+
+  const isDragging = drag !== null;
+
+  let transform: string;
+  if (drag) {
+    transform = drag.wasOpen
+      ? `translateY(${Math.max(0, drag.deltaY)}px)`
+      : `translateY(calc(100% - ${TAGGED_ITEMS_PEEK_HEIGHT_PX + Math.max(0, -drag.deltaY)}px))`;
+  } else {
+    transform = open
+      ? 'translateY(0)'
+      : `translateY(calc(100% - ${TAGGED_ITEMS_PEEK_HEIGHT_PX}px))`;
+  }
+
   return (
-    <BottomSheet
-      open={open}
-      onClose={onClose}
-      variant="plain"
-      dragProgressPx={dragProgressPx}
-      className="max-h-[70vh] overflow-y-auto"
-    >
-      <div className="px-5 pb-6">
-        <h2 className="text-title-4 text-text-primary font-semibold">태그된 아이템</h2>
-        <p className="text-body-3 text-text-tertiary mt-1">사진 속에서 태그된 것만 모아봅니다.</p>
-
-        {items.length === 0 ? (
-          <div className="bg-bg-tertiary text-body-3 text-text-secondary mt-5 rounded-lg px-4 py-8 text-center">
-            관련된 태그가 없습니다.
-          </div>
-        ) : (
-          <ul className="mt-4 flex flex-col gap-3">
-            {items.map((item) => (
-              <TaggedItemRow
-                key={`${item.id}-${open}`}
-                item={item}
-                isOwner={isOwner}
-                onToggleWish={onToggleWish}
-              />
-            ))}
-          </ul>
+    <div className="pointer-events-none fixed inset-0 z-40">
+      <div
+        className={cn(
+          'absolute inset-0 bg-black/40',
+          isDragging ? '' : 'transition-opacity duration-300',
+          open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0',
         )}
+        onClick={onClose}
+      />
 
-        <div className="mt-5">
-          <CTAButton
-            label="관련된 OOTD 보러가기"
-            onClick={onViewRelatedOotd}
-            fullWidth
-            variant="dark"
-          />
+      <div
+        className={cn(
+          'bg-bg-white pointer-events-auto absolute inset-x-0 bottom-0 mx-auto flex max-w-[768px]',
+          'min-w-[320px] flex-col overflow-hidden rounded-t-2xl shadow-[0_-8px_24px_rgba(0,0,0,0.12)]',
+          isDragging ? '' : 'transition-transform duration-300 ease-out',
+        )}
+        style={{ height: '70vh', transform }}
+      >
+        <div
+          onClick={handleHeaderClick}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          className="flex shrink-0 touch-none flex-col items-center gap-2 px-5 pt-2 pb-4"
+        >
+          <span className="bg-gray-bg h-1 w-9 rounded-full" />
+          <span className="w-full text-left">
+            <span className="text-body-1 text-text-primary block font-semibold">태그된 아이템</span>
+            <span className="text-body-3 text-text-tertiary">
+              사진 속에서 태그된 것만 모아봅니다.
+            </span>
+          </span>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 pb-6" inert={!open}>
+          {items.length === 0 ? (
+            <div className="bg-bg-tertiary text-body-3 text-text-secondary rounded-lg px-4 py-8 text-center">
+              관련된 태그가 없습니다.
+            </div>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {items.map((item) => (
+                <TaggedItemRow
+                  key={`${item.id}-${open}`}
+                  item={item}
+                  isOwner={isOwner}
+                  onToggleWish={onToggleWish}
+                />
+              ))}
+            </ul>
+          )}
+
+          <div className="mt-5">
+            <CTAButton
+              label="관련된 OOTD 보러가기"
+              onClick={onViewRelatedOotd}
+              fullWidth
+              variant="dark"
+            />
+          </div>
         </div>
       </div>
-    </BottomSheet>
+    </div>
   );
 };
 

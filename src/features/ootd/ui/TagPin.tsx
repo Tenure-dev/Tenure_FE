@@ -1,5 +1,5 @@
-import { cn } from '@/shared/lib/cn';
 import type { TaggedItem } from '@/features/ootd/model/types';
+import TagBubble, { type TagBubbleTail } from './TagBubble';
 
 export interface TagPinProps {
   item: TaggedItem;
@@ -11,51 +11,33 @@ export interface TagPinProps {
 }
 
 const TagPin = ({ item, selected = false, onClick, interactive = true }: TagPinProps) => {
-  const content = (
-    <>
-      <p className="text-body-3 text-text-primary truncate font-semibold">
-        {item.brand} / {item.name}
-      </p>
-      <p
-        className={cn(
-          'text-body-4',
-          item.status === '판매중' ? 'text-brand' : 'text-text-tertiary',
-        )}
-      >
-        #{item.status}
-      </p>
-    </>
-  );
-
   // 말풍선이 사진 밖으로 넘치지 않도록 태그 지점이 가장자리에 가까우면 반대쪽으로 펼친다.
   const flipX = item.position.x > 65;
   const flipY = item.position.y < 25;
 
-  // 태그 지점과 맞닿는 모서리만 뾰족하게(각지게) 남기고 나머지 세 모서리는 둥글게 처리한다.
-  const cornerClass =
-    !flipY && !flipX
-      ? 'rounded-tl-2xl rounded-tr-2xl rounded-br-2xl'
-      : !flipY && flipX
-        ? 'rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl'
-        : flipY && !flipX
-          ? 'rounded-tr-2xl rounded-bl-2xl rounded-br-2xl'
-          : 'rounded-tl-2xl rounded-bl-2xl rounded-br-2xl';
+  // 태그 지점(anchor)과 맞닿는 모서리를 꼬리로. flip 조합 → 꼬리 위치.
+  const tail: TagBubbleTail = !flipY ? (flipX ? 'br' : 'bl') : flipX ? 'tr' : 'tl';
 
   const style = {
     left: `${item.position.x}%`,
     top: `${item.position.y}%`,
     transform: `translate(${flipX ? '-100%' : '0%'}, ${flipY ? '0%' : '-100%'})`,
   };
-  const className = cn(
-    'absolute max-w-[170px] bg-bg-white/95 px-3 py-1.5 text-left shadow-md',
-    cornerClass,
-    selected && 'ring-2 ring-brand',
+
+  const bubble = (
+    <TagBubble
+      title={`${item.brand} / ${item.name}`}
+      status={item.status}
+      statusClassName={item.status === '판매중' ? 'text-brand' : 'text-text-tertiary'}
+      tail={tail}
+      selected={selected}
+    />
   );
 
   if (!onClick) {
     return (
-      <div style={style} className={className}>
-        {content}
+      <div style={style} className="absolute">
+        {bubble}
       </div>
     );
   }
@@ -69,9 +51,9 @@ const TagPin = ({ item, selected = false, onClick, interactive = true }: TagPinP
           onClick();
         }}
         style={style}
-        className={cn(className, 'cursor-default')}
+        className="absolute cursor-default"
       >
-        {content}
+        {bubble}
       </div>
     );
   }
@@ -87,9 +69,9 @@ const TagPin = ({ item, selected = false, onClick, interactive = true }: TagPinP
         onClick();
       }}
       style={style}
-      className={className}
+      className="absolute"
     >
-      {content}
+      {bubble}
     </button>
   );
 };

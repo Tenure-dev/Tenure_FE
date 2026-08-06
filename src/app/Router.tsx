@@ -113,29 +113,6 @@ export const router = createBrowserRouter([
           { path: 'ootd/preview', element: <OotdPreviewPage /> },
           { path: 'chat', element: <ChatListPage /> },
           { path: 'chat/:id', element: <ChatRoomPage /> },
-          /* 채팅방 테스트용 (role × saleStatus × tradeStatus) */
-          { path: 'chat/buyer', element: <ChatRoomPage role="buyer" /> },
-          { path: 'chat/seller', element: <ChatRoomPage role="seller" /> },
-          {
-            path: 'chat/unlisted-buyer',
-            element: <ChatRoomPage role="buyer" saleStatus="unlisted" tradeStatus="waiting" />,
-          },
-          {
-            path: 'chat/unlisted-seller',
-            element: <ChatRoomPage role="seller" saleStatus="unlisted" tradeStatus="waiting" />,
-          },
-          {
-            // 미판매 + 구매제안X (판매자) → '제안 확인' 비활성
-            path: 'chat/unlisted-no-offer',
-            element: (
-              <ChatRoomPage
-                role="seller"
-                saleStatus="unlisted"
-                tradeStatus="none"
-                offerEnabled={false}
-              />
-            ),
-          },
         ],
       },
     ],

@@ -113,6 +113,7 @@ const ChatRoomPage = ({
     });
   };
 
+  console.log(room);
   return (
     <div
       style={vvHeight ? { height: vvHeight } : undefined}

@@ -41,7 +41,7 @@ const TagBubble = ({
         CORNER[tail],
         isBlack
           ? 'border-brand-primary border bg-black/60'
-          : 'border-border-primary bg-bg-white/60 border',
+          : 'border-border-primary bg-bg-white/75 border',
         selected && 'ring-brand ring-2',
         className,
       )}

@@ -32,5 +32,8 @@ export const cropImageToBbox = (
       );
     };
     img.onerror = () => reject(new Error('이미지를 불러오지 못했어요.'));
+    // 원격 이미지(상세 게시글의 imageUrl)도 canvas로 크롭할 수 있게 CORS 허용 요청.
+    // dataURL(카메라 촬영)엔 무해하고, 서버가 CORS 헤더를 주면 tainted 없이 크롭된다.
+    img.crossOrigin = 'anonymous';
     img.src = dataUrl;
   });

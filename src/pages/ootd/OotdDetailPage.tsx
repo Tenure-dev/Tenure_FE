@@ -459,8 +459,7 @@ const OotdDetailPage = () => {
             photo={post.imageUrl}
             initialTags={post.taggedItems.map(toEditorTag)}
             onChange={setEditorTags}
-            // 원격 이미지(post.imageUrl)는 canvas 크롭 시 CORS로 tainted될 수 있어 대표이미지 크롭 비활성.
-            enableNewItemCrop={false}
+            // 새 아이템 등록 시 bbox 영역을 대표 이미지로 크롭·업로드(cropImage가 crossOrigin으로 원격 이미지 지원).
             // 손 안 댄 기존 태그는 게시글처럼 흰색 말풍선, 누르거나 새로 추가한 것만 검정.
             untouchedVariant="default"
             className="flex-1"

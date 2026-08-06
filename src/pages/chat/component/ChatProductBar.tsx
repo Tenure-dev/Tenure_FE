@@ -13,6 +13,8 @@ const ChatActions = ({
   tradeId = null,
   productId = null,
   itemId = null,
+  purchaseIntentId = null,
+  purchaseOfferId = null,
 }: {
   role: ChatRole;
   saleStatus: SaleStatus;
@@ -21,6 +23,8 @@ const ChatActions = ({
   tradeId?: number | null;
   productId?: number | null;
   itemId?: number | null;
+  purchaseIntentId?: number | null;
+  purchaseOfferId?: number | null;
 }) => {
   const navigate = useNavigate();
   // 거래 생성 이후(생성~완료): 3번째 버튼 '거래 상세', 판매 전환 비활성
@@ -37,7 +41,12 @@ const ChatActions = ({
     const proposalDisabled = isUnlisted && !offerEnabled && !tradeStarted;
     return (
       <div className="flex gap-2">
-        <Button variant="solid" size="36" className="text-body-2 font-regular w-full! flex-1">
+        <Button
+          variant="solid"
+          size="36"
+          className="text-body-2 font-regular w-full! flex-1"
+          onClick={itemId != null ? () => navigate(`/items/${itemId}`) : undefined}
+        >
           {isUnlisted ? '아이템 관리' : '상품 관리'}
         </Button>
         <Button
@@ -71,6 +80,16 @@ const ChatActions = ({
       saleStatus === 'onSale' ? { label: '구매하기', filled: true } : { label: '보낸 요청 보기' };
   }
 
+  // '보낸 요청 보기' 목적지: 판매중이면 구매 의사 상세, 미판매면 구매 제안 상세. id 없으면 null(무동작).
+  const sentRequestPath =
+    saleStatus === 'onSale'
+      ? purchaseIntentId != null
+        ? `/purchase/intent/${purchaseIntentId}`
+        : null
+      : purchaseOfferId != null
+        ? `/purchase/offer/${purchaseOfferId}`
+        : null;
+
   return (
     <div className="flex gap-2">
       <Button
@@ -91,7 +110,9 @@ const ChatActions = ({
             : right.label === '구매하기' && productId != null
               ? () =>
                   navigate(`/product/${productId}/purchase/checkout`, { state: { direct: true } })
-              : undefined
+              : right.label === '보낸 요청 보기' && sentRequestPath
+                ? () => navigate(sentRequestPath)
+                : undefined
         }
       >
         {right.label}
@@ -109,6 +130,8 @@ const ChatProductBar = ({
   tradeId = null,
   productId = null,
   itemId = null,
+  purchaseIntentId = null,
+  purchaseOfferId = null,
 }: {
   product: ChatProduct;
   role: ChatRole;
@@ -118,6 +141,8 @@ const ChatProductBar = ({
   tradeId?: number | null;
   productId?: number | null;
   itemId?: number | null;
+  purchaseIntentId?: number | null;
+  purchaseOfferId?: number | null;
 }) => (
   <div className="border-border-secondary flex flex-col gap-4 border-b px-5 py-2">
     <div className="flex items-center gap-2">
@@ -157,6 +182,8 @@ const ChatProductBar = ({
       tradeId={tradeId}
       productId={productId}
       itemId={itemId}
+      purchaseIntentId={purchaseIntentId}
+      purchaseOfferId={purchaseOfferId}
     />
   </div>
 );

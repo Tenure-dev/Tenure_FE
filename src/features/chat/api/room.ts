@@ -31,6 +31,8 @@ export interface ChatRoomView {
   productId: number;
   itemId: number;
   tradeId: number | null;
+  purchaseIntentId: number | null; // 구매자가 보낸 구매 의사 id (판매중 방)
+  purchaseOfferId: number | null; // 구매자가 보낸 구매 제안 id (미판매 방)
   opponentExited: boolean;
 }
 
@@ -66,6 +68,8 @@ export const toChatRoomView = (r: ChatRoomDetailResponse): ChatRoomView => {
     productId: r.productId,
     itemId: r.itemId,
     tradeId: r.tradeId,
+    purchaseIntentId: r.purchaseIntentId ?? null,
+    purchaseOfferId: r.purchaseOfferId ?? null,
     opponentExited: r.opponentExited,
   };
 };

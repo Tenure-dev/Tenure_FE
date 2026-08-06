@@ -65,5 +65,8 @@ export interface ChatRoomDetailResponse {
   buyer: boolean;
   hasPurchaseIntent: boolean;
   hasPurchaseOffer: boolean;
+  // BE 추가 예정: 구매자가 보낸 SENT 의사/제안의 id(없으면 null). '보낸 요청 보기' 링크용.
+  purchaseIntentId?: number | null;
+  purchaseOfferId?: number | null;
   opponentExited: boolean; // 상대방이 채팅방을 나갔는지
 }

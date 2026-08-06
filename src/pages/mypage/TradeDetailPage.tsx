@@ -192,15 +192,6 @@ const TradeDetailPage = () => {
                     <span className={`text-[14px] ${textClass}`}>{step.label}</span>
                     {step.date && <span className="text-[12px] text-[#767676]">{step.date}</span>}
                   </div>
-                  {step.label === '상품 발송' && canRegisterShipping && (
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/trade/${trade.tradeId}/shipping`)}
-                      className="text-[13px] text-[#00AAFF]"
-                    >
-                      운송 번호 입력
-                    </button>
-                  )}
                   {step.label === '상품 발송' && trade.trackingNumber && (
                     <span className="text-[12px] text-[#767676]">
                       {deliveryCarrierLabel} 택배 {trade.trackingNumber}

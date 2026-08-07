@@ -1,11 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Bookmark, Heart } from 'lucide-react';
 import { FollowButton, Toast } from '@/shared/components';
@@ -30,14 +23,15 @@ import { toOotdPost } from '@/features/ootd/lib/mappers';
 import TagPin from '@/features/ootd/ui/TagPin';
 import IntroTagModal from '@/features/ootd/ui/IntroTagModal';
 import ConfirmModal from '@/features/ootd/ui/ConfirmModal';
-import TaggedItemsSheet from '@/features/ootd/ui/TaggedItemsSheet';
+import TaggedItemsSheet, { TAGGED_ITEMS_PEEK_HEIGHT_PX } from '@/features/ootd/ui/TaggedItemsSheet';
 import MoreMenu from '@/features/ootd/ui/MoreMenu';
 import OotdTagEditor, { type EditorTag } from '@/features/ootd/ui/OotdTagEditor';
 import ViewHeader from './components/ViewHeader';
 import EditHeader from './components/EditHeader';
 
-const INTRO_SEEN_KEY = 'ootd-intro-seen';
-const SHEET_DRAG_OPEN_THRESHOLD = 80;
+// 계정당 한 번만 보여주는 안내 모달. 로그인 세션이 아니라 계정(userId) 단위로 영구 기록한다.
+const INTRO_SEEN_KEY_PREFIX = 'ootd-intro-seen';
+const getIntroSeenKey = (userId: number | null) => `${INTRO_SEEN_KEY_PREFIX}:${userId ?? 'anon'}`;
 
 const getCurrentUserId = (): number | null => {
   const raw = localStorage.getItem(USER_ID_STORAGE_KEY);
@@ -70,8 +64,6 @@ const OotdDetailPage = () => {
   const [tagsVisible, setTagsVisible] = useState(true);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showTaggedSheet, setShowTaggedSheet] = useState(false);
-  const [sheetDragPx, setSheetDragPx] = useState<number | undefined>(undefined);
-  const dragStartYRef = useRef<number | null>(null);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -117,7 +109,7 @@ const OotdDetailPage = () => {
       const detail = await getOotdDetail(ootdId);
       if (loadRequestIdRef.current !== requestId) return;
       setPost(toOotdPost(detail, currentUserId));
-      setShowIntro(sessionStorage.getItem(INTRO_SEEN_KEY) !== '1');
+      setShowIntro(localStorage.getItem(getIntroSeenKey(currentUserId)) !== '1');
     } catch {
       if (loadRequestIdRef.current === requestId) setLoadError(true);
     } finally {
@@ -156,28 +148,6 @@ const OotdDetailPage = () => {
 
   // 완료 버튼 활성: 변경이 있을 때. 태그 0개면 눌렀을 때 토스트로 막는다(handleComplete).
   const canComplete = changeCount > 0;
-
-  const handlePeekPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
-    dragStartYRef.current = e.clientY;
-    setSheetDragPx(0);
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handlePeekPointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
-    if (dragStartYRef.current === null) return;
-    const draggedUp = dragStartYRef.current - e.clientY;
-    setSheetDragPx(Math.max(0, draggedUp));
-  };
-
-  const handlePeekPointerEnd = () => {
-    if (dragStartYRef.current === null) return;
-    const finalDrag = sheetDragPx ?? 0;
-    dragStartYRef.current = null;
-    setSheetDragPx(undefined);
-    if (finalDrag > SHEET_DRAG_OPEN_THRESHOLD) {
-      setShowTaggedSheet(true);
-    }
-  };
 
   const handlePhotoClick = () => {
     setTagsVisible((v) => !v);
@@ -358,11 +328,13 @@ const OotdDetailPage = () => {
     );
   }
 
-  const isUnsellable = (status: TaggedItem['status']) =>
-    status === '미판매_제안가능' || status === '미판매_제안불가';
+  const isDeadEnd = (status: TaggedItem['status']) => status === '삭제됨';
 
   return (
-    <div className="bg-bg-white relative flex min-h-screen flex-col">
+    <div
+      className="bg-bg-white relative flex min-h-screen flex-col"
+      style={mode === 'view' ? { paddingBottom: TAGGED_ITEMS_PEEK_HEIGHT_PX } : undefined}
+    >
       {mode === 'view' ? (
         <ViewHeader onBack={() => navigate(-1)} onMoreClick={() => setShowMoreMenu(true)} />
       ) : (
@@ -390,9 +362,8 @@ const OotdDetailPage = () => {
                   <TagPin
                     key={tag.id}
                     item={tag}
-                    // 판매 전환 이력이 없는 미판매 태그는 이동할 상세가 없어 탭해도 아무 동작 안 함.
-                    onClick={isUnsellable(tag.status) ? () => {} : () => goToDetail(tag)}
-                    interactive={!isUnsellable(tag.status)}
+                    onClick={isDeadEnd(tag.status) ? () => {} : () => goToDetail(tag)}
+                    interactive={!isDeadEnd(tag.status)}
                   />
                 ))}
             </div>
@@ -433,30 +404,12 @@ const OotdDetailPage = () => {
                 <FollowButton following={post.isFollowing} onToggle={toggleFollow} />
               )}
             </div>
-
-            <button
-              type="button"
-              onClick={() => setShowTaggedSheet(true)}
-              onPointerDown={handlePeekPointerDown}
-              onPointerMove={handlePeekPointerMove}
-              onPointerUp={handlePeekPointerEnd}
-              onPointerCancel={handlePeekPointerEnd}
-              className="border-border-secondary mt-auto flex touch-none flex-col items-center gap-2 border-t px-4 pt-2 pb-6"
-            >
-              <span className="bg-gray-bg h-1 w-9 rounded-full" />
-              <span className="w-full text-left">
-                <span className="text-body-1 text-text-primary block font-semibold">
-                  태그된 아이템
-                </span>
-                <span className="text-body-3 text-text-tertiary">
-                  사진 속에서 태그된 것만 모아봅니다.
-                </span>
-              </span>
-            </button>
           </>
         ) : (
           <OotdTagEditor
             photo={post.imageUrl}
+            ootdId={post.id}
+            scrollable
             initialTags={post.taggedItems.map(toEditorTag)}
             onChange={setEditorTags}
             // 새 아이템 등록 시 bbox 영역을 대표 이미지로 크롭·업로드(cropImage가 crossOrigin으로 원격 이미지 지원).
@@ -470,36 +423,38 @@ const OotdDetailPage = () => {
       <IntroTagModal
         open={showIntro}
         onConfirm={() => {
-          sessionStorage.setItem(INTRO_SEEN_KEY, '1');
+          localStorage.setItem(getIntroSeenKey(currentUserId), '1');
           setShowIntro(false);
         }}
-        imageUrl={post.imageUrl}
-        previewTags={post.taggedItems.slice(0, 2)}
       />
 
-      <MoreMenu
-        open={showMoreMenu}
-        onClose={() => setShowMoreMenu(false)}
-        isOwner={post.isOwner}
-        isBlocked={post.isBlocked}
-        onEdit={handleStartEdit}
-        onDelete={() => {
-          setShowMoreMenu(false);
-          setShowDeleteConfirm(true);
-        }}
-        onBlockToggle={handleBlockMenuClick}
-        onReport={handleReportClick}
-      />
+      <div className="relative z-50">
+        <MoreMenu
+          open={showMoreMenu}
+          onClose={() => setShowMoreMenu(false)}
+          isOwner={post.isOwner}
+          isBlocked={post.isBlocked}
+          onEdit={handleStartEdit}
+          onDelete={() => {
+            setShowMoreMenu(false);
+            setShowDeleteConfirm(true);
+          }}
+          onBlockToggle={handleBlockMenuClick}
+          onReport={handleReportClick}
+        />
+      </div>
 
-      <TaggedItemsSheet
-        open={showTaggedSheet}
-        onClose={() => setShowTaggedSheet(false)}
-        items={post.taggedItems}
-        isOwner={post.isOwner}
-        dragProgressPx={sheetDragPx}
-        onViewRelatedOotd={() => navigate(`/ootd/${targetId}/related`)}
-        onToggleWish={toggleTagWish}
-      />
+      {mode === 'view' && (
+        <TaggedItemsSheet
+          open={showTaggedSheet}
+          onOpen={() => setShowTaggedSheet(true)}
+          onClose={() => setShowTaggedSheet(false)}
+          items={post.taggedItems}
+          isOwner={post.isOwner}
+          onViewRelatedOotd={() => navigate(`/ootd/${targetId}/related`)}
+          onToggleWish={toggleTagWish}
+        />
+      )}
 
       <ConfirmModal
         open={showBlockConfirm}

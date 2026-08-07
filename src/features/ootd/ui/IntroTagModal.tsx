@@ -1,23 +1,17 @@
 import { Modal, Button } from '@/shared/components';
-import type { TaggedItem } from '@/features/ootd/model/types';
-import TagPin from './TagPin';
+import introTagGuideImage from '@/shared/assets/ootd/intro-tag-guide.png';
 
 export interface IntroTagModalProps {
   open: boolean;
   onConfirm: () => void;
-  imageUrl: string;
-  previewTags?: TaggedItem[];
 }
 
-const IntroTagModal = ({ open, onConfirm, imageUrl, previewTags = [] }: IntroTagModalProps) => {
+const IntroTagModal = ({ open, onConfirm }: IntroTagModalProps) => {
   return (
     <Modal open={open}>
       <div className="flex flex-col items-center gap-6 text-center">
-        <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl">
-          <img src={imageUrl} alt="" className="size-full object-cover object-top" />
-          {previewTags.map((tag) => (
-            <TagPin key={tag.id} item={tag} />
-          ))}
+        <div className="relative w-full overflow-hidden rounded-xl">
+          <img src={introTagGuideImage} alt="" className="w-full object-contain" />
         </div>
 
         <div>

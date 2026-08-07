@@ -95,6 +95,17 @@ export interface OotdTagCreateRequest {
   status: 'CONFIRMED';
 }
 
+export interface OotdTagAnalyzeRequest {
+  bbox: Bbox;
+}
+
+export interface OotdTagAnalyzeResponse {
+  labelText: string | null;
+  categoryLarge: string | null;
+  categorySmall: string | null;
+  matchedItemIds: number[];
+}
+
 export interface OotdTagUpdateRequest {
   itemId: number;
   bbox: Bbox;

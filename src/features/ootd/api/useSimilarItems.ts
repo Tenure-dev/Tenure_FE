@@ -1,8 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
+import { getDaysAgo } from '@/features/mypage/lib/daysAgo';
 import { getSimilarItems } from './similarItems';
 import type { SimilarItemResponse } from './dto';
 import type { OotdItem } from '../model/item';
+
+const PENDING_CATEGORY_NAME = 'AI 분류 대기';
 
 // 추천 응답 → 태그 화면 아이템 추천 리스트용 OotdItem
 const toOotdItem = (r: SimilarItemResponse): OotdItem => ({
@@ -10,7 +13,12 @@ const toOotdItem = (r: SimilarItemResponse): OotdItem => ({
   brand: r.brandName,
   name: r.itemName,
   thumbnail: resolveFileUrl(r.representativeImageUrl),
-  meta: r.categoryName,
+  meta: [
+    r.lastWornAt ? `최근 착용 ${getDaysAgo(r.lastWornAt)}일 전` : null,
+    `OOTD 인증 : ${r.ootdVerifiedWearCount ?? 0}회`,
+  ]
+    .filter(Boolean)
+    .join(' · '),
   isNew: false,
 });
 
@@ -18,6 +26,6 @@ const toOotdItem = (r: SimilarItemResponse): OotdItem => ({
 export const useSimilarItems = (ootdId?: number) =>
   useQuery({
     queryKey: ['similar-items', ootdId ?? null],
-    queryFn: () => getSimilarItems(10, ootdId),
-    select: (data) => data.map(toOotdItem),
+    queryFn: () => getSimilarItems(30, ootdId),
+    select: (data) => data.filter((r) => r.categoryName !== PENDING_CATEGORY_NAME).map(toOotdItem),
   });

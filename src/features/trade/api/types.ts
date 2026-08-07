@@ -3,6 +3,13 @@ export type TradeStatus =
 
 export type TradeViewerMode = 'BUYER' | 'SELLER';
 
+export interface TradeCounterpart {
+  userId: number;
+  username: string;
+  profileImageUrl: string | null;
+  followerCount: number;
+}
+
 export interface TradeDetailResponse {
   tradeId: number;
   viewerMode: TradeViewerMode;
@@ -23,12 +30,20 @@ export interface TradeDetailResponse {
   sellerServiceFee: number | null;
   paymentAmount: number;
   settlementAmount: number | null;
+  deliveryReceiverName: string;
+  deliveryPhone: string;
+  deliveryAddressLine1: string;
+  deliveryAddressLine2: string;
+  deliveryPostalCode: string | null;
+  deliveryRequestNote: string | null;
+  tradeRequestNote: string | null;
   shippedAt: string | null;
   deliveredAt: string | null;
   confirmedAt: string | null;
   settledAt: string | null;
   createdAt: string;
   updatedAt: string;
+  counterpart: TradeCounterpart;
 }
 
 export interface TradeStatusChangeRequest {

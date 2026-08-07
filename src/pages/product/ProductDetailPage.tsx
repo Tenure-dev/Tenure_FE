@@ -207,7 +207,11 @@ const ProductDetailPageContent = ({
       <RepresentativeOOTDSection
         title={isItemMode ? '태그된 OOTD' : '대표 OOTD'}
         items={ootdItems}
-        onMoreClick={isItemMode ? undefined : () => navigate(`/product/${productId}/ootds`)}
+        onMoreClick={
+          isItemMode
+            ? () => navigate(`/items/${itemIdForItemMode}/ootds`)
+            : () => navigate(`/product/${productId}/ootds`)
+        }
       />
 
       <ItemDetailCTA

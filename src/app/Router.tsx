@@ -98,6 +98,7 @@ export const router = createBrowserRouter([
           { path: 'product', element: <ProductDetailPage /> },
           { path: 'product/:productId', element: <ProductDetailPage /> },
           { path: 'product/:productId/ootds', element: <OotdGridPage /> },
+          { path: 'items/:itemId/ootds', element: <OotdGridPage /> },
           { path: 'product/:productId/edit', element: <ProductEditPage /> },
           { path: 'product/:productId/report', element: <ProductReportPage /> },
           { path: 'product/:itemId/offer/price', element: <PricePage /> },

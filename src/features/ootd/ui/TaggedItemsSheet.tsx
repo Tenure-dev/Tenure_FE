@@ -23,7 +23,12 @@ const SWIPE_OPEN_THRESHOLD = ACTION_WIDTH / 2;
 
 // 배경 화면 스크롤과 무관하게 화면 하단에 항상 고정 노출되는 높이(핸들 + 제목 + 부제목).
 export const TAGGED_ITEMS_PEEK_HEIGHT_PX = 96;
-const SHEET_DRAG_THRESHOLD_PX = 80;
+// 펼친 상태에서 아래로 내려 접을 때는 조금만 내려도 반응하도록 낮게, 접힌 상태에서 위로
+// 올려 펼 때는 실수로 스크롤하다 걸리지 않도록 조금 더 높게 잡는다.
+const SHEET_CLOSE_THRESHOLD_PX = 40;
+const SHEET_OPEN_THRESHOLD_PX = 80;
+// 이 정도 이하로만 움직였으면 드래그가 아니라 탭으로 간주한다.
+const SHEET_TAP_THRESHOLD_PX = 6;
 
 const STATUS_LABEL: Record<TaggedItem['status'], string> = {
   판매중: '판매중',
@@ -119,8 +124,9 @@ const TaggedItemRow = ({ item, isOwner, onToggleWish }: TaggedItemRowProps) => {
           onPointerUp={handlePointerEnd}
           onPointerCancel={handlePointerEnd}
           onClick={handleRowClick}
+          onDragStart={(e) => e.preventDefault()}
           className={cn(
-            'bg-bg-white flex touch-pan-y items-center gap-3',
+            'bg-bg-white flex touch-pan-y items-center gap-3 select-none',
             !isDeleted && !isUnsold && 'cursor-pointer active:opacity-70',
             !isDragging && 'transition-transform duration-200 ease-out',
             isDimmed && 'opacity-50',
@@ -135,7 +141,12 @@ const TaggedItemRow = ({ item, isOwner, onToggleWish }: TaggedItemRowProps) => {
           >
             <div className="bg-gray-bg size-full">
               {item.imageUrl && (
-                <img src={item.imageUrl} alt="" className="size-full object-cover" />
+                <img
+                  src={item.imageUrl}
+                  alt=""
+                  draggable={false}
+                  className="size-full object-cover"
+                />
               )}
             </div>
           </div>
@@ -197,21 +208,22 @@ const TaggedItemsSheet = ({
     setDrag((prev) => (prev ? { ...prev, deltaY: e.clientY - prev.startY } : prev));
   };
 
+  // 탭(거의 움직임 없음)과 드래그를 여기서 함께 판정한다. 별도 onClick을 쓰면, 드래그로
+  // 방금 닫은 직후에도 브라우저가 뒤이어 click 이벤트를 한 번 더 보내는 경우가 있어(이동량과
+  // 무관하게) open이 이미 false로 바뀐 걸 보고 handleHeaderClick이 즉시 다시 열어버리는
+  // 문제가 있었다. 그래서 열기/닫기/탭을 전부 pointerup 하나로만 판단한다.
   const handlePointerUp = () => {
     if (!drag) return;
     const { wasOpen, deltaY } = drag;
     setDrag(null);
+    const isTap = Math.abs(deltaY) < SHEET_TAP_THRESHOLD_PX;
     if (wasOpen) {
-      // 펼쳐진 상태에서 아래로 충분히 내리면 접는다(바깥 탭 닫기와 동일한 결과).
-      if (deltaY > SHEET_DRAG_THRESHOLD_PX) onClose();
-    } else if (deltaY < -SHEET_DRAG_THRESHOLD_PX) {
-      // 접힌(peek) 상태에서 위로 충분히 올리면 펼친다.
+      // 펼쳐진 상태에서 아래로 조금만 내려도 접는다(바깥 탭 닫기와 동일한 결과).
+      if (deltaY > SHEET_CLOSE_THRESHOLD_PX) onClose();
+    } else if (deltaY < -SHEET_OPEN_THRESHOLD_PX || isTap) {
+      // 접힌(peek) 상태에서 위로 충분히 올리거나, 핸들을 탭만 해도 펼친다.
       onOpen();
     }
-  };
-
-  const handleHeaderClick = () => {
-    if (!open) onOpen();
   };
 
   const isDragging = drag !== null;
@@ -247,12 +259,12 @@ const TaggedItemsSheet = ({
         style={{ height: '70vh', transform }}
       >
         <div
-          onClick={handleHeaderClick}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
-          className="flex shrink-0 touch-none flex-col items-center gap-2 px-5 pt-2 pb-4"
+          onDragStart={(e) => e.preventDefault()}
+          className="flex shrink-0 touch-none flex-col items-center gap-2 px-5 pt-2 pb-4 select-none"
         >
           <span className="bg-gray-bg h-1 w-9 rounded-full" />
           <span className="w-full text-left">

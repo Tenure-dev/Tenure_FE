@@ -3,8 +3,14 @@ import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import type { OotdItem, Bbox } from '@/features/ootd/model/item';
 import { useSimilarItems } from '@/features/ootd/api/useSimilarItems';
+import { analyzeTagArea } from '@/features/ootd/api/ootdApi';
+import { getItemDetail } from '@/features/mypage/api/itemsApi';
+import type { ItemDetailResponse } from '@/features/mypage/model/items';
+import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 import TagLoading from '@/pages/camera/component/TagLoading';
-import TagResultSheet from '@/pages/camera/component/TagResultSheet';
+import TagResultSheet, {
+  MIDDLE as RESULT_SHEET_DEFAULT_H,
+} from '@/pages/camera/component/TagResultSheet';
 import NewItemSheet from '@/pages/camera/component/NewItemSheet';
 import TagBBox from '@/pages/camera/component/TagBBox';
 import type { TagBubbleVariant } from './TagBubble';
@@ -26,15 +32,17 @@ type Box = {
 
 type Props = {
   photo: string | null;
+  ootdId?: number;
   initialTags?: EditorTag[]; // 기존 태그 복원(상세 편집). 없으면 빈 편집(생성).
   onChange?: (tags: EditorTag[]) => void; // 완성된 태그 셋이 바뀔 때마다 통지(부모가 완료/저장에 사용)
   enableNewItemCrop?: boolean; // 새 아이템 대표이미지 bbox 크롭. 원격 이미지 CORS 이슈 시 false. 기본 true.
   untouchedVariant?: TagBubbleVariant; // 손 안 댄 기존 태그 말풍선 색(기본 black). 상세 편집은 default(흰색).
+  scrollable?: boolean;
   className?: string;
 };
 
-const BOX_W = 0.4;
-const BOX_H = 0.35;
+const BOX_W = 0.26;
+const BOX_H = 0.22;
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
 
 // 클릭 지점을 중심으로 기본 크기 박스 (이미지 밖으로 안 나가게 clamp)
@@ -50,20 +58,31 @@ const newBoxId = () => `box-${Date.now()}-${boxSeq++}`;
 
 const ANALYSIS_DEBOUNCE_MS = 350; // 박스 생성/이동/리사이즈가 잠잠해진 뒤 한 번만 분석
 
+const toOotdItemFromDetail = (d: ItemDetailResponse): OotdItem => ({
+  id: String(d.itemId),
+  brand: d.brandName,
+  name: d.itemName,
+  thumbnail: resolveFileUrl(d.representativeImageUrl),
+  meta: `${d.categoryLarge} · ${d.categorySmall}`,
+  isNew: false,
+});
+
 // OOTD 생성/상세 편집이 공유하는 태그 에디터. 사진 위 bbox 박스 편집 + 유사 아이템 시트 + 새 아이템 등록.
 // 헤더/저장(완료)/네비게이션은 이 컴포넌트를 쓰는 페이지가 담당한다.
 const OotdTagEditor = ({
   photo,
+  ootdId,
   initialTags,
   onChange,
   enableNewItemCrop = true,
   untouchedVariant = 'black',
+  scrollable = false,
   className,
 }: Props) => {
-  // 유사 아이템 분석 결과(현재 API는 bbox/이미지 안 받으므로 목록은 동일하게 옴)
-  const { data: recommended = [], isPending, refetch } = useSimilarItems();
+  const { data: recommended = [], isPending } = useSimilarItems();
   const [addedItems, setAddedItems] = useState<OotdItem[]>([]); // 새로 등록한 아이템
-  const items = useMemo(() => [...addedItems, ...recommended], [addedItems, recommended]);
+  const [analyzedItems, setAnalyzedItems] = useState<Record<string, OotdItem[]>>({});
+  const [sheetHeight, setSheetHeight] = useState(RESULT_SHEET_DEFAULT_H);
   // 태그된 아이템 객체 보관 — 추천 목록이 갱신돼도 활성 박스 아이템이 목록에서 사라지지 않게
   const [tagged, setTagged] = useState<Record<string, OotdItem>>({});
 
@@ -85,6 +104,10 @@ const OotdTagEditor = ({
 
   const activeBox = boxes.find((b) => b.id === activeBoxId) ?? null;
   const tagCount = boxes.filter((b) => b.itemId).length; // 아이템 부착된 박스 = 완성 태그
+
+  const activeMatched = activeBoxId ? analyzedItems[activeBoxId] : undefined;
+  const baseItems = activeMatched ?? recommended;
+  const items = useMemo(() => [...addedItems, ...baseItems], [addedItems, baseItems]);
 
   const itemLabel = (id?: string) => {
     const it = items.find((i) => i.id === id);
@@ -118,11 +141,45 @@ const OotdTagEditor = ({
       ? [activeItem, ...filteredItems]
       : filteredItems;
 
+  const boxesRef = useRef<Box[]>(boxes);
+  useEffect(() => {
+    boxesRef.current = boxes;
+  }, [boxes]);
+
+  const runAnalysis = async (boxId: string, bbox: Bbox) => {
+    if (ootdId == null) return;
+    try {
+      const res = await analyzeTagArea(ootdId, { bbox });
+      if (res.matchedItemIds.length === 0) {
+        setAnalyzedItems((prev) => {
+          if (!(boxId in prev)) return prev;
+          const next = { ...prev };
+          delete next[boxId];
+          return next;
+        });
+        return;
+      }
+      const details = await Promise.all(res.matchedItemIds.map((id) => getItemDetail(id)));
+      setAnalyzedItems((prev) => ({ ...prev, [boxId]: details.map(toOotdItemFromDetail) }));
+    } catch {
+      setAnalyzedItems((prev) => {
+        if (!(boxId in prev)) return prev;
+        const next = { ...prev };
+        delete next[boxId];
+        return next;
+      });
+    }
+  };
+
   // 박스 생성/이동/리사이즈가 연달아 일어나도, 멈춘 뒤 한 번만 분석 API 호출(디바운스)
   const analysisTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const scheduleAnalysis = () => {
+  const scheduleAnalysis = (boxId: string) => {
+    if (ootdId == null) return;
     if (analysisTimer.current) clearTimeout(analysisTimer.current);
-    analysisTimer.current = setTimeout(() => void refetch(), ANALYSIS_DEBOUNCE_MS);
+    analysisTimer.current = setTimeout(() => {
+      const box = boxesRef.current.find((b) => b.id === boxId);
+      if (box) void runAnalysis(boxId, box.bbox);
+    }, ANALYSIS_DEBOUNCE_MS);
   };
   useEffect(
     () => () => {
@@ -157,7 +214,7 @@ const OotdTagEditor = ({
       { id, bbox: boxAt(cx, cy), touched: true },
     ]);
     setActiveBoxId(id);
-    scheduleAnalysis(); // bbox 확정 → 분석(디바운스)
+    scheduleAnalysis(id); // bbox 확정 → 분석(디바운스)
   };
 
   const updateBox = (id: string, bbox: Bbox) =>
@@ -195,14 +252,17 @@ const OotdTagEditor = ({
 
   if (isPending) {
     return (
-      <div className={cn('bg-bg-white relative overflow-hidden', className)}>
+      <div className={cn('bg-bg-white relative', !scrollable && 'overflow-hidden', className)}>
         <TagLoading />
       </div>
     );
   }
 
   return (
-    <div className={cn('bg-bg-white relative overflow-hidden', className)}>
+    <div
+      className={cn('bg-bg-white relative', !scrollable && 'overflow-hidden', className)}
+      style={scrollable ? { paddingBottom: sheetHeight } : undefined}
+    >
       {/* 사진 영역: 빈 곳 탭하면 박스 생성 */}
       <div className="relative z-0 w-full overflow-hidden" onClick={handleAreaClick}>
         {photo && (
@@ -234,7 +294,7 @@ const OotdTagEditor = ({
               variant={b.touched ? 'black' : untouchedVariant}
               onActivate={() => activateBox(activeBoxId === b.id ? null : b.id)}
               onChange={(bb) => updateBox(b.id, bb)}
-              onSettle={scheduleAnalysis}
+              onSettle={() => scheduleAnalysis(b.id)}
             />
           ))}
       </div>
@@ -256,6 +316,8 @@ const OotdTagEditor = ({
         }}
         onNewItem={() => setNewItemOpen(true)}
         onBbox={() => activateBox(null)}
+        overlay={scrollable ? 'fixed' : 'absolute'}
+        onHeightChange={scrollable ? setSheetHeight : undefined}
       />
 
       {/* 새 아이템 등록 시트 */}

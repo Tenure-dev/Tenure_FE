@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { cn } from '@/shared/lib/cn';
 import type { OotdItem } from '@/features/ootd/model/item';
 import imageUpload from '@/shared/assets/image-upload.svg';
@@ -17,6 +17,8 @@ type Props = {
   onSearchClose: () => void;
   onNewItem: () => void;
   onBbox: () => void;
+  overlay?: 'absolute' | 'fixed';
+  onHeightChange?: (height: number) => void;
 };
 
 const SearchIcon = () => (
@@ -27,8 +29,8 @@ const SearchIcon = () => (
 );
 
 // 3단계 스냅 높이
-const COLLAPSED = 100; // 맨 아래 (선택 완료 버튼만)
-const MIDDLE = 178; // 중간 (분석한 결과 헤더 + 검색까지) — 기본
+export const COLLAPSED = 100; // 맨 아래 (선택 완료 버튼만)
+export const MIDDLE = 178; // 중간 (분석한 결과 헤더 + 검색까지) — 기본
 const TOP_GAP = 48; // 끝까지 올렸을 때 헤더 아래로 남기는 여백
 
 const TagResultSheet = ({
@@ -44,11 +46,17 @@ const TagResultSheet = ({
   onSearchClose,
   onNewItem,
   onBbox,
+  overlay = 'absolute',
+  onHeightChange,
 }: Props) => {
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
   const [height, setHeight] = useState(MIDDLE);
   const [dragging, setDragging] = useState(false);
+
+  useEffect(() => {
+    onHeightChange?.(height);
+  }, [height, onHeightChange]);
 
   // 박스가 비활성→활성으로 바뀌면(말풍선 클릭 등) 시트를 중간 높이로 올린다.
   // (effect 대신 이전 값 비교로 렌더 중 조정 — React 권장 패턴)
@@ -67,8 +75,7 @@ const TagResultSheet = ({
   });
 
   // 끝까지 올렸을 때 최대 높이 (헤더 아래 살짝 남김)
-  const getMaxH = () =>
-    (sheetRef.current?.parentElement?.clientHeight ?? window.innerHeight) - TOP_GAP;
+  const getMaxH = () => window.innerHeight - TOP_GAP;
 
   // 드래그로 자유롭게, 놓으면 3단계 중 가까운 곳으로 스냅
   const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
@@ -99,7 +106,8 @@ const TagResultSheet = ({
       ref={sheetRef}
       style={{ height }}
       className={cn(
-        'bg-bg-white absolute inset-x-0 bottom-0 flex flex-col rounded-t-2xl shadow-xl',
+        'bg-bg-white inset-x-0 bottom-0 mx-auto flex max-w-[768px] flex-col rounded-t-2xl shadow-xl',
+        overlay === 'fixed' ? 'fixed' : 'absolute',
         !dragging && 'transition-[height] duration-200',
       )}
     >
@@ -114,7 +122,7 @@ const TagResultSheet = ({
         <span className="bg-bg-secondary h-1 w-10 rounded-full" />
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-5">
+      <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-5">
         {!active ? (
           <div className="flex h-full flex-col items-center justify-center pb-8 text-center">
             <p className="text-body-2 text-text-secondary leading-relaxed">

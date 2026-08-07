@@ -410,6 +410,8 @@ const OotdDetailPage = () => {
         ) : (
           <OotdTagEditor
             photo={post.imageUrl}
+            ootdId={post.id}
+            scrollable
             initialTags={post.taggedItems.map(toEditorTag)}
             onChange={setEditorTags}
             // 새 아이템 등록 시 bbox 영역을 대표 이미지로 크롭·업로드(cropImage가 crossOrigin으로 원격 이미지 지원).
@@ -428,19 +430,21 @@ const OotdDetailPage = () => {
         }}
       />
 
-      <MoreMenu
-        open={showMoreMenu}
-        onClose={() => setShowMoreMenu(false)}
-        isOwner={post.isOwner}
-        isBlocked={post.isBlocked}
-        onEdit={handleStartEdit}
-        onDelete={() => {
-          setShowMoreMenu(false);
-          setShowDeleteConfirm(true);
-        }}
-        onBlockToggle={handleBlockMenuClick}
-        onReport={handleReportClick}
-      />
+      <div className="relative z-50">
+        <MoreMenu
+          open={showMoreMenu}
+          onClose={() => setShowMoreMenu(false)}
+          isOwner={post.isOwner}
+          isBlocked={post.isBlocked}
+          onEdit={handleStartEdit}
+          onDelete={() => {
+            setShowMoreMenu(false);
+            setShowDeleteConfirm(true);
+          }}
+          onBlockToggle={handleBlockMenuClick}
+          onReport={handleReportClick}
+        />
+      </div>
 
       {mode === 'view' && (
         <TaggedItemsSheet

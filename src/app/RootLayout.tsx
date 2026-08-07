@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import BottomNavBar from '@/shared/components/BottomNavBar';
 import { cn } from '@/shared/lib/cn';
@@ -21,11 +20,6 @@ const HIDE_NAV_PATH_PATTERN = /^\/ootd\/\d+(\/report)?$/;
 
 const RootLayout = () => {
   const { pathname } = useLocation();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
-
   const hideNav =
     HIDE_NAV_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
     HIDE_NAV_PATH_PATTERN.test(pathname);

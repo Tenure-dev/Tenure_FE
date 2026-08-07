@@ -56,6 +56,6 @@ export const getHistoryOotds = (
   params?: { page?: number; size?: number },
 ) => api.get<HistoryOotdsResponse>(`/items/${itemId}/histories/${historyId}/ootds`, { params });
 
-// 판매 전환 대표 OOTD 후보 조회 (해당 아이템이 태그된 OOTD)
+// 판매 전환 대표 OOTD 후보 조회
 export const getItemOotdCandidates = (itemId: number, params?: { page?: number; size?: number }) =>
   api.get<HistoryOotdsResponse>(`/items/${itemId}/ootds`, { params });

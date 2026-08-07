@@ -10,13 +10,13 @@ import FollowAvatarRow from '@/features/feed/ui/FollowAvatarRow';
 import type { FeedCard, FeedTab } from '@/features/feed/model/types';
 import { useFeedQuery } from '@/features/feed/model/useFeedQuery';
 import { useFollowings } from '@/features/feed/model/useFollowings';
-import { USER_NAME_STORAGE_KEY } from '@/shared/lib/api';
+import { useProfileStore } from '@/store/useProfileStore';
 import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 
 const TABS: FeedTab[] = ['모두', '팔로우'];
 
 const FeedPage = () => {
-  const userName = localStorage.getItem(USER_NAME_STORAGE_KEY) ?? '';
+  const { name: userName } = useProfileStore();
   const [activeTab, setActiveTab] = useState<FeedTab>('모두');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 

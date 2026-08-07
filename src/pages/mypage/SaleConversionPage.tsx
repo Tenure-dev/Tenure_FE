@@ -3,6 +3,7 @@ import { cn } from '@/shared/lib/cn';
 import { useNavigate, useParams } from 'react-router-dom';
 import { circleCheck } from '@/shared/assets';
 import { BackHeader, CTAButton } from '@/shared/components';
+import { useUserStore } from '@/store/userStore';
 import { getSizeSystem } from '@/shared/lib/itemSizeData';
 import type { ItemDetailResponse } from '@/features/mypage/model/items';
 import { useItemDetailQuery } from '@/features/mypage/model/useItemDetailQuery';
@@ -45,6 +46,8 @@ const SaleConversionPage = () => {
 
 const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
   const navigate = useNavigate();
+  const grade = useUserStore((s) => s.user?.grade);
+  const isBasic = grade === 'BASIC';
   const [view, setView] = useState<View>('form');
   const [tempOotdIds, setTempOotdIds] = useState<number[]>([]);
   const [openSections, setOpenSections] = useState<Set<SectionKey>>(
@@ -63,8 +66,8 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
     sizeSystem: getSizeSystem(item.categoryLarge ?? '', item.sizeValue ?? ''),
     sizeValue: item.sizeValue ?? '',
     wearingTarget: MYPAGE_TO_PRODUCT_TARGET[item.wearingTarget] ?? '',
-    feePolicy: '',
-    shippingFee: '',
+    feePolicy: isBasic ? 'SELLER_PAYS' : '',
+    shippingFee: isBasic ? '0' : '',
     price: '',
     attachedOotdIds: [],
     measurements: {},
@@ -190,6 +193,7 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
           selectedOotds={selectedOotds}
           submitLabel="판매하기"
           onSubmit={handleSubmit}
+          isBasic={isBasic}
         />
       </div>
       {view === 'ootd-picker' && (

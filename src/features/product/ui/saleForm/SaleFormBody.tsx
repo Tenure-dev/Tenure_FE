@@ -36,17 +36,21 @@ const SelectChip = ({
   label,
   selected,
   onClick,
+  disabled,
 }: {
   label: string;
   selected: boolean;
   onClick: () => void;
+  disabled?: boolean;
 }) => (
   <button
     type="button"
-    onClick={onClick}
+    onClick={disabled ? undefined : onClick}
+    disabled={disabled}
     className={cn(
       'text-body-2 inline-flex h-9 shrink-0 items-center justify-center rounded-full px-3.5 font-semibold whitespace-nowrap',
       selected ? 'bg-bg-black text-text-inverse' : 'bg-gray-bg text-text-primary',
+      disabled && !selected && 'cursor-not-allowed opacity-30',
     )}
   >
     {label}
@@ -111,6 +115,7 @@ export interface SaleFormBodyProps {
   selectedOotds: { id: number; imageUrl: string }[];
   submitLabel: string;
   onSubmit: () => void;
+  isBasic?: boolean;
 }
 
 const SaleFormBody = ({
@@ -123,6 +128,7 @@ const SaleFormBody = ({
   selectedOotds,
   submitLabel,
   onSubmit,
+  isBasic = false,
 }: SaleFormBodyProps) => {
   const subCategories = CATEGORY_GROUPS.find((g) => g.name === form.categoryLarge)?.items ?? [];
   const sizes = CATEGORY_SIZES[form.categoryLarge] ?? [];
@@ -296,6 +302,7 @@ const SaleFormBody = ({
               label={label}
               selected={form.feePolicy === value}
               onClick={() => onFormChange({ feePolicy: value })}
+              disabled={isBasic && value !== 'SELLER_PAYS'}
             />
           ))}
         </div>
@@ -308,14 +315,20 @@ const SaleFormBody = ({
             배송비
             <Req />
           </p>
-          <div className="border-border flex h-12 items-center rounded-lg border px-3">
+          <div
+            className={cn(
+              'border-border flex h-12 items-center rounded-lg border px-3',
+              isBasic && 'bg-gray-bg',
+            )}
+          >
             <input
               type="number"
               inputMode="numeric"
-              value={form.shippingFee}
-              onChange={(e) => onFormChange({ shippingFee: e.target.value })}
+              value={isBasic ? '0' : form.shippingFee}
+              onChange={(e) => !isBasic && onFormChange({ shippingFee: e.target.value })}
               placeholder="0"
-              className="text-body-2 text-text-primary placeholder:text-text-tertiary min-w-0 flex-1 bg-transparent outline-none"
+              disabled={isBasic}
+              className="text-body-2 text-text-primary placeholder:text-text-tertiary min-w-0 flex-1 bg-transparent outline-none disabled:cursor-not-allowed"
             />
             <span className="text-body-3 text-text-tertiary shrink-0">원</span>
           </div>

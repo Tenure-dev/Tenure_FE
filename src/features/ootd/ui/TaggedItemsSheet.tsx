@@ -1,16 +1,15 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
 import { Bell, BellRing } from 'lucide-react';
 import { BottomSheet, CTAButton } from '@/shared/components';
 import { cn } from '@/shared/lib/cn';
-import { getItemDetail } from '@/features/mypage/api/itemsApi';
+import { useTagNavigation } from '@/features/ootd/lib/useTagNavigation';
 import type { TaggedItem } from '@/features/ootd/model/types';
 
 export interface TaggedItemsSheetProps {
   open: boolean;
   onClose: () => void;
   items: TaggedItem[];
+  isOwner: boolean;
   onViewRelatedOotd: () => void;
   onToggleWish: (itemId: number, currentlyWished: boolean) => void;
   dragProgressPx?: number;
@@ -31,12 +30,14 @@ const STATUS_LABEL: Record<TaggedItem['status'], string> = {
 
 interface TaggedItemRowProps {
   item: TaggedItem;
+  isOwner: boolean;
   onToggleWish: (itemId: number, currentlyWished: boolean) => void;
 }
 
-const TaggedItemRow = ({ item, onToggleWish }: TaggedItemRowProps) => {
-  const navigate = useNavigate();
-  const hasAction = item.status === '판매중' || item.status === '미판매_제안가능';
+const TaggedItemRow = ({ item, isOwner, onToggleWish }: TaggedItemRowProps) => {
+  const { goToDetail, goToCheckout } = useTagNavigation();
+  // 작성자 본인 글에서는 구매/구매제안/미판매 액션이 필요 없어 슬라이드 자체를 막는다.
+  const hasAction = !isOwner && (item.status === '판매중' || item.status === '미판매_제안가능');
   const isDeleted = item.status === '삭제됨';
   const isDimmed = isDeleted || item.status === '판매완료';
   const [swipePx, setSwipePx] = useState(0);
@@ -44,27 +45,17 @@ const TaggedItemRow = ({ item, onToggleWish }: TaggedItemRowProps) => {
   const dragStartRef = useRef<{ x: number; startSwipe: number } | null>(null);
   const draggedRef = useRef(false);
 
-  const { mutate: fetchProductId } = useMutation({
-    mutationFn: () => getItemDetail(item.itemId),
-    onSuccess: (detail) => {
-      if (detail.productId) navigate(`/product/${detail.productId}`);
-    },
-  });
-
-  const goToItemDetail = () => navigate(`/items/${item.itemId}`);
-
-  // 판매중(활성 product 있음)만 productId로 브릿지, 나머지(구매제안)는 itemId 상세로 보낸다.
   const handlePurchaseAction = () => {
     if (item.status === '판매중') {
-      fetchProductId();
+      goToCheckout(item.itemId);
     } else {
-      goToItemDetail();
+      goToDetail(item);
     }
   };
 
   const handleRowClick = () => {
     if (isDeleted || draggedRef.current) return;
-    goToItemDetail();
+    goToDetail(item);
   };
 
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -178,6 +169,7 @@ const TaggedItemsSheet = ({
   open,
   onClose,
   items,
+  isOwner,
   onViewRelatedOotd,
   onToggleWish,
   dragProgressPx,
@@ -201,7 +193,12 @@ const TaggedItemsSheet = ({
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {items.map((item) => (
-              <TaggedItemRow key={`${item.id}-${open}`} item={item} onToggleWish={onToggleWish} />
+              <TaggedItemRow
+                key={`${item.id}-${open}`}
+                item={item}
+                isOwner={isOwner}
+                onToggleWish={onToggleWish}
+              />
             ))}
           </ul>
         )}

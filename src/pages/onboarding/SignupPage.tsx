@@ -14,9 +14,14 @@ import {
   signup,
   verifyEmailCode,
 } from '@/features/auth/api/authApi';
-import { getMyInfo } from '@/features/auth/api/userApi';
+import { getMyInfo, uploadProfileImage } from '@/features/auth/api/userApi';
 import { toApiGender } from '@/features/auth/lib/gender';
-import { ACCESS_TOKEN_STORAGE_KEY, ApiError, USER_ID_STORAGE_KEY } from '@/shared/lib/api';
+import {
+  ACCESS_TOKEN_STORAGE_KEY,
+  ApiError,
+  USER_ID_STORAGE_KEY,
+  USER_NAME_STORAGE_KEY,
+} from '@/shared/lib/api';
 import { useUserStore } from '@/store/userStore';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 
@@ -225,6 +230,7 @@ const SignupPage = () => {
   // Step 4 — 프로필 작성
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [nickname, setNickname] = useState('');
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [height, setHeight] = useState(170);
@@ -243,14 +249,24 @@ const SignupPage = () => {
 
   const [isPhotoSheetOpen, setIsPhotoSheetOpen] = useState(false);
   const [pendingPhotoPreview, setPendingPhotoPreview] = useState<string | null>(null);
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
 
   const setUser = useUserStore((state) => state.setUser);
+  const uploadPhotoMutation = useMutation({ mutationFn: uploadProfileImage });
   const signupMutation = useMutation({ mutationFn: signup });
 
-  const handleSignupComplete = () => {
+  const handleSignupComplete = async () => {
     setSignupError(null);
-    signupMutation.mutate(
-      {
+
+    let userId: number;
+    try {
+      // signup은 이미지 파일 자체가 아니라 업로드된 URL만 받으므로, 사진을 골랐다면
+      // 먼저 업로드해 URL을 받아온 뒤 그 URL을 profileImageUrl로 실어 보낸다.
+      const profileImageUrl = photoFile
+        ? (await uploadPhotoMutation.mutateAsync(photoFile)).imageUrl
+        : undefined;
+
+      ({ userId } = await signupMutation.mutateAsync({
         email,
         password,
         passwordConfirm,
@@ -264,40 +280,45 @@ const SignupPage = () => {
         gender: toApiGender(gender),
         heightCm: height,
         weightKg: weight,
-      },
-      {
-        onSuccess: async ({ userId }) => {
-          localStorage.setItem(USER_ID_STORAGE_KEY, String(userId));
-          try {
-            // 회원가입 응답에는 accessToken이 포함되지 않으므로, 동일 자격증명으로 로그인해 토큰을 발급받는다.
-            const { accessToken } = await login({ email, password });
-            localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
-            setUser(await getMyInfo());
-          } catch (error) {
-            console.error(error);
-          }
-          navigate('/loading');
-        },
-        onError: (error) => {
-          console.error(error);
-          setSignupError('회원가입에 실패했습니다. 다시 시도해주세요.');
-        },
-      },
-    );
+        profileImageUrl,
+      }));
+    } catch (error) {
+      console.error(error);
+      setSignupError('회원가입에 실패했습니다. 다시 시도해주세요.');
+      return;
+    }
+
+    localStorage.setItem(USER_ID_STORAGE_KEY, String(userId));
+    try {
+      // 회원가입 응답에는 accessToken이 포함되지 않으므로, 동일 자격증명으로 로그인해 토큰을 발급받는다.
+      const { accessToken, username } = await login({ email, password });
+      localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
+      localStorage.setItem(USER_NAME_STORAGE_KEY, username);
+      setUser(await getMyInfo());
+    } catch (error) {
+      console.error(error);
+    }
+    navigate('/loading', { replace: true });
   };
 
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setPendingPhotoFile(file);
       setPendingPhotoPreview(URL.createObjectURL(file));
     }
     e.target.value = '';
   };
 
-  const handleCancelPendingPhoto = () => setPendingPhotoPreview(null);
+  const handleCancelPendingPhoto = () => {
+    setPendingPhotoFile(null);
+    setPendingPhotoPreview(null);
+  };
 
   const handleConfirmPendingPhoto = () => {
+    setPhotoFile(pendingPhotoFile);
     setPhotoPreview(pendingPhotoPreview);
+    setPendingPhotoFile(null);
     setPendingPhotoPreview(null);
   };
 
@@ -621,7 +642,7 @@ const SignupPage = () => {
               variant="filled"
               size="54"
               className="!w-full"
-              disabled={!canComplete || signupMutation.isPending}
+              disabled={!canComplete || signupMutation.isPending || uploadPhotoMutation.isPending}
               onClick={handleSignupComplete}
             >
               완료
@@ -652,6 +673,7 @@ const SignupPage = () => {
             <button
               type="button"
               onClick={() => {
+                setPhotoFile(null);
                 setPhotoPreview(null);
                 setIsPhotoSheetOpen(false);
               }}
@@ -700,14 +722,15 @@ const SignupPage = () => {
         </div>
       )}
 
-      {/* TODO: 개발 확인용 임시 버튼 — 나중에 제거 */}
-      <button
-        type="button"
-        onClick={() => setStep((prev) => (prev < TOTAL_STEPS ? ((prev + 1) as Step) : prev))}
-        className="mx-[20px] mb-[20px] h-[40px] shrink-0 rounded-[8px] border border-dashed border-[#FF9500] bg-[#FFF4E5] text-[13px] font-medium text-[#FF9500]"
-      >
-        [DEV] 다음 단계
-      </button>
+      {import.meta.env.DEV && (
+        <button
+          type="button"
+          onClick={() => setStep((prev) => (prev < TOTAL_STEPS ? ((prev + 1) as Step) : prev))}
+          className="mx-[20px] mb-[20px] h-[40px] shrink-0 rounded-[8px] border border-dashed border-[#FF9500] bg-[#FFF4E5] text-[13px] font-medium text-[#FF9500]"
+        >
+          [DEV] 다음 단계
+        </button>
+      )}
     </div>
   );
 };

@@ -43,6 +43,7 @@ export interface PasswordResetRequest {
 
 export interface AuthResult {
   userId: number;
+  username: string;
   accessToken: string;
 }
 

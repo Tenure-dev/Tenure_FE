@@ -16,6 +16,9 @@ export interface TagDraftItemRequest {
   itemName: string;
   wearingTarget: WearingTarget;
   firstOwnedAt?: string; // 'YYYY-MM-DD'
+  // BE의 ItemTagDraftCreateRequest가 아직 이 필드를 받지 않아 (2026-08-04 기준) 지금은 무시됨.
+  // BE에 필드가 추가되면 별도 FE 변경 없이 그대로 반영된다.
+  representativeImageUrl?: string;
 }
 
 export interface TagDraftItemResponse {
@@ -30,3 +33,16 @@ export interface TagDraftItemResponse {
 // 태그 작성용 간편 아이템 등록 (카테고리는 백엔드가 자동 분류)
 export const createTagDraftItem = (payload: TagDraftItemRequest) =>
   api.post<TagDraftItemResponse>('/items/tag-draft', payload);
+
+export interface ItemImageUploadResponse {
+  imageUrl: string; // 저장된 대표 이미지 URL (representativeImageUrl로 사용)
+}
+
+// 아이템 대표 이미지 업로드 → 저장된 URL 반환 (bbox 크롭 이미지를 올리는 데 사용)
+export const uploadItemImage = (image: File) => {
+  const formData = new FormData();
+  formData.append('image', image);
+  return api.post<ItemImageUploadResponse>('/images/items', formData, {
+    headers: { 'Content-Type': undefined },
+  });
+};

@@ -1,22 +1,22 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Bookmark, Eye, EyeOff, Heart } from 'lucide-react';
-import { BottomSheet, FollowButton, Toast } from '@/shared/components';
+import { Bookmark, Heart } from 'lucide-react';
+import { FollowButton, Toast } from '@/shared/components';
 import { useToast } from '@/shared/hooks/useToast';
 import { USER_ID_STORAGE_KEY } from '@/shared/lib/api';
-import { MAX_TAGGED_ITEMS, type Bbox, type OotdPost } from '@/features/ootd/model/types';
+import { type Bbox, type OotdPost, type TaggedItem } from '@/features/ootd/model/types';
+import { useTagNavigation } from '@/features/ootd/lib/useTagNavigation';
 import {
-  confirmTags,
-  createTag,
+  createTagsBatch,
   deleteOotd,
   followUser,
-  getMyItems,
   getOotdDetail,
   heartOotd,
   saveOotd,
@@ -24,39 +24,37 @@ import {
   unheartOotd,
   unsaveOotd,
   unwishItem,
-  updateTag,
   wishItem,
 } from '@/features/ootd/api/ootdApi';
-import { toClosetItem, toOotdPost } from '@/features/ootd/lib/mappers';
-import type { ClosetItem } from '@/features/ootd/model/types';
+import { toOotdPost } from '@/features/ootd/lib/mappers';
 import TagPin from '@/features/ootd/ui/TagPin';
 import IntroTagModal from '@/features/ootd/ui/IntroTagModal';
 import ConfirmModal from '@/features/ootd/ui/ConfirmModal';
 import TaggedItemsSheet from '@/features/ootd/ui/TaggedItemsSheet';
-import EditTagSheet, { type EditTagTarget } from '@/features/ootd/ui/EditTagSheet';
 import MoreMenu from '@/features/ootd/ui/MoreMenu';
+import OotdTagEditor, { type EditorTag } from '@/features/ootd/ui/OotdTagEditor';
 import ViewHeader from './components/ViewHeader';
 import EditHeader from './components/EditHeader';
 
 const INTRO_SEEN_KEY = 'ootd-intro-seen';
 const SHEET_DRAG_OPEN_THRESHOLD = 80;
-const TAG_ANALYZE_DELAY_MS = 700;
-const RESULT_EXPAND_RATIO = 0.8;
-const MIN_DRAG_BOX_PERCENT = 4;
-const DEFAULT_TAP_BOX_PERCENT = 16;
-
-interface DragBoxRect {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-}
 
 const getCurrentUserId = (): number | null => {
   const raw = localStorage.getItem(USER_ID_STORAGE_KEY);
   const parsed = raw ? Number(raw) : NaN;
   return Number.isFinite(parsed) ? parsed : null;
 };
+
+// 서버 태그 → 에디터 태그(tagId 보존)
+const toEditorTag = (t: TaggedItem): EditorTag => ({
+  tagId: t.id,
+  itemId: t.itemId,
+  bbox: t.bbox,
+  labelText: `${t.brand} / ${t.name}`,
+});
+
+const bboxEq = (a: Bbox, b: Bbox) =>
+  a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
 
 const OotdDetailPage = () => {
   const navigate = useNavigate();
@@ -79,32 +77,12 @@ const OotdDetailPage = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const [mode, setMode] = useState<'view' | 'edit'>('view');
-  const [changeCount, setChangeCount] = useState(0);
-  const [editTagsVisible, setEditTagsVisible] = useState(true);
-  const [editTarget, setEditTarget] = useState<EditTagTarget>(null);
-  const [isAnalyzingTag, setIsAnalyzingTag] = useState(false);
-  const [selectedClosetItemId, setSelectedClosetItemId] = useState<number | null>(null);
-  const [pendingBbox, setPendingBbox] = useState<Bbox | null>(null);
-  const [dragBoxRect, setDragBoxRect] = useState<DragBoxRect | null>(null);
-  const dragBoxStartRef = useRef<{ x: number; y: number } | null>(null);
-  const analyzeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [resultExpanded, setResultExpanded] = useState(false);
-  const collapsedDragStartYRef = useRef<number | null>(null);
-  const expandedDragStartYRef = useRef<number | null>(null);
-
-  const [closetItems, setClosetItems] = useState<ClosetItem[]>([]);
-  const [closetItemsLoading, setClosetItemsLoading] = useState(false);
-
-  const clearAnalyzeTimeout = () => {
-    if (analyzeTimeoutRef.current !== null) {
-      clearTimeout(analyzeTimeoutRef.current);
-      analyzeTimeoutRef.current = null;
-    }
-  };
-
-  useEffect(() => clearAnalyzeTimeout, []);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  // 편집 중 태그 상태(에디터가 onChange로 통지). 완료 전까지 서버 미반영 → 뒤로가기/취소 시 그대로 버림.
+  const [editorTags, setEditorTags] = useState<EditorTag[]>([]);
 
   const { message: toastMessage, show: showToast, hide: hideToast } = useToast();
+  const { goToDetail } = useTagNavigation();
 
   const initialToastRef = useRef((location.state as { toast?: string } | null)?.toast ?? null);
 
@@ -155,6 +133,30 @@ const OotdDetailPage = () => {
 
   const targetId = post?.id ?? ootdId;
 
+  // 원본 대비 변경 수(신규 + 수정 + 삭제). 저장은 배치(전체 교체)라 삭제도 반영된다.
+  const changeCount = useMemo(() => {
+    if (!post) return 0;
+    const origById = new Map(post.taggedItems.map((t) => [t.id, t]));
+    const editedTagIds = new Set(editorTags.filter((t) => t.tagId != null).map((t) => t.tagId));
+    let n = 0;
+    for (const t of editorTags) {
+      if (t.tagId == null) {
+        n += 1;
+        continue;
+      }
+      const o = origById.get(t.tagId);
+      if (!o || o.itemId !== t.itemId || !bboxEq(o.bbox, t.bbox)) n += 1;
+    }
+    // 제거된 태그(원본엔 있는데 편집 결과엔 없음)도 변경으로 카운트
+    for (const o of post.taggedItems) {
+      if (!editedTagIds.has(o.id)) n += 1;
+    }
+    return n;
+  }, [post, editorTags]);
+
+  // 완료 버튼 활성: 변경이 있을 때. 태그 0개면 눌렀을 때 토스트로 막는다(handleComplete).
+  const canComplete = changeCount > 0;
+
   const handlePeekPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
     dragStartYRef.current = e.clientY;
     setSheetDragPx(0);
@@ -181,186 +183,55 @@ const OotdDetailPage = () => {
     setTagsVisible((v) => !v);
   };
 
-  const beginTagAnalysis = (target: EditTagTarget, presetItemId: number | null) => {
-    clearAnalyzeTimeout();
-    setEditTarget(null);
-    setIsAnalyzingTag(true);
-    setResultExpanded(false);
-    setSelectedClosetItemId(presetItemId);
-    analyzeTimeoutRef.current = setTimeout(() => {
-      setEditTarget(target);
-      setIsAnalyzingTag(false);
-      analyzeTimeoutRef.current = null;
-    }, TAG_ANALYZE_DELAY_MS);
-  };
-
-  const getResultExpandedHeightPx = () => window.innerHeight * RESULT_EXPAND_RATIO;
-
-  const handleCollapsedHandlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    collapsedDragStartYRef.current = e.clientY;
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handleCollapsedHandlePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const startY = collapsedDragStartYRef.current;
-    collapsedDragStartYRef.current = null;
-    if (startY === null) return;
-    if (startY - e.clientY > SHEET_DRAG_OPEN_THRESHOLD) setResultExpanded(true);
-  };
-
-  const handleExpandedHandlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    expandedDragStartYRef.current = e.clientY;
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handleExpandedHandlePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const startY = expandedDragStartYRef.current;
-    expandedDragStartYRef.current = null;
-    if (startY === null) return;
-    if (e.clientY - startY > SHEET_DRAG_OPEN_THRESHOLD) setResultExpanded(false);
-  };
-
-  const getPercentPoint = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100));
-    const y = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100));
-    return { x, y };
-  };
-
-  const handleEditPhotoPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!post || post.taggedItems.length >= MAX_TAGGED_ITEMS) {
-      showToast(`태그는 최대 ${MAX_TAGGED_ITEMS}개까지 가능해요.`);
-      return;
-    }
-    const point = getPercentPoint(e);
-    dragBoxStartRef.current = point;
-    setDragBoxRect({ x1: point.x, y1: point.y, x2: point.x, y2: point.y });
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handleEditPhotoPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!dragBoxStartRef.current) return;
-    const point = getPercentPoint(e);
-    setDragBoxRect({
-      x1: dragBoxStartRef.current.x,
-      y1: dragBoxStartRef.current.y,
-      x2: point.x,
-      y2: point.y,
-    });
-  };
-
-  const handleEditPhotoPointerUp = () => {
-    const start = dragBoxStartRef.current;
-    const rect = dragBoxRect;
-    dragBoxStartRef.current = null;
-    setDragBoxRect(null);
-    if (!start || !rect) return;
-
-    const width = Math.abs(rect.x2 - rect.x1);
-    const height = Math.abs(rect.y2 - rect.y1);
-
-    let box: { x: number; y: number; width: number; height: number };
-    if (width < MIN_DRAG_BOX_PERCENT || height < MIN_DRAG_BOX_PERCENT) {
-      const half = DEFAULT_TAP_BOX_PERCENT / 2;
-      box = {
-        x: Math.max(0, Math.min(100 - DEFAULT_TAP_BOX_PERCENT, start.x - half)),
-        y: Math.max(0, Math.min(100 - DEFAULT_TAP_BOX_PERCENT, start.y - half)),
-        width: DEFAULT_TAP_BOX_PERCENT,
-        height: DEFAULT_TAP_BOX_PERCENT,
-      };
-    } else {
-      box = { x: Math.min(rect.x1, rect.x2), y: Math.min(rect.y1, rect.y2), width, height };
-    }
-
-    setPendingBbox({
-      x: box.x / 100,
-      y: box.y / 100,
-      width: box.width / 100,
-      height: box.height / 100,
-    });
-    beginTagAnalysis({ type: 'add' }, null);
-  };
-
   const handleStartEdit = () => {
     if (!post) return;
-    clearAnalyzeTimeout();
-    setChangeCount(0);
-    setEditTarget(null);
-    setIsAnalyzingTag(false);
-    setResultExpanded(false);
-    setSelectedClosetItemId(null);
-    setPendingBbox(null);
-    setEditTagsVisible(true);
+    setEditorTags(post.taggedItems.map(toEditorTag));
     setMode('edit');
     setShowMoreMenu(false);
+  };
 
-    setClosetItemsLoading(true);
-    getMyItems({ size: 50 })
-      .then((page) => setClosetItems(page.content.map(toClosetItem)))
-      .catch(() => showToast('옷장 아이템을 불러오지 못했어요.'))
-      .finally(() => setClosetItemsLoading(false));
+  const resetEditState = () => {
+    setEditorTags([]);
+    setMode('view');
   };
 
   const handleCancelEdit = () => {
-    clearAnalyzeTimeout();
-    setMode('view');
-    setEditTarget(null);
-    setIsAnalyzingTag(false);
-    setResultExpanded(false);
-    setSelectedClosetItemId(null);
-    setPendingBbox(null);
-    setChangeCount(0);
-  };
-
-  const handleEditSubmit = async () => {
-    if (!editTarget || selectedClosetItemId === null || !post) return;
-
-    const closetItem = closetItems.find((item) => item.id === selectedClosetItemId);
-    if (!closetItem) return;
-    const labelText = `${closetItem.brand} / ${closetItem.name}`;
-
-    try {
-      if (editTarget.type === 'edit') {
-        const existingTag = post.taggedItems.find((tag) => tag.id === editTarget.tagId);
-        if (!existingTag) return;
-        await updateTag(editTarget.tagId, {
-          itemId: selectedClosetItemId,
-          bbox: existingTag.bbox,
-          labelText,
-        });
-        showToast('수정되었습니다.');
-      } else {
-        if (post.taggedItems.length >= MAX_TAGGED_ITEMS || !pendingBbox) return;
-        await createTag(post.id, {
-          itemId: selectedClosetItemId,
-          bbox: pendingBbox,
-          labelText,
-          status: 'CONFIRMED',
-        });
-        showToast('추가되었습니다.');
-      }
-      setChangeCount((c) => c + 1);
-      setEditTarget(null);
-      setSelectedClosetItemId(null);
-      setPendingBbox(null);
-      setResultExpanded(false);
-      await refreshPost();
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : '처리 중 오류가 발생했어요.');
+    if (changeCount > 0) {
+      setShowDiscardConfirm(true);
+      return;
     }
+    resetEditState();
   };
 
+  const handleDiscardConfirm = () => {
+    setShowDiscardConfirm(false);
+    resetEditState();
+  };
+
+  // 완료 → 배치(전체 교체) 한 번으로 추가·수정·삭제 반영. confirm 불필요(배치가 CONFIRMED 저장).
   const handleComplete = async () => {
     if (!post) return;
+    if (changeCount === 0) {
+      resetEditState();
+      setTagsVisible(true);
+      return;
+    }
+    if (editorTags.length === 0) {
+      showToast('1개 이상의 태그가 필요합니다.');
+      return;
+    }
     setIsSaving(true);
     try {
-      await confirmTags(post.id).catch(() => undefined);
+      await createTagsBatch(post.id, {
+        tags: editorTags.map((t) => ({ itemId: t.itemId, bbox: t.bbox, labelText: t.labelText })),
+      });
       await refreshPost();
       showToast('게시물이 수정되었습니다.');
     } catch (e) {
       showToast(e instanceof Error ? e.message : '처리 중 오류가 발생했어요.');
     } finally {
       setIsSaving(false);
+      setEditorTags([]);
       setMode('view');
       setTagsVisible(true);
     }
@@ -487,8 +358,8 @@ const OotdDetailPage = () => {
     );
   }
 
-  const visibleTags = post.taggedItems;
-  const showTags = mode === 'view' ? tagsVisible : editTagsVisible;
+  const isUnsellable = (status: TaggedItem['status']) =>
+    status === '미판매_제안가능' || status === '미판매_제안불가';
 
   return (
     <div className="bg-bg-white relative flex min-h-screen flex-col">
@@ -497,172 +368,104 @@ const OotdDetailPage = () => {
       ) : (
         <EditHeader
           changeCount={changeCount}
+          canComplete={canComplete}
           onCancel={handleCancelEdit}
           onComplete={handleComplete}
         />
       )}
 
-      <div
-        className="relative aspect-[3/4] w-full shrink-0 overflow-hidden bg-black"
-        onClick={mode === 'view' ? handlePhotoClick : undefined}
-        onPointerDown={mode === 'edit' ? handleEditPhotoPointerDown : undefined}
-        onPointerMove={mode === 'edit' ? handleEditPhotoPointerMove : undefined}
-        onPointerUp={mode === 'edit' ? handleEditPhotoPointerUp : undefined}
-        onPointerCancel={mode === 'edit' ? handleEditPhotoPointerUp : undefined}
-      >
-        <img src={post.imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
+      <div className="relative flex flex-1 flex-col">
+        {mode === 'view' ? (
+          <>
+            {/* 태그 좌표(bbox 0~1)는 원본 이미지 기준 → 에디터/미리보기와 동일하게 원본 비율로 렌더해야
+                뷰/편집 태그 위치가 일치한다. (aspect-[3/4]+object-cover는 크롭돼 좌표가 어긋남) */}
+            <div
+              className="relative w-full shrink-0 overflow-hidden bg-black"
+              onClick={handlePhotoClick}
+            >
+              <img src={post.imageUrl} alt="" className="block w-full" />
 
-        {mode === 'edit' && (
-          <button
-            type="button"
-            onPointerDown={(e) => e.stopPropagation()}
-            onPointerMove={(e) => e.stopPropagation()}
-            onPointerUp={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              setEditTagsVisible((v) => !v);
-            }}
-            aria-label="태그 표시 전환"
-            className="absolute top-3 right-3 flex size-9 items-center justify-center rounded-full bg-black/50 text-white"
-          >
-            {editTagsVisible ? <Eye size={18} /> : <EyeOff size={18} />}
-          </button>
-        )}
+              {tagsVisible &&
+                post.taggedItems.map((tag) => (
+                  <TagPin
+                    key={tag.id}
+                    item={tag}
+                    // 판매 전환 이력이 없는 미판매 태그는 이동할 상세가 없어 탭해도 아무 동작 안 함.
+                    onClick={isUnsellable(tag.status) ? () => {} : () => goToDetail(tag)}
+                    interactive={!isUnsellable(tag.status)}
+                  />
+                ))}
+            </div>
 
-        {mode === 'edit' && dragBoxRect && (
-          <div
-            className="border-brand bg-brand/10 pointer-events-none absolute border-2"
-            style={{
-              left: `${Math.min(dragBoxRect.x1, dragBoxRect.x2)}%`,
-              top: `${Math.min(dragBoxRect.y1, dragBoxRect.y2)}%`,
-              width: `${Math.abs(dragBoxRect.x2 - dragBoxRect.x1)}%`,
-              height: `${Math.abs(dragBoxRect.y2 - dragBoxRect.y1)}%`,
-            }}
-          />
-        )}
+            <div className="flex items-center gap-4 px-4 pt-3">
+              <button type="button" onClick={toggleHeart} className="flex items-center gap-1">
+                <Heart
+                  size={20}
+                  className={post.liked ? 'fill-brand text-brand' : 'text-text-tertiary'}
+                />
+                <span className="text-body-3 text-text-secondary">{post.likeCount}</span>
+              </button>
+              <button type="button" onClick={toggleBookmark} className="flex items-center gap-1">
+                <Bookmark
+                  size={20}
+                  className={
+                    post.bookmarked ? 'fill-text-primary text-text-primary' : 'text-text-tertiary'
+                  }
+                />
+                <span className="text-body-3 text-text-secondary">{post.bookmarkCount}</span>
+              </button>
+            </div>
 
-        {showTags &&
-          visibleTags.map((tag) => (
-            <TagPin
-              key={tag.id}
-              item={tag}
-              selected={
-                mode === 'edit' && editTarget?.type === 'edit' && editTarget.tagId === tag.id
-              }
-              onClick={
-                mode === 'edit'
-                  ? () => {
-                      setPendingBbox(null);
-                      beginTagAnalysis({ type: 'edit', tagId: tag.id }, tag.itemId);
-                    }
-                  : undefined
-              }
-            />
-          ))}
-      </div>
+            <div className="flex items-center justify-between px-4 py-3">
+              <button
+                type="button"
+                onClick={() => navigate(`/users/${post.author.id}`)}
+                className="flex items-center gap-2"
+              >
+                <div className="bg-gray-bg size-9 overflow-hidden rounded-full">
+                  {post.author.avatarUrl && (
+                    <img src={post.author.avatarUrl} alt="" className="size-full object-cover" />
+                  )}
+                </div>
+                <p className="text-body-2 text-text-primary font-semibold">{post.author.name}</p>
+              </button>
+              {!post.isOwner && (
+                <FollowButton following={post.isFollowing} onToggle={toggleFollow} />
+              )}
+            </div>
 
-      {mode === 'view' && (
-        <>
-          <div className="flex items-center gap-4 px-4 pt-3">
-            <button type="button" onClick={toggleHeart} className="flex items-center gap-1">
-              <Heart
-                size={20}
-                className={post.liked ? 'fill-brand text-brand' : 'text-text-tertiary'}
-              />
-              <span className="text-body-3 text-text-secondary">{post.likeCount}</span>
-            </button>
-            <button type="button" onClick={toggleBookmark} className="flex items-center gap-1">
-              <Bookmark
-                size={20}
-                className={
-                  post.bookmarked ? 'fill-text-primary text-text-primary' : 'text-text-tertiary'
-                }
-              />
-              <span className="text-body-3 text-text-secondary">{post.bookmarkCount}</span>
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between px-4 py-3">
             <button
               type="button"
-              onClick={() => navigate(`/users/${post.author.id}`)}
-              className="flex items-center gap-2"
+              onClick={() => setShowTaggedSheet(true)}
+              onPointerDown={handlePeekPointerDown}
+              onPointerMove={handlePeekPointerMove}
+              onPointerUp={handlePeekPointerEnd}
+              onPointerCancel={handlePeekPointerEnd}
+              className="border-border-secondary mt-auto flex touch-none flex-col items-center gap-2 border-t px-4 pt-2 pb-6"
             >
-              <div className="bg-gray-bg size-9 overflow-hidden rounded-full">
-                {post.author.avatarUrl && (
-                  <img src={post.author.avatarUrl} alt="" className="size-full object-cover" />
-                )}
-              </div>
-              <p className="text-body-2 text-text-primary font-semibold">{post.author.name}</p>
+              <span className="bg-gray-bg h-1 w-9 rounded-full" />
+              <span className="w-full text-left">
+                <span className="text-body-1 text-text-primary block font-semibold">
+                  태그된 아이템
+                </span>
+                <span className="text-body-3 text-text-tertiary">
+                  사진 속에서 태그된 것만 모아봅니다.
+                </span>
+              </span>
             </button>
-            {!post.isOwner && <FollowButton following={post.isFollowing} onToggle={toggleFollow} />}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowTaggedSheet(true)}
-            onPointerDown={handlePeekPointerDown}
-            onPointerMove={handlePeekPointerMove}
-            onPointerUp={handlePeekPointerEnd}
-            onPointerCancel={handlePeekPointerEnd}
-            className="border-border-secondary mt-auto flex touch-none flex-col items-center gap-2 border-t px-4 pt-2 pb-6"
-          >
-            <span className="bg-gray-bg h-1 w-9 rounded-full" />
-            <span className="w-full text-left">
-              <span className="text-body-1 text-text-primary block font-semibold">
-                태그된 아이템
-              </span>
-              <span className="text-body-3 text-text-tertiary">
-                사진 속에서 태그된 것만 모아봅니다.
-              </span>
-            </span>
-          </button>
-        </>
-      )}
-
-      {mode === 'edit' && !resultExpanded && (
-        <div className="bg-bg-white flex h-60 shrink-0 flex-col overflow-hidden rounded-t-2xl shadow-[0_-8px_24px_rgba(0,0,0,0.12)]">
-          <div
-            className="flex cursor-grab touch-none justify-center py-2 active:cursor-grabbing"
-            onClick={() => setResultExpanded(true)}
-            onPointerDown={handleCollapsedHandlePointerDown}
-            onPointerUp={handleCollapsedHandlePointerUp}
-          >
-            <span className="bg-border-secondary h-1 w-10 rounded-full" />
-          </div>
-          <EditTagSheet
-            target={editTarget}
-            isAnalyzing={isAnalyzingTag || closetItemsLoading}
-            closetItems={closetItems}
-            selectedClosetItemId={selectedClosetItemId}
-            onSelectClosetItem={(item) => setSelectedClosetItemId(item.id)}
-            onRegisterNewItem={() => showToast('새 아이템 등록은 추후 지원될 예정이에요.')}
-            onSubmit={handleEditSubmit}
+          </>
+        ) : (
+          <OotdTagEditor
+            photo={post.imageUrl}
+            initialTags={post.taggedItems.map(toEditorTag)}
+            onChange={setEditorTags}
+            // 새 아이템 등록 시 bbox 영역을 대표 이미지로 크롭·업로드(cropImage가 crossOrigin으로 원격 이미지 지원).
+            // 손 안 댄 기존 태그는 게시글처럼 흰색 말풍선, 누르거나 새로 추가한 것만 검정.
+            untouchedVariant="default"
+            className="flex-1"
           />
-        </div>
-      )}
-
-      {mode === 'edit' && (
-        <BottomSheet
-          open={resultExpanded}
-          onClose={() => setResultExpanded(false)}
-          variant="plain"
-          heightPx={getResultExpandedHeightPx()}
-          onHandlePointerDown={handleExpandedHandlePointerDown}
-          onHandlePointerUp={handleExpandedHandlePointerUp}
-          className="flex flex-col"
-        >
-          <EditTagSheet
-            target={editTarget}
-            isAnalyzing={isAnalyzingTag || closetItemsLoading}
-            closetItems={closetItems}
-            selectedClosetItemId={selectedClosetItemId}
-            onSelectClosetItem={(item) => setSelectedClosetItemId(item.id)}
-            onRegisterNewItem={() => showToast('새 아이템 등록은 추후 지원될 예정이에요.')}
-            onSubmit={handleEditSubmit}
-          />
-        </BottomSheet>
-      )}
+        )}
+      </div>
 
       <IntroTagModal
         open={showIntro}
@@ -692,6 +495,7 @@ const OotdDetailPage = () => {
         open={showTaggedSheet}
         onClose={() => setShowTaggedSheet(false)}
         items={post.taggedItems}
+        isOwner={post.isOwner}
         dragProgressPx={sheetDragPx}
         onViewRelatedOotd={() => navigate(`/ootd/${targetId}/related`)}
         onToggleWish={toggleTagWish}
@@ -713,6 +517,16 @@ const OotdDetailPage = () => {
         confirmLabel="삭제하기"
         onCancel={() => setShowDeleteConfirm(false)}
         onConfirm={handleDeleteConfirm}
+      />
+
+      <ConfirmModal
+        open={showDiscardConfirm}
+        title="수정 중인 내용이 있어요"
+        description="완료를 누르지 않고 나가면 수정한 내용이 저장되지 않아요."
+        confirmLabel="나가기"
+        cancelLabel="계속 수정"
+        onCancel={() => setShowDiscardConfirm(false)}
+        onConfirm={handleDiscardConfirm}
       />
 
       {isSaving && (

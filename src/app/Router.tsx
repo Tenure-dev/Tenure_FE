@@ -35,6 +35,7 @@ import ProtectedLayout from './ProtectedLayout';
 import OotdDetailPage from '@/pages/ootd/OotdDetailPage';
 import ReportPage from '@/pages/ootd/ReportPage';
 import RelatedOotdPage from '@/pages/ootd/RelatedOotdPage';
+import RelatedOotdMorePage from '@/pages/ootd/RelatedOotdMorePage';
 import ChatListPage from '@/pages/chat/ChatListPage';
 import ChatRoomPage from '@/pages/chat/ChatRoomPage';
 import PricePage from '@/pages/purchase/PricePage';
@@ -77,6 +78,7 @@ export const router = createBrowserRouter([
           { path: 'ootd/:id', element: <OotdDetailPage /> },
           { path: 'ootd/:id/report', element: <ReportPage /> },
           { path: 'ootd/:id/related', element: <RelatedOotdPage /> },
+          { path: 'ootd/:id/related/more', element: <RelatedOotdMorePage /> },
           { path: 'mypage', element: <MyPage /> },
           { path: 'mypage/follow', element: <FollowListPage /> },
           { path: 'wishlist', element: <WishListPage /> },
@@ -93,6 +95,7 @@ export const router = createBrowserRouter([
           { path: 'items/:itemId/offers', element: <ReceivedOffersPage /> },
           { path: 'trade/:tradeId', element: <TradeDetailPage /> },
           { path: 'trade/:tradeId/shipping', element: <ShippingInputPage /> },
+          { path: 'product', element: <ProductDetailPage /> },
           { path: 'product/:productId', element: <ProductDetailPage /> },
           { path: 'product/:productId/ootds', element: <OotdGridPage /> },
           { path: 'product/:productId/edit', element: <ProductEditPage /> },

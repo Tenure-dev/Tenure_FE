@@ -33,6 +33,7 @@ const TRADE_STATUS_LABEL: Record<TradeStatus, string> = {
 
 // BE TradeAction enum(com.tenure.domain.trade.enums.TradeAction)과 값이 일치해야 한다.
 const ACTION_REGISTER_SHIPMENT = 'REGISTER_SHIPMENT';
+const ACTION_MARK_DELIVERED = 'MARK_DELIVERED';
 const ACTION_CONFIRM_PURCHASE = 'CONFIRM_PURCHASE';
 
 const MessageScreen = ({ message, onBack }: { message: string; onBack: () => void }) => (
@@ -60,6 +61,8 @@ const TradeDetailPage = () => {
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [showDeliverModal, setShowDeliverModal] = useState(false);
+  const [showDeliverToast, setShowDeliverToast] = useState(false);
   const [showShippingToast, setShowShippingToast] = useState(() =>
     Boolean((location.state as { shippingConfirmed?: boolean } | null)?.shippingConfirmed),
   );
@@ -109,7 +112,10 @@ const TradeDetailPage = () => {
   const canRegisterShipping =
     !trade.trackingNumber && trade.availableActions.includes(ACTION_REGISTER_SHIPMENT);
   const canConfirmPurchase = trade.availableActions.includes(ACTION_CONFIRM_PURCHASE);
+  const canMarkDelivered = !isBuyer && trade.availableActions.includes(ACTION_MARK_DELIVERED);
   const deliveryCarrierLabel = trade.customDeliveryCarrierName ?? trade.deliveryCarrier ?? '-';
+  // currentStepIndex < 2 → shippedAt이 아직 없는 단계(결제 완료까지만 진행). 상품 발송부터 배송지 공개.
+  const isBeforeShipped = currentStepIndex < 2;
 
   const handleConfirmPurchase = () => {
     statusChangeMutation.mutate(
@@ -119,6 +125,20 @@ const TradeDetailPage = () => {
           setShowConfirmModal(false);
           setShowToast(true);
           setTimeout(() => setShowToast(false), 2000);
+        },
+        onError: (mutationError) => console.error(mutationError),
+      },
+    );
+  };
+
+  const handleMarkDelivered = () => {
+    statusChangeMutation.mutate(
+      { status: 'DELIVERED' },
+      {
+        onSuccess: () => {
+          setShowDeliverModal(false);
+          setShowDeliverToast(true);
+          setTimeout(() => setShowDeliverToast(false), 2000);
         },
         onError: (mutationError) => console.error(mutationError),
       },
@@ -204,6 +224,18 @@ const TradeDetailPage = () => {
               </div>
             );
           })}
+          {canMarkDelivered && (
+            <div className="pt-[12px]">
+              <Button
+                variant="filled"
+                size="54"
+                className="!w-full"
+                onClick={() => setShowDeliverModal(true)}
+              >
+                배송 완료 처리
+              </Button>
+            </div>
+          )}
           {canConfirmPurchase && (
             <div className="pt-[12px]">
               <Button
@@ -242,10 +274,20 @@ const TradeDetailPage = () => {
       <SectionTitle>{isBuyer ? '판매자 정보' : '구매자 정보'}</SectionTitle>
       <div className="flex items-center justify-between border-b border-[#F0F0F0] px-[16px] pb-[16px]">
         <div className="flex items-center gap-3">
-          <div className="size-[40px] shrink-0 rounded-full bg-[#F5F6F8]" />
+          {trade.counterpart.profileImageUrl ? (
+            <img
+              src={trade.counterpart.profileImageUrl}
+              alt={trade.counterpart.username}
+              className="size-[40px] shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="size-[40px] shrink-0 rounded-full bg-[#F5F6F8]" />
+          )}
           <div className="flex flex-col gap-1">
-            {/* TODO: 상대방 프로필(닉네임 등) 조회 API 연동 전까지 임시 표시 */}
-            <p className="text-[14px] font-semibold text-[#111111]">-</p>
+            <p className="text-[14px] font-semibold text-[#111111]">{trade.counterpart.username}</p>
+            <p className="text-[12px] text-[#767676]">
+              팔로워 {trade.counterpart.followerCount.toLocaleString('ko-KR')}
+            </p>
           </div>
         </div>
         <Button variant="ghost" size="36">
@@ -258,9 +300,22 @@ const TradeDetailPage = () => {
         <div className="flex flex-col gap-2">
           <InfoRow label="택배사" value={deliveryCarrierLabel} />
           <InfoRow label="운송장 번호" value={trade.trackingNumber ?? '-'} />
-          {/* TODO(은혜님 확인 대기): 받는 분/주소/연락처는 TradeDetailResponse에 없음.
-              배송지 조회 API가 확정되면 아래 임시 문구를 실제 데이터로 교체한다. */}
-          <p className="pt-[8px] text-[13px] text-[#767676]">배송지 정보 준비 중입니다.</p>
+          {isBeforeShipped ? (
+            <p className="pt-[8px] text-[13px] text-[#767676]">배송 전에는 확인할 수 없습니다.</p>
+          ) : (
+            <div className="flex flex-col gap-1 pt-[8px]">
+              <p className="text-[13px] text-[#111111]">
+                {trade.deliveryReceiverName} · {trade.deliveryPhone}
+              </p>
+              <p className="text-[13px] text-[#111111]">
+                {trade.deliveryPostalCode && `[${trade.deliveryPostalCode}] `}
+                {trade.deliveryAddressLine1} {trade.deliveryAddressLine2}
+              </p>
+              {trade.deliveryRequestNote && (
+                <p className="text-[12px] text-[#767676]">{trade.deliveryRequestNote}</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -336,6 +391,32 @@ const TradeDetailPage = () => {
       {showToast && (
         <div className="fixed bottom-[24px] left-1/2 z-50 -translate-x-1/2 rounded-[8px] bg-[#111111] px-[16px] py-[12px] text-[13px] text-white">
           거래가 확정되었습니다
+        </div>
+      )}
+
+      {showDeliverModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-[16px]">
+          <div className="rounded-[12px] bg-white p-[24px]">
+            <p className="text-[16px] font-semibold text-[#111111]">배송을 완료 처리할까요?</p>
+            <p className="mt-[8px] text-[13px] text-[#767676]">
+              완료 후에는 이전 단계로 되돌릴 수 없습니다.
+            </p>
+            <div className="mt-[20px]">
+              <DoubleButton
+                layout="half"
+                leftLabel="취소"
+                rightLabel="완료"
+                onLeftClick={() => setShowDeliverModal(false)}
+                onRightClick={handleMarkDelivered}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeliverToast && (
+        <div className="fixed bottom-[24px] left-1/2 z-50 -translate-x-1/2 rounded-[8px] bg-[#111111] px-[16px] py-[12px] text-[13px] text-white">
+          배송이 완료 처리되었습니다
         </div>
       )}
 

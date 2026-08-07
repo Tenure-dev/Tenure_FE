@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import { BackHeader, Button } from '@/shared/components';
 import { useProductDetail } from '@/features/product/model/useProductDetail';
+import { useItemDetailQuery } from '@/features/mypage/model/useItemDetailQuery';
 import { useOfferStore, type PaymentMethod } from '@/store/offerStore';
 import { useAddresses } from '@/features/purchase/model/useAddresses';
 import { cn } from '@/shared/lib/cn';
@@ -18,11 +19,13 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string }[] = [
 ];
 
 const CheckoutPage = () => {
-  const { productId = '' } = useParams();
+  const { productId = '', itemId = '' } = useParams();
+  const isOfferFlow = !!itemId && !productId;
   const { state } = useLocation();
   const navigate = useNavigate();
 
   const offerPrice = useOfferStore((s) => s.price);
+  const offerSellerNickname = useOfferStore((s) => s.sellerNickname);
   const tradeRequest = useOfferStore((s) => s.tradeRequest);
   const paymentMethod = useOfferStore((s) => s.paymentMethod);
   const setItemId = useOfferStore((s) => s.setItemId);
@@ -33,8 +36,21 @@ const CheckoutPage = () => {
   const [agreeOrder, setAgreeOrder] = useState(false);
   const [agreeAuto, setAgreeAuto] = useState(false);
 
-  const { data, isLoading, isError } = useProductDetail(Number(productId));
+  const {
+    data: productData,
+    isLoading: productLoading,
+    isError: productError,
+  } = useProductDetail(isOfferFlow ? NaN : Number(productId));
+  const {
+    data: itemData,
+    isLoading: itemLoading,
+    isError: itemError,
+  } = useItemDetailQuery(Number(itemId), { enabled: isOfferFlow });
+
   const { defaultAddress } = useAddresses();
+
+  const isLoading = isOfferFlow ? itemLoading : productLoading;
+  const isError = isOfferFlow ? itemError : productError;
 
   if (isLoading) {
     return (
@@ -44,7 +60,7 @@ const CheckoutPage = () => {
     );
   }
 
-  if (isError || !data) {
+  if (isError || (isOfferFlow && !itemData) || (!isOfferFlow && !productData)) {
     return (
       <div className="bg-bg-white text-body-3 text-text-secondary flex min-h-screen items-center justify-center">
         아이템 정보를 찾을 수 없습니다.
@@ -53,17 +69,34 @@ const CheckoutPage = () => {
   }
 
   const isDirect = (state as { direct?: boolean } | null)?.direct === true;
-  const displayPrice = isDirect ? (data.price ?? 0) : offerPrice;
+
+  const displayImageUrl = isOfferFlow
+    ? (itemData?.representativeImageUrl ?? '')
+    : (productData?.mainImageUrl ?? '');
+  const displayBrand = isOfferFlow
+    ? (itemData?.brandName ?? '')
+    : (productData?.item.brandName ?? '');
+  const displayName = isOfferFlow ? (itemData?.itemName ?? '') : (productData?.item.itemName ?? '');
+  const displaySeller = isOfferFlow ? offerSellerNickname : (productData?.seller.username ?? '');
+  const displayPrice = isDirect ? (productData?.price ?? 0) : offerPrice;
+
   const fee = Math.round(displayPrice / 30);
   const total = displayPrice + SHIPPING_FEE + fee;
   const canPay = !!defaultAddress && agreeOrder && agreeAuto;
 
   const handlePay = () => {
-    if (isDirect) {
-      setItemId(data.item.itemId);
-      setSellerNickname(data.seller.username);
+    if (isDirect && productData) {
+      setItemId(productData.item.itemId);
+      setSellerNickname(productData.seller.username);
     }
-    navigate(`/product/${productId}/purchase/processing`, { state: { direct: isDirect } });
+    if (isOfferFlow) {
+      navigate(`/product/${itemId}/offer/processing`, { replace: true });
+    } else {
+      navigate(`/product/${productId}/purchase/processing`, {
+        state: { direct: isDirect },
+        replace: true,
+      });
+    }
   };
 
   return (
@@ -75,10 +108,10 @@ const CheckoutPage = () => {
       <section className="px-4 pt-4">
         <h2 className="text-title-4 text-text-primary mb-3 font-bold">상품 정보</h2>
         <ItemSummaryCard
-          imageUrl={data.mainImageUrl}
-          brand={data.item.brandName}
-          name={data.item.itemName}
-          sellerNickname={data.seller.username}
+          imageUrl={displayImageUrl}
+          brand={displayBrand}
+          name={displayName}
+          sellerNickname={displaySeller}
           subline="주문자 : 홍길동 · 010-xxxx-xxxx"
         />
         <div className="mt-3 flex flex-col gap-2">

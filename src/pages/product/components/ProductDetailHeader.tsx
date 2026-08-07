@@ -3,7 +3,7 @@ import { BackHeader } from '@/shared/components';
 
 export interface ItemDetailHeaderProps {
   onShareClick: () => void;
-  onMoreClick: () => void;
+  onMoreClick?: () => void;
 }
 
 const ItemDetailHeader = ({ onShareClick, onMoreClick }: ItemDetailHeaderProps) => (
@@ -14,9 +14,11 @@ const ItemDetailHeader = ({ onShareClick, onMoreClick }: ItemDetailHeaderProps) 
         <button type="button" onClick={onShareClick} aria-label="공유하기">
           <img src={share} alt="" className="size-5" />
         </button>
-        <button type="button" onClick={onMoreClick} aria-label="더보기옵션">
-          <img src={moreOptions} alt="" className="size-5" />
-        </button>
+        {onMoreClick && (
+          <button type="button" onClick={onMoreClick} aria-label="더보기옵션">
+            <img src={moreOptions} alt="" className="size-5" />
+          </button>
+        )}
       </>
     }
   />

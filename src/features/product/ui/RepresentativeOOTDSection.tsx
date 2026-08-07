@@ -2,16 +2,21 @@ import { ChevronRight } from 'lucide-react';
 import type { RepresentativeOOTD } from '../model/types';
 
 export interface RepresentativeOOTDSectionProps {
+  title?: string;
   items: RepresentativeOOTD[];
   onMoreClick?: () => void;
 }
 
-const RepresentativeOOTDSection = ({ items, onMoreClick }: RepresentativeOOTDSectionProps) => {
+const RepresentativeOOTDSection = ({
+  title = '대표 OOTD',
+  items,
+  onMoreClick,
+}: RepresentativeOOTDSectionProps) => {
   return (
     <div className="border-border-secondary border-t-2 p-4 md:px-6">
       <div className="mb-3 flex w-full items-center justify-between">
-        <span className="text-title-4 text-text-primary">대표 OOTD</span>
-        <button type="button" onClick={onMoreClick} aria-label="대표 OOTD 더보기">
+        <span className="text-title-4 text-text-primary">{title}</span>
+        <button type="button" onClick={onMoreClick} aria-label={`${title} 더보기`}>
           <ChevronRight size={18} className="text-text-primary" />
         </button>
       </div>

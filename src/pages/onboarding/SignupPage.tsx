@@ -16,7 +16,12 @@ import {
 } from '@/features/auth/api/authApi';
 import { getMyInfo, uploadProfileImage } from '@/features/auth/api/userApi';
 import { toApiGender } from '@/features/auth/lib/gender';
-import { ACCESS_TOKEN_STORAGE_KEY, ApiError, USER_ID_STORAGE_KEY } from '@/shared/lib/api';
+import {
+  ACCESS_TOKEN_STORAGE_KEY,
+  ApiError,
+  USER_ID_STORAGE_KEY,
+  USER_NAME_STORAGE_KEY,
+} from '@/shared/lib/api';
 import { useUserStore } from '@/store/userStore';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 
@@ -286,13 +291,14 @@ const SignupPage = () => {
     localStorage.setItem(USER_ID_STORAGE_KEY, String(userId));
     try {
       // 회원가입 응답에는 accessToken이 포함되지 않으므로, 동일 자격증명으로 로그인해 토큰을 발급받는다.
-      const { accessToken } = await login({ email, password });
+      const { accessToken, username } = await login({ email, password });
       localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
+      localStorage.setItem(USER_NAME_STORAGE_KEY, username);
       setUser(await getMyInfo());
     } catch (error) {
       console.error(error);
     }
-    navigate('/loading');
+    navigate('/loading', { replace: true });
   };
 
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {

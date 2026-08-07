@@ -2,6 +2,7 @@ import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios';
 import { useUserStore } from '@/store/userStore';
 
 export const USER_ID_STORAGE_KEY = 'userId';
+export const USER_NAME_STORAGE_KEY = 'userName';
 export const ACCESS_TOKEN_STORAGE_KEY = 'accessToken';
 
 const LOGIN_PATH = '/login';
@@ -17,6 +18,7 @@ interface BaseResponse<T> {
 export const clearAuthStorage = () => {
   localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
   localStorage.removeItem(USER_ID_STORAGE_KEY);
+  localStorage.removeItem(USER_NAME_STORAGE_KEY);
   useUserStore.getState().clearUser();
 };
 

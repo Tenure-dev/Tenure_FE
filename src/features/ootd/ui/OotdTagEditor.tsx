@@ -6,6 +6,7 @@ import { useSimilarItems } from '@/features/ootd/api/useSimilarItems';
 import { analyzeTagArea } from '@/features/ootd/api/ootdApi';
 import { getItemDetail } from '@/features/mypage/api/itemsApi';
 import type { ItemDetailResponse } from '@/features/mypage/model/items';
+import { getDaysAgo } from '@/features/mypage/lib/daysAgo';
 import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 import TagLoading from '@/pages/camera/component/TagLoading';
 import TagResultSheet, {
@@ -63,7 +64,12 @@ const toOotdItemFromDetail = (d: ItemDetailResponse): OotdItem => ({
   brand: d.brandName,
   name: d.itemName,
   thumbnail: resolveFileUrl(d.representativeImageUrl),
-  meta: `${d.categoryLarge} · ${d.categorySmall}`,
+  meta: [
+    d.lastWornAt ? `최근 착용 ${getDaysAgo(d.lastWornAt)}일 전` : null,
+    `OOTD 인증 : ${d.ootdVerifiedWearCount}회`,
+  ]
+    .filter(Boolean)
+    .join(' · '),
   isNew: false,
 });
 

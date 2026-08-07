@@ -3,6 +3,9 @@ export type TradeStatus =
 
 export type TradeViewerMode = 'BUYER' | 'SELLER';
 
+// BE DeliveryCarrier enum(com.tenure.domain.trade.enums.DeliveryCarrier)과 값이 일치해야 한다.
+export type DeliveryCarrier = 'CJ_LOGISTICS' | 'KOREA_POST' | 'GS_POSTBOX' | 'CU_POST' | 'OTHER';
+
 export interface TradeCounterpart {
   userId: number;
   username: string;
@@ -21,7 +24,7 @@ export interface TradeDetailResponse {
   buyerUserId: number;
   sellerUserId: number;
   status: TradeStatus;
-  deliveryCarrier: string | null;
+  deliveryCarrier: DeliveryCarrier | null;
   customDeliveryCarrierName: string | null;
   trackingNumber: string | null;
   itemPrice: number;
@@ -48,7 +51,7 @@ export interface TradeDetailResponse {
 
 export interface TradeStatusChangeRequest {
   status: TradeStatus;
-  deliveryCarrier?: string;
+  deliveryCarrier?: DeliveryCarrier;
   trackingNumber?: string;
   customDeliveryCarrierName?: string;
 }

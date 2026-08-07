@@ -10,7 +10,11 @@ import logo from '@/shared/assets/logo.png';
 import googleLogo from '@/shared/assets/google.webp';
 import { login } from '@/features/auth/api/authApi';
 import { getMyInfo } from '@/features/auth/api/userApi';
-import { ACCESS_TOKEN_STORAGE_KEY, USER_ID_STORAGE_KEY } from '@/shared/lib/api';
+import {
+  ACCESS_TOKEN_STORAGE_KEY,
+  USER_ID_STORAGE_KEY,
+  USER_NAME_STORAGE_KEY,
+} from '@/shared/lib/api';
 import { useUserStore } from '@/store/userStore';
 import { useToast } from '@/shared/hooks/useToast';
 
@@ -61,15 +65,16 @@ const LoginPage = () => {
   const onSubmit = (values: LoginFormValues) => {
     setLoginError(null);
     loginMutation.mutate(values, {
-      onSuccess: async ({ userId, accessToken }) => {
+      onSuccess: async ({ userId, username, accessToken }) => {
         localStorage.setItem(USER_ID_STORAGE_KEY, String(userId));
+        localStorage.setItem(USER_NAME_STORAGE_KEY, username);
         localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
         try {
           setUser(await getMyInfo());
         } catch (error) {
           console.error(error);
         }
-        navigate('/loading');
+        navigate('/loading', { replace: true });
       },
       onError: (error) => {
         console.error(error);

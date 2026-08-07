@@ -71,7 +71,15 @@ const ProductEditContent = ({
             .map(([k, v]) => [k, String(v)]),
         ) as FormMeasurements)
       : {},
-    conditionFlags: data.conditionFlags ?? DEFAULT_CONDITION_FLAGS,
+    conditionFlags: data.conditionFlags
+      ? {
+          stain: data.conditionFlags.stain ?? false,
+          tear: data.conditionFlags.tear ?? false,
+          pillingOrDiscoloration: data.conditionFlags.pillingOrDiscoloration ?? false,
+          repairHistory: data.conditionFlags.repairHistory ?? false,
+          missingComponents: data.conditionFlags.missingComponents ?? false,
+        }
+      : DEFAULT_CONDITION_FLAGS,
     sellerDescription: data.sellerDescription ?? '',
   }));
 

@@ -217,7 +217,7 @@ const ProductDetailPageContent = ({
         onBuy={() =>
           navigate(`/product/${productId}/purchase/checkout`, { state: { direct: true } })
         }
-        onOffer={() => navigate(`/product/${productId}/purchase/price`)}
+        onOffer={() => navigate(`/product/${wishItemId}/offer/price`)}
         onChat={async () => {
           if (!productData) return;
           const { chatRoomId } = await createOrGetChatRoom(productData.item.itemId);

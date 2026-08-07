@@ -11,7 +11,8 @@ import StepProgress from './components/StepProgress';
 type View = 'processing' | 'complete' | 'error';
 
 const ProcessingPage = () => {
-  const { productId = '' } = useParams();
+  const { productId = '', itemId: itemIdParam = '' } = useParams();
+  const isOfferFlow = !!itemIdParam && !productId;
   const { state } = useLocation();
   const navigate = useNavigate();
 
@@ -29,6 +30,7 @@ const ProcessingPage = () => {
   const { mutate: submitIntent } = useCreatePurchaseIntent();
 
   const [view, setView] = useState<View>('processing');
+  const [resultId, setResultId] = useState<number | null>(null);
   const calledRef = useRef(false);
 
   useEffect(() => {
@@ -44,7 +46,10 @@ const ProcessingPage = () => {
           agreement: true,
         },
         {
-          onSuccess: () => setView('complete'),
+          onSuccess: (data) => {
+            setResultId(data.intentId);
+            setView('complete');
+          },
           onError: () => setView('error'),
         },
       );
@@ -61,7 +66,10 @@ const ProcessingPage = () => {
         agreement: true,
       },
       {
-        onSuccess: () => setView('complete'),
+        onSuccess: (data) => {
+          setResultId(data.offerId);
+          setView('complete');
+        },
         onError: () => setView('error'),
       },
     );
@@ -95,12 +103,16 @@ const ProcessingPage = () => {
 
   const handleConfirm = () => {
     reset();
-    navigate(`/product/${productId}`, { replace: true });
+    navigate('/purchase-history', { replace: true });
   };
 
   const handleViewOffer = () => {
     reset();
-    navigate('/purchase-history', { replace: true });
+    if (isOfferFlow) {
+      navigate(`/purchase/offer/${resultId}`, { replace: true });
+    } else {
+      navigate(`/purchase/intent/${resultId}`, { replace: true });
+    }
   };
 
   return (

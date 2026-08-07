@@ -21,5 +21,9 @@ export const useTagNavigation = () => {
     if (detail.productId) navigate(`/product/${detail.productId}/purchase/checkout`);
   };
 
-  return { goToDetail, goToCheckout };
+  const goToOffer = (itemId: number) => {
+    navigate(`/product/${itemId}/offer/price`);
+  };
+
+  return { goToDetail, goToCheckout, goToOffer };
 };

@@ -122,7 +122,10 @@ const TagResultSheet = ({
         <span className="bg-bg-secondary h-1 w-10 rounded-full" />
       </div>
 
-      <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-5">
+      <div
+        onDragStart={(e) => e.preventDefault()}
+        className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-5 select-none"
+      >
         {!active ? (
           <div className="flex h-full flex-col items-center justify-center pb-8 text-center">
             <p className="text-body-2 text-text-secondary leading-relaxed">

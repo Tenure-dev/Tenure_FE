@@ -328,8 +328,7 @@ const OotdDetailPage = () => {
     );
   }
 
-  const isUnsellable = (status: TaggedItem['status']) =>
-    status === '미판매_제안가능' || status === '미판매_제안불가';
+  const isDeadEnd = (status: TaggedItem['status']) => status === '삭제됨';
 
   return (
     <div
@@ -363,9 +362,8 @@ const OotdDetailPage = () => {
                   <TagPin
                     key={tag.id}
                     item={tag}
-                    // 판매 전환 이력이 없는 미판매 태그는 이동할 상세가 없어 탭해도 아무 동작 안 함.
-                    onClick={isUnsellable(tag.status) ? () => {} : () => goToDetail(tag)}
-                    interactive={!isUnsellable(tag.status)}
+                    onClick={isDeadEnd(tag.status) ? () => {} : () => goToDetail(tag)}
+                    interactive={!isDeadEnd(tag.status)}
                   />
                 ))}
             </div>

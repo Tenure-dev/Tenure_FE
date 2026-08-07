@@ -1,6 +1,6 @@
 import { useRef, type PointerEvent } from 'react';
 import type { Bbox } from '@/features/ootd/model/item';
-import TagMessage from './TagMessage';
+import TagBubble, { type TagBubbleTail, type TagBubbleVariant } from '@/features/ootd/ui/TagBubble';
 
 type Props = {
   bbox: Bbox; // 0~1 정규화
@@ -9,16 +9,26 @@ type Props = {
   onActivate: () => void; // 말풍선 클릭 시
   onChange: (bbox: Bbox) => void;
   onSettle?: () => void; // 이동/리사이즈 끝(pointerup) 시 — 분석 API 트리거용
+  variant?: TagBubbleVariant; // 말풍선 색(기본 black). 손 안 댄 기존 태그는 default(흰색)
 };
 
 type Corner = 'nw' | 'ne' | 'sw' | 'se';
 
-const MIN = 0.06; // 박스 최소 크기(이미지 대비 비율)
+const MIN_W = 0.2; // 박스 최소 가로(이미지 가로 대비 비율)
+const MIN_H = 0.15; // 박스 최소 세로(이미지 세로 대비 비율)
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
 
 // 이미지 위 태그: 말풍선은 항상 표시, 누르면 활성화되어 박스(+스포트라이트)가 뜨고
 // 가운데를 잡으면 이동, 모서리 핸들을 잡으면 크기 조절.
-const TagBBox = ({ bbox, label, active, onActivate, onChange, onSettle }: Props) => {
+const TagBBox = ({
+  bbox,
+  label,
+  active,
+  onActivate,
+  onChange,
+  onSettle,
+  variant = 'black',
+}: Props) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // 공통 드래그: pointerdown 시점 bbox 기준으로 dx,dy(정규화)를 compute에 넘겨 새 bbox 생성
@@ -67,27 +77,35 @@ const TagBBox = ({ bbox, label, active, onActivate, onChange, onSettle }: Props)
       if (corner === 'se') {
         return {
           ...s,
-          width: clamp(s.width + dx, MIN, 1 - s.x),
-          height: clamp(s.height + dy, MIN, 1 - s.y),
+          width: clamp(s.width + dx, MIN_W, 1 - s.x),
+          height: clamp(s.height + dy, MIN_H, 1 - s.y),
         };
       }
       if (corner === 'sw') {
-        const x = clamp(s.x + dx, 0, right - MIN);
-        return { ...s, x, width: right - x, height: clamp(s.height + dy, MIN, 1 - s.y) };
+        const x = clamp(s.x + dx, 0, right - MIN_W);
+        return { ...s, x, width: right - x, height: clamp(s.height + dy, MIN_H, 1 - s.y) };
       }
       if (corner === 'ne') {
-        const y = clamp(s.y + dy, 0, bottom - MIN);
-        return { ...s, y, width: clamp(s.width + dx, MIN, 1 - s.x), height: bottom - y };
+        const y = clamp(s.y + dy, 0, bottom - MIN_H);
+        return { ...s, y, width: clamp(s.width + dx, MIN_W, 1 - s.x), height: bottom - y };
       }
       // nw
-      const x = clamp(s.x + dx, 0, right - MIN);
-      const y = clamp(s.y + dy, 0, bottom - MIN);
+      const x = clamp(s.x + dx, 0, right - MIN_W);
+      const y = clamp(s.y + dy, 0, bottom - MIN_H);
       return { ...s, x, y, width: right - x, height: bottom - y };
     });
   };
 
   // 보이는 장식 없이 모서리에 투명한 탭 영역만 (박스 테두리만 깔끔하게 보임)
   const handleClass = 'absolute z-20 size-6 touch-none';
+
+  // 말풍선을 게시글(TagPin)과 동일하게 배치한다: 태그 지점(박스 중심)에 꼬리 모서리를 붙이고
+  // 가장자리에 가까우면 반대쪽으로 펼친다. (편집·미리보기·게시글 태그 위치를 일치시키기 위함)
+  const cxPct = (bbox.x + bbox.width / 2) * 100;
+  const cyPct = (bbox.y + bbox.height / 2) * 100;
+  const flipX = cxPct > 65;
+  const flipY = cyPct < 25;
+  const tail: TagBubbleTail = !flipY ? (flipX ? 'br' : 'bl') : flipX ? 'tr' : 'tl';
 
   return (
     <div
@@ -133,18 +151,16 @@ const TagBBox = ({ bbox, label, active, onActivate, onChange, onSettle }: Props)
         </>
       )}
 
-      {/* 말풍선(태그): 아이템 설정된 박스만. bbox 중심 기준으로 그 위에 배치(게시글과 동일) */}
-      {label && (
+      {/* 말풍선(태그): 아이템 설정 + 비활성일 때만. 누르면 활성화되어 bbox 편집 UI로 전환.
+          박스 중심(top/left-1/2)을 태그 지점 삼아 TagPin과 동일한 transform으로 펼친다. */}
+      {!active && label && (
         <button
           type="button"
           onClick={onActivate}
-          className="absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-full"
+          className="absolute top-1/2 left-1/2 z-10"
+          style={{ transform: `translate(${flipX ? '-100%' : '0%'}, ${flipY ? '0%' : '-100%'})` }}
         >
-          <TagMessage
-            title={label}
-            side={bbox.x + bbox.width / 2 > 0.5 ? 'right' : 'left'}
-            variant="black"
-          />
+          <TagBubble title={label} tail={tail} variant={variant} />
         </button>
       )}
     </div>

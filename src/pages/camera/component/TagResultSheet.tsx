@@ -1,7 +1,6 @@
 import { useRef, useState, type PointerEvent } from 'react';
 import { cn } from '@/shared/lib/cn';
 import type { OotdItem } from '@/features/ootd/model/item';
-import { SIMILAR_COUNT } from '@/features/ootd/mock';
 import imageUpload from '@/shared/assets/image-upload.svg';
 import TagItemRow from './TagItemRow';
 
@@ -17,6 +16,7 @@ type Props = {
   onSearchOpen: () => void;
   onSearchClose: () => void;
   onNewItem: () => void;
+  onBbox: () => void;
 };
 
 const SearchIcon = () => (
@@ -43,11 +43,20 @@ const TagResultSheet = ({
   onSearchOpen,
   onSearchClose,
   onNewItem,
+  onBbox,
 }: Props) => {
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
   const [height, setHeight] = useState(MIDDLE);
   const [dragging, setDragging] = useState(false);
+
+  // 박스가 비활성→활성으로 바뀌면(말풍선 클릭 등) 시트를 중간 높이로 올린다.
+  // (effect 대신 이전 값 비교로 렌더 중 조정 — React 권장 패턴)
+  const [prevActive, setPrevActive] = useState(active);
+  if (active !== prevActive) {
+    setPrevActive(active);
+    if (active) setHeight(MIDDLE);
+  }
 
   const collapsed = height <= COLLAPSED; // 접힌 상태면 버튼 닫힌 색
 
@@ -158,7 +167,7 @@ const TagResultSheet = ({
               </button>
             </div>
             <p className="text-body-3 text-text-secondary mt-1">
-              유사한 아이템 {SIMILAR_COUNT}개 찾았습니다.
+              유사한 아이템 {items.length}개 찾았습니다.
             </p>
           </div>
         )}
@@ -195,7 +204,10 @@ const TagResultSheet = ({
         <button
           type="button"
           disabled={count === 0}
-          onClick={() => setHeight(COLLAPSED)}
+          onClick={() => {
+            setHeight(COLLAPSED);
+            onBbox();
+          }}
           className={cn(
             'text-btn-2 w-full rounded-md py-3.5 font-medium',
             count > 0 && !collapsed

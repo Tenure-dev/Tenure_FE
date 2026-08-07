@@ -1,5 +1,4 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Bell, BellRing } from 'lucide-react';
 import { BottomSheet, CTAButton } from '@/shared/components';
 import { cn } from '@/shared/lib/cn';
@@ -36,15 +35,11 @@ interface TaggedItemRowProps {
 }
 
 const TaggedItemRow = ({ item, isOwner, onToggleWish }: TaggedItemRowProps) => {
-  const navigate = useNavigate();
   const { goToDetail, goToCheckout } = useTagNavigation();
   // 작성자 본인 글에서는 구매/구매제안/미판매 액션이 필요 없어 슬라이드 자체를 막는다.
   const hasAction = !isOwner && (item.status === '판매중' || item.status === '미판매_제안가능');
   const isDeleted = item.status === '삭제됨';
   const isDimmed = isDeleted || item.status === '판매완료';
-  // 판매 전환 이력이 없는 미판매 아이템은 productId가 없어 이동할 상세 화면이 없으므로
-  // 일반 클릭은 막고, 슬라이드로 드러나는 "구매제안" 버튼으로만 이동할 수 있게 한다.
-  const isUnsold = item.status === '미판매_제안가능' || item.status === '미판매_제안불가';
   const [swipePx, setSwipePx] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; startSwipe: number } | null>(null);
@@ -54,12 +49,12 @@ const TaggedItemRow = ({ item, isOwner, onToggleWish }: TaggedItemRowProps) => {
     if (item.status === '판매중') {
       goToCheckout(item.itemId);
     } else {
-      navigate(`/items/${item.itemId}`);
+      goToDetail(item);
     }
   };
 
   const handleRowClick = () => {
-    if (isDeleted || isUnsold || draggedRef.current) return;
+    if (isDeleted || draggedRef.current) return;
     goToDetail(item);
   };
 
@@ -117,7 +112,7 @@ const TaggedItemRow = ({ item, isOwner, onToggleWish }: TaggedItemRowProps) => {
           onClick={handleRowClick}
           className={cn(
             'bg-bg-white flex touch-pan-y items-center gap-3',
-            !isDeleted && !isUnsold && 'cursor-pointer active:opacity-70',
+            !isDeleted && 'cursor-pointer active:opacity-70',
             !isDragging && 'transition-transform duration-200 ease-out',
             isDimmed && 'opacity-50',
           )}

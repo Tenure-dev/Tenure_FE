@@ -123,6 +123,24 @@ export interface OotdTagConfirmResponse {
   publicationStatus: OotdPublicationStatus;
 }
 
+// POST /ootds/{ootdId}/tags/batch — 기존 태그를 전부 삭제하고 이 목록으로 교체(모두 CONFIRMED).
+// 최소 1개 이상이어야 함(빈 목록은 400).
+export interface OotdTagBatchItem {
+  itemId: number;
+  bbox: Bbox;
+  labelText: string;
+}
+
+export interface OotdTagBatchRequest {
+  tags: OotdTagBatchItem[];
+}
+
+export interface OotdTagBatchResponse {
+  ootdId: number;
+  savedCount: number;
+  tags: OotdTagResponse[];
+}
+
 export type ApiItemStatus = 'OWNED' | 'ON_SALE' | 'SOLD' | 'TRANSFERRED' | 'ARCHIVED';
 
 export interface ItemListResponse {

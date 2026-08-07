@@ -12,7 +12,7 @@ export const useTagNavigation = () => {
     if (detail.productId) {
       navigate(`/product/${detail.productId}`);
     } else {
-      navigate(`/items/${item.itemId}`);
+      navigate(`/product?itemId=${item.itemId}`);
     }
   };
 

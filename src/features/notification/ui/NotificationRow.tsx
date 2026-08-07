@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/shared/lib/cn';
 import profileDefault from '@/shared/assets/profileDefault.svg';
+import { getItemDetail } from '@/features/mypage/api/itemsApi';
 import { formatNotificationTime } from '../lib/groupByDate';
 import type { NotificationItem } from '../model/types';
 
@@ -9,22 +10,28 @@ export interface NotificationRowProps {
   onRead: (id: number) => void;
 }
 
-// PURCHASE_INTENT/PURCHASE_OFFER는 이동할 화면이 불명확해 BE 확인 전까지 매핑하지 않는다.
 const TARGET_PATH: Partial<Record<NotificationItem['targetType'], (id: number) => string>> = {
-  ITEM: (id) => `/item/${id}`,
-  PRODUCT: (id) => `/item/${id}`,
   OOTD: (id) => `/ootd/${id}`,
   TRADE: (id) => `/trade/${id}`,
   CHAT: (id) => `/chat/${id}`,
   USER: (id) => `/users/${id}`,
   FOLLOW: (id) => `/users/${id}`,
+  PURCHASE_OFFER: (id) => `/purchase/offer/${id}`,
+  PURCHASE_INTENT: (id) => `/purchase/intent/${id}`,
 };
 
 const NotificationRow = ({ item, onRead }: NotificationRowProps) => {
   const navigate = useNavigate();
 
-  const handleClick = () => {
+  const handleClick = async () => {
     onRead(item.id);
+
+    if (item.targetType === 'ITEM' || item.targetType === 'PRODUCT') {
+      const detail = await getItemDetail(item.targetId);
+      navigate(detail.productId ? `/product/${detail.productId}` : `/items/${item.targetId}`);
+      return;
+    }
+
     const path = TARGET_PATH[item.targetType]?.(item.targetId);
     if (path) navigate(path);
   };

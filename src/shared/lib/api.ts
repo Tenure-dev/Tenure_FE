@@ -2,6 +2,7 @@ import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios';
 import { useUserStore } from '@/store/userStore';
 
 export const USER_ID_STORAGE_KEY = 'userId';
+export const USER_NAME_STORAGE_KEY = 'userName';
 export const ACCESS_TOKEN_STORAGE_KEY = 'accessToken';
 
 const LOGIN_PATH = '/login';
@@ -17,7 +18,19 @@ interface BaseResponse<T> {
 export const clearAuthStorage = () => {
   localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
   localStorage.removeItem(USER_ID_STORAGE_KEY);
+  localStorage.removeItem(USER_NAME_STORAGE_KEY);
   useUserStore.getState().clearUser();
+};
+
+// JWT payload의 exp(초 단위)를 파싱해 만료 여부를 반환한다.
+// 파싱 실패(비표준 토큰, 손상 등)는 만료로 간주 -> 로그인 페이지로 리다이렉트
+export const isTokenExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return typeof payload.exp === 'number' && payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
 };
 
 // BaseResponse.code(예: AUTH_1001)를 보존해 호출부가 실패 사유를 분기할 수 있게 한다.

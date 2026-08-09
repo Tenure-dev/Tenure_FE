@@ -36,9 +36,9 @@ type Props = {
   ootdId?: number;
   initialTags?: EditorTag[]; // 기존 태그 복원(상세 편집). 없으면 빈 편집(생성).
   onChange?: (tags: EditorTag[]) => void; // 완성된 태그 셋이 바뀔 때마다 통지(부모가 완료/저장에 사용)
-  enableNewItemCrop?: boolean; // 새 아이템 대표이미지 bbox 크롭. 원격 이미지 CORS 이슈 시 false. 기본 true.
   untouchedVariant?: TagBubbleVariant; // 손 안 댄 기존 태그 말풍선 색(기본 black). 상세 편집은 default(흰색).
   scrollable?: boolean;
+  onSheetExpandedChange?: (expanded: boolean) => void; // 결과 시트가 최대 높이일 때 통지
   className?: string;
 };
 
@@ -80,9 +80,9 @@ const OotdTagEditor = ({
   ootdId,
   initialTags,
   onChange,
-  enableNewItemCrop = true,
   untouchedVariant = 'black',
   scrollable = false,
+  onSheetExpandedChange,
   className,
 }: Props) => {
   const { data: recommended = [], isPending } = useSimilarItems();
@@ -324,13 +324,14 @@ const OotdTagEditor = ({
         onBbox={() => activateBox(null)}
         overlay={scrollable ? 'fixed' : 'absolute'}
         onHeightChange={scrollable ? setSheetHeight : undefined}
+        onExpandedChange={onSheetExpandedChange}
       />
 
       {/* 새 아이템 등록 시트 */}
       {newItemOpen && (
         <NewItemSheet
-          photo={enableNewItemCrop ? photo : undefined}
           bbox={activeBox?.bbox}
+          ootdId={ootdId}
           onBack={() => setNewItemOpen(false)}
           onSubmit={handleRegister}
         />

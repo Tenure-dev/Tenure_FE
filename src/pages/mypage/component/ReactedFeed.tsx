@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 import { useReactedOotds } from '@/features/mypage/api/useMyFeed';
 import { useRemoveReaction } from '@/features/mypage/api/useRemoveReaction';
+import { useInfiniteScroll } from '@/shared/hooks/useInfiniteScroll';
 import heartActive from '@/shared/assets/heart-active.svg';
 import saveActive from '@/shared/assets/save-active.svg';
 
@@ -12,8 +13,10 @@ type Props = {
 // 좋아요·저장 탭: 응답에 날짜·카운트가 없어 월 구분 없이 썸네일만 그리드로 깐다.
 // 오버레이 아이콘을 누르면 좋아요/저장을 취소한다(DELETE).
 const ReactedFeed = ({ tab }: Props) => {
-  const { data, isPending, isError } = useReactedOotds(tab);
+  const { data, isPending, isError, fetchNextPage, hasNextPage } = useReactedOotds(tab);
   const { mutate: remove, isPending: isRemoving } = useRemoveReaction(tab);
+  const items = data?.pages.flatMap((page) => page.content) ?? [];
+  const sentinelRef = useInfiniteScroll({ hasMore: !!hasNextPage, onLoadMore: fetchNextPage });
 
   if (isPending)
     return <p className="text-body-3 text-text-secondary px-4 py-10 text-center">불러오는 중…</p>;
@@ -23,7 +26,7 @@ const ReactedFeed = ({ tab }: Props) => {
         목록을 불러오지 못했어요.
       </p>
     );
-  if (data.content.length === 0)
+  if (items.length === 0)
     return (
       <p className="text-body-3 text-text-secondary px-4 py-10 text-center">
         {tab === '좋아요' ? '좋아요한 게시물이 없어요.' : '저장한 게시물이 없어요.'}
@@ -36,7 +39,7 @@ const ReactedFeed = ({ tab }: Props) => {
   return (
     <div className="px-4 pb-6">
       <div className="mt-5 columns-[160px] gap-2">
-        {data.content.map((it) => (
+        {items.map((it) => (
           <Link
             key={it.ootdId}
             to={`/ootd/${it.ootdId}`}
@@ -63,6 +66,7 @@ const ReactedFeed = ({ tab }: Props) => {
           </Link>
         ))}
       </div>
+      <div ref={sentinelRef} />
     </div>
   );
 };

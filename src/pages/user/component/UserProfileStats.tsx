@@ -1,13 +1,9 @@
 import cn from '@/shared/lib/cn';
-import { userProfile } from '../mock';
 
-const stats = [
-  { label: '피드', value: userProfile.stats.feed },
-  { label: '아이템', value: userProfile.stats.item },
-  { label: '팔로워', value: userProfile.stats.follower },
-];
+const stats = [{ label: '피드' }, { label: '아이템' }, { label: '팔로워' }];
+type Props = { feed: number; item: number; follower: number };
 
-const UserProfileStats = () => {
+const UserProfileStats = ({ feed, item, follower }: Props) => {
   return (
     <div className="flex p-4">
       {stats.map((stat, index) => (
@@ -18,7 +14,11 @@ const UserProfileStats = () => {
             index !== 0 && 'border-border-secondary border-l',
           )}
         >
-          <span className="text-title-3 font-medium">{stat.value}</span>
+          <span className="text-title-3 font-medium">
+            {stat.label === '피드' && feed}
+            {stat.label === '아이템' && item}
+            {stat.label === '팔로워' && follower}
+          </span>
           <span className="text-body-3 text-text-secondary">{stat.label}</span>
         </div>
       ))}

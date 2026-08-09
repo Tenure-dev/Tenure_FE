@@ -115,6 +115,8 @@ const UserProfilePage = () => {
         feed={profile.feedCount}
         item={profile.itemCount}
         follower={profile.followerCount}
+        userId={id}
+        username={profile.username}
       />
       <FollowButton following={following} onToggle={handleToggleFollow} />
       <UserFeed userId={id} />

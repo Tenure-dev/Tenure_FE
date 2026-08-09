@@ -1,10 +1,23 @@
-import { useEffect, useRef } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 import type { ChatMessage } from '@/features/chat/model/types';
 import MessageBubble from './MessageBubble';
 
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+// ISO → '2026.06.21 월요일'
+const formatDateLabel = (iso: string): string => {
+  const d = new Date(iso);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}.${mm}.${dd} ${WEEKDAYS[d.getDay()]}요일`;
+};
+
+// 같은 날짜인지 판별 (연·월·일 기준)
+const sameDay = (a: string, b: string): boolean =>
+  new Date(a).toDateString() === new Date(b).toDateString();
+
 type Props = {
   messages: ChatMessage[];
-  date?: string;
   avatar: string;
   name: string;
   // 이 값이 바뀌면 맨 아래로 다시 스크롤 (키보드 열림 등)
@@ -16,7 +29,6 @@ type Props = {
 
 const ChatMessages = ({
   messages,
-  date,
   avatar,
   name,
   scrollTrigger,
@@ -57,10 +69,20 @@ const ChatMessages = ({
       onScroll={handleScroll}
       className="bg-bg-quaternary flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 pb-24"
     >
-      {date && <p className="text-regular text-body-2 text-text-tertiary text-center">{date}</p>}
-      {messages.map((message) => (
-        <MessageBubble key={message.id} message={message} avatar={avatar} name={name} />
-      ))}
+      {messages.map((message, i) => {
+        // 그 날짜의 첫 메시지 위에 날짜 구분선 표시
+        const showDate = i === 0 || !sameDay(message.createdAt, messages[i - 1].createdAt);
+        return (
+          <Fragment key={message.id}>
+            {showDate && (
+              <p className="text-regular text-body-2 text-text-tertiary py-1 text-center">
+                {formatDateLabel(message.createdAt)}
+              </p>
+            )}
+            <MessageBubble message={message} avatar={avatar} name={name} />
+          </Fragment>
+        );
+      })}
     </div>
   );
 };

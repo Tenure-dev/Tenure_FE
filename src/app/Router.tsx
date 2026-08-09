@@ -81,6 +81,7 @@ export const router = createBrowserRouter([
           { path: 'ootd/:id/related/more', element: <RelatedOotdMorePage /> },
           { path: 'mypage', element: <MyPage /> },
           { path: 'mypage/follow', element: <FollowListPage /> },
+          { path: 'users/:userId/follow', element: <FollowListPage /> },
           { path: 'wishlist', element: <WishListPage /> },
           { path: 'mypage/edit', element: <ProfileEditPage /> },
           { path: 'mypage/items', element: <RegisteredItemsPage /> },

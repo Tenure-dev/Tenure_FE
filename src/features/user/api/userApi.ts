@@ -43,6 +43,8 @@ export const followUser = (userId: number): Promise<FollowResponse> =>
 export const unfollowUser = (userId: number): Promise<FollowResponse> =>
   api.delete(`/users/${userId}/follow`);
 
-// 타 사용자 공개 OOTD 피드 (커서 기반, 첫 페이지 20개). 응답 형태는 /ootds/me와 동일.
-export const getUserPosts = (userId: number) =>
-  api.get<MyPostsResponse>(`/users/${userId}/ootds`, { params: { size: 20 } });
+// 타 사용자 공개 OOTD 피드 (커서 기반). 응답 형태는 /ootds/me와 동일.
+export type UserPostsCursor = { cursorCreatedAt?: string; cursorId?: number };
+
+export const getUserPosts = (userId: number, cursor?: UserPostsCursor) =>
+  api.get<MyPostsResponse>(`/users/${userId}/ootds`, { params: { size: 20, ...cursor } });

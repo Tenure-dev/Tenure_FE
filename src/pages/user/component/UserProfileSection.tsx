@@ -1,4 +1,6 @@
 import profileDefault from '@/shared/assets/profileDefault.svg';
+import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
+
 type Props = {
   name: string;
   grade: string;
@@ -12,7 +14,7 @@ const UserProfileSection = ({ name, grade, height, weight, profileImageUrl }: Pr
   return (
     <div className="flex items-center gap-4 px-4 py-6">
       <img
-        src={profileImageUrl || profileDefault}
+        src={resolveFileUrl(profileImageUrl) || profileDefault}
         alt=""
         className="bg-bg-quaternary size-24 rounded-full object-cover"
       />

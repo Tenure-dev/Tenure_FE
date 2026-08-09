@@ -19,8 +19,10 @@ const OotdCreatePage = () => {
     if (!photo) return;
     const image = dataUrlToFile(photo, 'ootd.jpg');
     createOotd(image, {
-      onSuccess: () => {
-        navigate('/feed', { state: { toast: '게시되었습니다.' } });
+      onSuccess: (res) => {
+        // 자동태그 게시 → 상세로 이동. 상세에서 AI 태그 준비되면 자동 확정(confirm)된다.
+        // fromPublish: 상세에서 뒤로가기 시 작성 화면이 아니라 피드로 보내기 위함.
+        navigate(`/ootd/${res.ootdId}`, { state: { toast: '게시되었습니다.', fromPublish: true } });
       },
       onError: () => {
         navigate('/feed', { state: { toast: '게시에 실패하였습니다.' } });
@@ -51,7 +53,13 @@ const OotdCreatePage = () => {
   if (isPending || creatingManual) {
     return (
       <div className="bg-bg-white flex h-dvh w-full flex-col">
-        <TagLoading title="태그를 작성할 준비를 하고 있어요!" subtitle="잠시만 기다려 주세요!" />
+        {creatingManual ? (
+          // 태그 작성 준비: 문구 표시
+          <TagLoading title="태그를 작성할 준비를 하고 있어요!" subtitle="잠시만 기다려 주세요!" />
+        ) : (
+          // 자동 게시: 스피너만 (문구 없음)
+          <TagLoading />
+        )}
       </div>
     );
   }

@@ -20,5 +20,6 @@ export const toChatMessage = (res: ChatMessageResponse): ChatMessage => {
       ? res.contentImageUrls.map((url) => resolveFileUrl(url))
       : undefined,
     time: formatTime(res.createdAt),
+    createdAt: res.createdAt,
   };
 };

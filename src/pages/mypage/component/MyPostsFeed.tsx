@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 import { useMyPosts } from '@/features/mypage/api/useMyFeed';
 import { useToggleHeart, useToggleSave } from '@/features/mypage/api/useToggleReaction';
+import { useInfiniteScroll } from '@/shared/hooks/useInfiniteScroll';
 import type { MyPostItem } from '@/features/mypage/api/dto';
 import cn from '@/shared/lib/cn';
 import bookmark from '@/shared/assets/bookmark.svg';
@@ -81,7 +82,9 @@ const PostGridItem = ({ item }: { item: MyPostItem }) => {
 };
 
 const MyPostsFeed = () => {
-  const { data, isPending, isError } = useMyPosts();
+  const { data, isPending, isError, fetchNextPage, hasNextPage } = useMyPosts();
+  const items = data?.pages.flatMap((page) => page.content) ?? [];
+  const sentinelRef = useInfiniteScroll({ hasMore: !!hasNextPage, onLoadMore: fetchNextPage });
 
   if (isPending)
     return <p className="text-body-3 text-text-secondary px-4 py-10 text-center">불러오는 중…</p>;
@@ -91,7 +94,7 @@ const MyPostsFeed = () => {
         게시물을 불러오지 못했어요.
       </p>
     );
-  if (data.content.length === 0)
+  if (items.length === 0)
     return (
       <p className="text-body-3 text-text-secondary px-4 py-10 text-center">
         아직 게시물이 없어요.
@@ -100,16 +103,17 @@ const MyPostsFeed = () => {
 
   return (
     <div className="px-4 pb-6">
-      {groupByMonth(data.content).map(({ month, items }) => (
+      {groupByMonth(items).map(({ month, items: monthItems }) => (
         <section key={month} className="mt-5">
           <h2 className="text-title-2 mb-2 font-medium">{month}</h2>
           <div className="columns-[160px] gap-2">
-            {items.map((it) => (
+            {monthItems.map((it) => (
               <PostGridItem key={it.ootdId} item={it} />
             ))}
           </div>
         </section>
       ))}
+      <div ref={sentinelRef} />
     </div>
   );
 };

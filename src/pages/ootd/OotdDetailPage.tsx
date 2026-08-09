@@ -125,7 +125,8 @@ const OotdDetailPage = () => {
           return;
         }
         if (detail.tagStatus === 'AUTO_UNCONFIRMED') {
-          // 태그 0개여도 확정 처리 (백엔드가 0개 confirm 허용)
+          // 태그 0개면 확정할 것도 없음(백엔드 confirm 불필요) → 스킵
+          if ((detail.tags?.length ?? 0) === 0) return;
           try {
             await confirmTags(ootdId);
             if (!cancelled) await refreshPost(); // CONFIRMED 반영

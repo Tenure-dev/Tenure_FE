@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { cn } from '@/shared/lib/cn';
 import calendar from '@/shared/assets/calendar.svg';
 import type { Bbox, OotdItem, WearTarget } from '@/features/ootd/model/item';
@@ -60,12 +60,40 @@ const TextField = ({
   </div>
 );
 
+// 핸들을 이 정도 이상 아래로 끌어내리면 닫힘으로 판단
+const DISMISS_THRESHOLD_PX = 120;
+
 const NewItemSheet = ({ onBack, onSubmit, bbox, ootdId }: Props) => {
   const [brand, setBrand] = useState('');
   const [name, setName] = useState('');
   const [target, setTarget] = useState<WearTarget>('남성복');
   const [date, setDate] = useState('');
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+
+  // 핸들을 눌러 아래로 끌면 시트가 따라 내려가고, 충분히 내리면 닫힌다(다른 시트들과 동일한 제스처).
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragStartYRef = useRef<number | null>(null);
+
+  const handleHandlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    dragStartYRef.current = e.clientY;
+    setDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const handleHandlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragStartYRef.current == null) return;
+    setDragY(Math.max(0, e.clientY - dragStartYRef.current));
+  };
+  const handleHandlePointerUp = () => {
+    if (dragStartYRef.current == null) return;
+    dragStartYRef.current = null;
+    setDragging(false);
+    if (dragY > DISMISS_THRESHOLD_PX) {
+      onBack();
+    } else {
+      setDragY(0);
+    }
+  };
 
   const canSubmit = brand.trim() !== '' && name.trim() !== '';
 
@@ -124,14 +152,28 @@ const NewItemSheet = ({ onBack, onSubmit, bbox, ootdId }: Props) => {
   };
 
   return (
-    <div className="absolute inset-0 z-10 flex flex-col justify-end bg-black/30">
+    <div
+      className="absolute inset-0 z-10 flex flex-col justify-end bg-black/30"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onBack(); // 배경 자체를 눌렀을 때만 닫기(내부 클릭 버블링 무시)
+      }}
+    >
       <div
         className={cn(
-          'bg-bg-white flex h-[calc(100%-48px)] flex-col rounded-t-2xl px-5 pt-3 pb-6',
+          'bg-bg-white flex h-[calc(100%-48px)] flex-col rounded-t-2xl px-5 pt-3 pb-6 select-none',
+          !dragging && 'transition-transform duration-200 ease-out',
           datePickerOpen && 'hidden',
         )}
+        style={{ transform: dragY ? `translateY(${dragY}px)` : undefined }}
       >
-        <div className="mb-2 flex shrink-0 justify-center">
+        <div
+          onPointerDown={handleHandlePointerDown}
+          onPointerMove={handleHandlePointerMove}
+          onPointerUp={handleHandlePointerUp}
+          onPointerCancel={handleHandlePointerUp}
+          onDragStart={(e) => e.preventDefault()}
+          className="mb-2 flex shrink-0 touch-none justify-center py-1 select-none"
+        >
           <span className="bg-bg-secondary h-1 w-10 rounded-full" />
         </div>
 
@@ -141,7 +183,13 @@ const NewItemSheet = ({ onBack, onSubmit, bbox, ootdId }: Props) => {
             <label className="text-body-3 mb-1.5 block font-medium">대표 이미지</label>
             <div className="border-border-secondary bg-bg-secondary flex aspect-[3/4] w-24 items-center justify-center overflow-hidden rounded-md border">
               {preview ? (
-                <img src={preview} alt="대표 이미지 미리보기" className="size-full object-cover" />
+                <img
+                  src={preview}
+                  alt="대표 이미지 미리보기"
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                  className="size-full object-cover"
+                />
               ) : (
                 <span className="text-body-4 text-text-tertiary">이미지 없음</span>
               )}

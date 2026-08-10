@@ -65,7 +65,7 @@ const TaggedItemRow = ({ item, isOwner, onToggleWish }: TaggedItemRowProps) => {
 
   const handleRowClick = () => {
     if (isDeleted || draggedRef.current) return;
-    goToDetail(item);
+    goToDetail(item, isOwner);
   };
 
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {

@@ -1,10 +1,10 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import chevon from '@/shared/assets/chevron-left.svg';
 import TagLoading from './component/TagLoading';
 import { useCreateOotd } from '@/features/ootd/api/useCreateOotd';
 import { useCreateManualOotd } from '@/features/ootd/api/useCreateManualOotd';
 import { useOotdDraftStore } from '@/store/useOotdDraftStore';
 import { dataUrlToFile } from '@/shared/lib/dataUrlToFile';
+import BackHeader from '@/shared/components/BackHeader';
 
 const OotdCreatePage = () => {
   const navigate = useNavigate();
@@ -67,12 +67,7 @@ const OotdCreatePage = () => {
   return (
     <div className="bg-bg-white text-text-primary flex min-h-dvh flex-col">
       {/* 헤더 */}
-      <header className="flex items-center gap-3 px-5 py-4">
-        <button type="button" onClick={() => navigate(-1)} aria-label="뒤로">
-          <img src={chevon} width={24} height={24} alt="뒤로가기" />
-        </button>
-        <h1 className="text-title-2 font-medium">새 게시물 작성</h1>
-      </header>
+      <BackHeader title="새 게시물 작성" />
 
       {/* 진행바 */}
       <div className="bg-bg-tertiary h-1 w-full">

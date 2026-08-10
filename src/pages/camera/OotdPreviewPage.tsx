@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import chevron from '@/shared/assets/chevron-left.svg';
 import type { Bbox } from '@/features/ootd/model/item';
 import { usePublishOotd } from '@/features/ootd/api/usePublishOotd';
 import { useOotdDraftStore } from '@/store/useOotdDraftStore';
-import { Toast } from '@/shared/components';
+import { BackHeader, Toast } from '@/shared/components';
 import { useToast } from '@/shared/hooks/useToast';
 import TagLoading from './component/TagLoading';
 import TagBubble, { type TagBubbleTail } from '@/features/ootd/ui/TagBubble';
@@ -62,13 +61,7 @@ const OotdPreviewPage = () => {
 
   return (
     <div className="bg-bg-white text-text-primary flex min-h-dvh w-full flex-col">
-      {/* 헤더 */}
-      <header className="flex items-center gap-3 px-5 py-4">
-        <button type="button" onClick={() => navigate(-1)} aria-label="뒤로">
-          <img src={chevron} width={24} height={24} alt="뒤로가기" />
-        </button>
-        <h1 className="text-title-2 font-medium">게시물 미리보기</h1>
-      </header>
+      <BackHeader title="게시물 미리보기" />
 
       {/* 진행바 (마지막 단계) */}
       <div className="bg-bg-tertiary h-1 w-full">

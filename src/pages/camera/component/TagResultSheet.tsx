@@ -31,7 +31,7 @@ const SearchIcon = () => (
 // 3단계 스냅 높이
 export const COLLAPSED = 100; // 맨 아래 (선택 완료 버튼만)
 export const MIDDLE = 178; // 중간 (분석한 결과 헤더 + 검색까지) — 기본
-const TOP_GAP = 48; // 끝까지 올렸을 때 헤더 아래로 남기는 여백
+const MAX_HEIGHT_RATIO = 0.5; // 끝까지 올려도 화면 전체가 아니라 절반 정도까지만
 
 const TagResultSheet = ({
   items,
@@ -74,8 +74,8 @@ const TagResultSheet = ({
     return `${item.brand} ${item.name}`.toLowerCase().includes(q);
   });
 
-  // 끝까지 올렸을 때 최대 높이 (헤더 아래 살짝 남김)
-  const getMaxH = () => window.innerHeight - TOP_GAP;
+  // 끝까지 올렸을 때 최대 높이 (화면 절반까지만)
+  const getMaxH = () => window.innerHeight * MAX_HEIGHT_RATIO;
 
   // 드래그로 자유롭게, 놓으면 3단계 중 가까운 곳으로 스냅
   const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {

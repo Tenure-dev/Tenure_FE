@@ -30,7 +30,8 @@ export interface TagDraftItemResponse {
   categoryId: number;
 }
 
-// 태그 작성용 간편 아이템 등록 (카테고리는 백엔드가 자동 분류)
+// 태그 작성용 간편 아이템 등록. 카테고리 미지정 시 "AI 분류 대기"로 저장되고,
+// 이걸 실제 카테고리로 분류해주는 로직은 아직 BE에 없음(요청 문서 참고).
 export const createTagDraftItem = (payload: TagDraftItemRequest) =>
   api.post<TagDraftItemResponse>('/items/tag-draft', payload);
 

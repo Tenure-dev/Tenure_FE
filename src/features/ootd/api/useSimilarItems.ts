@@ -5,8 +5,6 @@ import { getSimilarItems } from './similarItems';
 import type { SimilarItemResponse } from './dto';
 import type { OotdItem } from '../model/item';
 
-const PENDING_CATEGORY_NAME = 'AI 분류 대기';
-
 // 추천 응답 → 태그 화면 아이템 추천 리스트용 OotdItem
 const toOotdItem = (r: SimilarItemResponse): OotdItem => ({
   id: String(r.itemId),
@@ -27,5 +25,5 @@ export const useSimilarItems = (ootdId?: number) =>
   useQuery({
     queryKey: ['similar-items', ootdId ?? null],
     queryFn: () => getSimilarItems(30, ootdId),
-    select: (data) => data.filter((r) => r.categoryName !== PENDING_CATEGORY_NAME).map(toOotdItem),
+    select: (data) => data.map(toOotdItem),
   });

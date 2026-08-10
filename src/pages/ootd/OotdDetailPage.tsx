@@ -362,7 +362,7 @@ const OotdDetailPage = () => {
                   <TagPin
                     key={tag.id}
                     item={tag}
-                    onClick={isDeadEnd(tag.status) ? () => {} : () => goToDetail(tag)}
+                    onClick={isDeadEnd(tag.status) ? () => {} : () => goToDetail(tag, post.isOwner)}
                     interactive={!isDeadEnd(tag.status)}
                   />
                 ))}

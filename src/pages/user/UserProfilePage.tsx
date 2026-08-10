@@ -118,9 +118,9 @@ const UserProfilePage = () => {
         userId={id}
         username={profile.username}
       />
+      g
       <FollowButton following={following} onToggle={handleToggleFollow} />
       <UserFeed userId={id} />
-
       <UserMoreSheet
         open={showMore}
         onClose={() => setShowMore(false)}
@@ -128,7 +128,6 @@ const UserProfilePage = () => {
         onToggleBlock={setIsBlocked}
         onToast={showToast}
       />
-
       <Toast message={toastMessage} onClose={hideToast} />
     </div>
   );

@@ -39,7 +39,7 @@ const OotdCameraPage = () => {
   return (
     <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-black text-white">
       {/* 헤더 */}
-      <header className="flex items-center gap-3 px-5 py-4">
+      <header className="flex items-center gap-3 px-5 py-3">
         {captured ? (
           <button type="button" onClick={() => setCaptured(null)} aria-label="닫기">
             <img src={close} width={24} height={24} alt="" className="brightness-0 invert" />
@@ -55,7 +55,7 @@ const OotdCameraPage = () => {
       </header>
 
       {/* 프리뷰 영역: 남은 공간에 맞춰 최대 높이 제한 (화면 밖으로 안 넘침) */}
-      <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+      <div className="relative mt-7 flex min-h-0 flex-1 items-center justify-center overflow-hidden">
         <div
           className="relative w-full overflow-hidden bg-black"
           // iOS Safari는 flex 아이템의 aspect-ratio를 종종 무시해서,
@@ -87,19 +87,19 @@ const OotdCameraPage = () => {
               {error}
             </p>
           )}
-
-          {/* 비율 버튼: 프리뷰 우상단 고정 */}
-          {!captured && (
-            <button
-              type="button"
-              onClick={cycleRatio}
-              aria-label={`촬영 비율 ${ratio.label}, 탭하여 변경`}
-              className="absolute top-3 right-3 flex size-11 items-center justify-center rounded-lg bg-black/50"
-            >
-              <img src={ratio.icon} alt={ratio.label} />
-            </button>
-          )}
         </div>
+
+        {/* 비율 버튼: 프리뷰 영역 우상단 고정 (비율 바뀌어도 위치 고정) */}
+        {!captured && (
+          <button
+            type="button"
+            onClick={cycleRatio}
+            aria-label={`촬영 비율 ${ratio.label}, 탭하여 변경`}
+            className="absolute top-3 right-3 z-30 flex size-11 items-center justify-center rounded-lg bg-black/50"
+          >
+            <img src={ratio.icon} alt={ratio.label} />
+          </button>
+        )}
       </div>
 
       {/* 컨트롤 영역: 고정 높이 (비율 바뀌어도 촬영버튼 위치 고정) */}

@@ -29,7 +29,11 @@ const AppLoadingPage = () => {
         initialPageParam: undefined,
       }),
       queryClient.prefetchQuery({ queryKey: ['my-page'], queryFn: getMyPage }),
-      queryClient.prefetchQuery({ queryKey: ['ootds', 'me'], queryFn: getMyPosts }),
+      queryClient.prefetchInfiniteQuery({
+        queryKey: ['ootds', 'me'],
+        queryFn: () => getMyPosts(),
+        initialPageParam: undefined,
+      }),
       queryClient.prefetchQuery({ queryKey: ['search', 'home'], queryFn: getSearchHome }),
     ]).finally(() => navigate('/feed', { replace: true }));
   }, [navigate, queryClient]);

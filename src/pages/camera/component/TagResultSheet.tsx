@@ -19,6 +19,7 @@ type Props = {
   onBbox: () => void;
   overlay?: 'absolute' | 'fixed';
   onHeightChange?: (height: number) => void;
+  onExpandedChange?: (expanded: boolean) => void; // 시트가 최대 높이에 도달했는지
 };
 
 const SearchIcon = () => (
@@ -48,6 +49,7 @@ const TagResultSheet = ({
   onBbox,
   overlay = 'absolute',
   onHeightChange,
+  onExpandedChange,
 }: Props) => {
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
@@ -56,7 +58,9 @@ const TagResultSheet = ({
 
   useEffect(() => {
     onHeightChange?.(height);
-  }, [height, onHeightChange]);
+    // 최대 높이 근처(40px 이내)면 '펼쳐짐'으로 간주 → 헤더 숨김 트리거
+    onExpandedChange?.(height >= window.innerHeight * MAX_HEIGHT_RATIO - 40);
+  }, [height, onHeightChange, onExpandedChange]);
 
   // 박스가 비활성→활성으로 바뀌면(말풍선 클릭 등) 시트를 중간 높이로 올린다.
   // (effect 대신 이전 값 비교로 렌더 중 조정 — React 권장 패턴)
@@ -226,7 +230,7 @@ const TagResultSheet = ({
               : 'bg-disabled text-text-inverse',
           )}
         >
-          선택 완료{count > 0 ? ` (${count})` : ''}
+          선택 완료
         </button>
       </div>
     </div>

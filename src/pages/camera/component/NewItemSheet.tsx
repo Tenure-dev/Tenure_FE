@@ -2,8 +2,11 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import { cn } from '@/shared/lib/cn';
 import calendar from '@/shared/assets/calendar.svg';
 import type { Bbox, OotdItem, WearTarget } from '@/features/ootd/model/item';
-import { createTagDraftItem, toWearingTarget, uploadItemImage } from '@/features/ootd/api/item';
-import { cropImageToBbox } from '@/features/ootd/lib/cropImage';
+import {
+  createTagDraftItem,
+  toWearingTarget,
+  createItemRepresentativeImage,
+} from '@/features/ootd/api/item';
 import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 import { Toast } from '@/shared/components';
 import { useToast } from '@/shared/hooks/useToast';
@@ -12,8 +15,8 @@ import DatePickerSheet from './DatePickerSheet';
 type Props = {
   onBack: () => void;
   onSubmit: (item: OotdItem) => void;
-  photo?: string | null; // 촬영 사진(dataURL) — bbox 크롭용
-  bbox?: Bbox; // 활성 박스 bbox — 이 영역만 대표 이미지로 업로드
+  bbox?: Bbox; // 활성 박스 bbox — 이 영역으로 대표 이미지 생성
+  ootdId?: number; // 대표 이미지 생성 대상 OOTD
 };
 
 const TARGETS: WearTarget[] = ['남성복', '여성복', '공용'];
@@ -60,7 +63,7 @@ const TextField = ({
 // 핸들을 이 정도 이상 아래로 끌어내리면 닫힘으로 판단
 const DISMISS_THRESHOLD_PX = 120;
 
-const NewItemSheet = ({ onBack, onSubmit, photo, bbox }: Props) => {
+const NewItemSheet = ({ onBack, onSubmit, bbox, ootdId }: Props) => {
   const [brand, setBrand] = useState('');
   const [name, setName] = useState('');
   const [target, setTarget] = useState<WearTarget>('남성복');
@@ -94,24 +97,25 @@ const NewItemSheet = ({ onBack, onSubmit, photo, bbox }: Props) => {
 
   const canSubmit = brand.trim() !== '' && name.trim() !== '';
 
-  // 대표 이미지 미리보기 — bbox 영역을 크롭해 objectURL로 표시 (업로드될 이미지 확인용)
-  const [preview, setPreview] = useState<string | null>(null);
+  // 대표 이미지 — 진입 시 백엔드가 원본 OOTD에서 생성한 3:4 대표 이미지를 그대로 미리보기로 표시하고,
+  // 등록 시 이 URL을 재사용한다(중복 생성 방지).
+  const [repImageUrl, setRepImageUrl] = useState<string | undefined>(undefined);
   useEffect(() => {
-    if (!photo || !bbox) return; // preview 기본값이 null이라 별도 초기화 불필요
-    let url: string | null = null;
+    if (ootdId == null || !bbox) return;
     let cancelled = false;
-    cropImageToBbox(photo, bbox)
-      .then((file) => {
-        if (cancelled) return;
-        url = URL.createObjectURL(file);
-        setPreview(url);
+    createItemRepresentativeImage(ootdId, bbox)
+      .then((res) => {
+        if (!cancelled) setRepImageUrl(res.representativeImageUrl);
       })
-      .catch(() => setPreview(null));
+      .catch(() => {
+        if (!cancelled) setRepImageUrl(undefined);
+      });
     return () => {
       cancelled = true;
-      if (url) URL.revokeObjectURL(url);
     };
-  }, [photo, bbox]);
+  }, [ootdId, bbox]);
+
+  const preview = repImageUrl ? resolveFileUrl(repImageUrl) : null;
 
   const [submitting, setSubmitting] = useState(false);
   const { message: toast, show: showToast, hide: hideToast } = useToast();
@@ -120,17 +124,8 @@ const NewItemSheet = ({ onBack, onSubmit, photo, bbox }: Props) => {
     if (!canSubmit || submitting) return;
     setSubmitting(true);
     try {
-      // bbox 영역만 크롭해 대표 이미지로 업로드 → URL 확보 (실패해도 아이템 등록은 진행)
-      let representativeImageUrl: string | undefined;
-      if (photo && bbox) {
-        try {
-          const cropped = await cropImageToBbox(photo, bbox);
-          const uploaded = await uploadItemImage(cropped);
-          representativeImageUrl = uploaded.imageUrl;
-        } catch {
-          // 이미지 업로드 실패는 무시하고 아이템만 등록
-        }
-      }
+      // 진입 시 생성해 둔 대표 이미지 URL을 재사용 (없으면 대표 이미지 없이 등록)
+      const representativeImageUrl = repImageUrl;
 
       // 'YY.MM.DD' → '20YY-MM-DD' (없으면 생략)
       const firstOwnedAt = date ? `20${date.replace(/\./g, '-')}` : undefined;
@@ -186,7 +181,7 @@ const NewItemSheet = ({ onBack, onSubmit, photo, bbox }: Props) => {
           <h2 className="text-title-2 mb-5 font-semibold">새 아이템 등록</h2>
           <div className="mb-4">
             <label className="text-body-3 mb-1.5 block font-medium">대표 이미지</label>
-            <div className="border-border-secondary bg-bg-secondary flex size-24 items-center justify-center overflow-hidden rounded-md border">
+            <div className="border-border-secondary bg-bg-secondary flex aspect-[3/4] w-24 items-center justify-center overflow-hidden rounded-md border">
               {preview ? (
                 <img
                   src={preview}

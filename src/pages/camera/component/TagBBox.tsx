@@ -5,7 +5,9 @@ import TagBubble, { type TagBubbleTail, type TagBubbleVariant } from '@/features
 type Props = {
   bbox: Bbox; // 0~1 정규화
   label: string;
-  active: boolean; // 이 태그가 선택(활성)됐는지 → 박스 표시 여부
+  active: boolean; // 이 태그가 선택(활성)됐는지 → 시트에 반영
+  showFrame: boolean; // 박스 테두리+스포트라이트+리사이즈 핸들 표시 여부(새 박스 배치 중일 때만 true).
+  // 기존 태그를 말풍선 클릭으로 활성화했을 때는 false로 넘어와 말풍선만 선택 표시된다.
   onActivate: () => void; // 말풍선 클릭 시
   onChange: (bbox: Bbox) => void;
   onSettle?: () => void; // 이동/리사이즈 끝(pointerup) 시 — 분석 API 트리거용
@@ -24,6 +26,7 @@ const TagBBox = ({
   bbox,
   label,
   active,
+  showFrame,
   onActivate,
   onChange,
   onSettle,
@@ -118,8 +121,9 @@ const TagBBox = ({
         height: `${bbox.height * 100}%`,
       }}
     >
-      {/* 활성 태그만: 박스 테두리 + 주변 어둡게(스포트라이트) + 이동/리사이즈 */}
-      {active && (
+      {/* 새 박스를 배치/조정하는 중일 때만: 박스 테두리 + 주변 어둡게(스포트라이트) + 이동/리사이즈.
+          기존 태그를 말풍선으로 활성화했을 때는(showFrame=false) 안 뜬다 — 아래 말풍선만 선택 표시. */}
+      {active && showFrame && (
         <>
           {/* 가운데: 이동 */}
           <div
@@ -151,16 +155,16 @@ const TagBBox = ({
         </>
       )}
 
-      {/* 말풍선(태그): 아이템 설정 + 비활성일 때만. 누르면 활성화되어 bbox 편집 UI로 전환.
-          박스 중심(top/left-1/2)을 태그 지점 삼아 TagPin과 동일한 transform으로 펼친다. */}
-      {!active && label && (
+      {/* 말풍선(태그): 라벨이 있고 박스 테두리가 안 뜬 상태(비활성, 또는 기존 태그를 방금 선택한 상태)일 때만.
+          누르면 활성화/비활성 토글. 박스 중심(top/left-1/2)을 태그 지점 삼아 TagPin과 동일한 transform으로 펼친다. */}
+      {(!active || !showFrame) && label && (
         <button
           type="button"
           onClick={onActivate}
           className="absolute top-1/2 left-1/2 z-10"
           style={{ transform: `translate(${flipX ? '-100%' : '0%'}, ${flipY ? '0%' : '-100%'})` }}
         >
-          <TagBubble title={label} tail={tail} variant={variant} />
+          <TagBubble title={label} tail={tail} variant={variant} selected={active} />
         </button>
       )}
     </div>

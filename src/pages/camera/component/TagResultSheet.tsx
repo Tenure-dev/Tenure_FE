@@ -19,6 +19,7 @@ type Props = {
   onBbox: () => void;
   overlay?: 'absolute' | 'fixed';
   onHeightChange?: (height: number) => void;
+  onExpandedChange?: (expanded: boolean) => void; // 시트가 최대 높이에 도달했는지
 };
 
 const SearchIcon = () => (
@@ -31,7 +32,7 @@ const SearchIcon = () => (
 // 3단계 스냅 높이
 export const COLLAPSED = 100; // 맨 아래 (선택 완료 버튼만)
 export const MIDDLE = 178; // 중간 (분석한 결과 헤더 + 검색까지) — 기본
-const TOP_GAP = 48; // 끝까지 올렸을 때 헤더 아래로 남기는 여백
+const MAX_HEIGHT_RATIO = 0.5; // 끝까지 올려도 화면 전체가 아니라 절반 정도까지만
 
 const TagResultSheet = ({
   items,
@@ -48,6 +49,7 @@ const TagResultSheet = ({
   onBbox,
   overlay = 'absolute',
   onHeightChange,
+  onExpandedChange,
 }: Props) => {
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
@@ -56,7 +58,9 @@ const TagResultSheet = ({
 
   useEffect(() => {
     onHeightChange?.(height);
-  }, [height, onHeightChange]);
+    // 최대 높이 근처(40px 이내)면 '펼쳐짐'으로 간주 → 헤더 숨김 트리거
+    onExpandedChange?.(height >= window.innerHeight * MAX_HEIGHT_RATIO - 40);
+  }, [height, onHeightChange, onExpandedChange]);
 
   // 박스가 비활성→활성으로 바뀌면(말풍선 클릭 등) 시트를 중간 높이로 올린다.
   // (effect 대신 이전 값 비교로 렌더 중 조정 — React 권장 패턴)
@@ -74,8 +78,8 @@ const TagResultSheet = ({
     return `${item.brand} ${item.name}`.toLowerCase().includes(q);
   });
 
-  // 끝까지 올렸을 때 최대 높이 (헤더 아래 살짝 남김)
-  const getMaxH = () => window.innerHeight - TOP_GAP;
+  // 끝까지 올렸을 때 최대 높이 (화면 절반까지만)
+  const getMaxH = () => window.innerHeight * MAX_HEIGHT_RATIO;
 
   // 드래그로 자유롭게, 놓으면 3단계 중 가까운 곳으로 스냅
   const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
@@ -226,7 +230,7 @@ const TagResultSheet = ({
               : 'bg-disabled text-text-inverse',
           )}
         >
-          선택 완료{count > 0 ? ` (${count})` : ''}
+          선택 완료
         </button>
       </div>
     </div>

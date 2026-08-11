@@ -551,12 +551,7 @@ const OotdDetailPage = () => {
         onConfirm={handleDiscardConfirm}
       />
 
-      {isSaving && (
-        <div className="bg-bg-white fixed inset-0 z-50 flex flex-col items-center justify-center gap-4">
-          <div className="border-brand size-10 animate-spin rounded-full border-4 border-t-transparent" />
-          <p className="text-body-2 text-text-secondary">게시물 수정 중입니다!!!</p>
-        </div>
-      )}
+      {isSaving && <TagLoading title="게시물 수정 중입니다!!!" />}
 
       <Toast message={toastMessage} onClose={hideToast} />
     </div>

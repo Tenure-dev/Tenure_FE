@@ -4,7 +4,7 @@ type Props = { title?: string; subtitle?: string };
 
 const TagLoading = ({ title, subtitle }: Props) => {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center pb-32">
+    <div className="flex min-h-screen flex-col items-center justify-center pb-32">
       <svg
         width="60"
         height="58"

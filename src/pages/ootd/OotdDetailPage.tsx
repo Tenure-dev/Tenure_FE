@@ -31,6 +31,7 @@ import MoreMenu from '@/features/ootd/ui/MoreMenu';
 import OotdTagEditor, { type EditorTag } from '@/features/ootd/ui/OotdTagEditor';
 import ViewHeader from './components/ViewHeader';
 import EditHeader from './components/EditHeader';
+import TagLoading from '../camera/component/TagLoading';
 
 // 계정당 한 번만 보여주는 안내 모달. 로그인 세션이 아니라 계정(userId) 단위로 영구 기록한다.
 const INTRO_SEEN_KEY_PREFIX = 'ootd-intro-seen';
@@ -380,11 +381,7 @@ const OotdDetailPage = () => {
   }
 
   if (loading || !post) {
-    return (
-      <div className="bg-bg-white flex min-h-screen flex-col items-center justify-center">
-        <div className="border-brand size-10 animate-spin rounded-full border-4 border-t-transparent" />
-      </div>
-    );
+    return <TagLoading />;
   }
 
   const isDeadEnd = (status: TaggedItem['status']) => status === '삭제됨';

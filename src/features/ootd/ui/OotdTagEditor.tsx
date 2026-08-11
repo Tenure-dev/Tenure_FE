@@ -159,10 +159,6 @@ const OotdTagEditor = ({
     try {
       const res = await analyzeTagArea(ootdId, { bbox });
       if (res.matchedItemIds.length === 0) {
-        // 확정 매칭(matchedItemIds)은 없어도 분석된 세부 카테고리는 있으면, 그걸로 전체
-        // 추천을 좁혀서 보여준다 — 아니면 재분석해도 매번 똑같은 전체 목록만 보여서 이 박스가
-        // 실제로 다시 분석됐다는 게 화면에 전혀 드러나지 않는다. 카테고리 정보조차 없으면
-        // (labelText 자체가 null) 좁힐 기준이 없어 기존처럼 전체 추천으로 폴백한다.
         if (res.categorySmall) {
           const scoped = recommended.filter((item) => item.categoryName === res.categorySmall);
           setAnalyzedItems((prev) => ({ ...prev, [boxId]: scoped }));
@@ -271,7 +267,13 @@ const OotdTagEditor = ({
 
   if (isPending) {
     return (
-      <div className={cn('bg-bg-white relative', !scrollable && 'overflow-hidden', className)}>
+      <div
+        className={cn(
+          'bg-bg-white relative flex flex-col',
+          !scrollable && 'overflow-hidden',
+          className,
+        )}
+      >
         <TagLoading />
       </div>
     );

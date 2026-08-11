@@ -42,9 +42,6 @@ const OotdPreviewPage = () => {
       {
         onSuccess: (id) => {
           clearDraft(); // 게시 완료 → 다음 촬영은 새 임시 OOTD로 시작
-          // 카메라→작성→태그→미리보기까지 쌓인 히스토리를 뒤로가기(브라우저/기기 back 포함)로
-          // 다시 들어갈 수 없게, 현재 단계를 피드로 replace한 뒤 상세를 push한다 — 상세에서
-          // 뒤로가기 하면 무조건 피드(홈)로 가게 된다.
           navigate('/feed', { replace: true });
           navigate(`/ootd/${id}`, {
             state: { toast: '게시물이 등록되었습니다.', fromPublish: true },

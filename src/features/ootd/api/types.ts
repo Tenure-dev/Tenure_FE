@@ -88,13 +88,6 @@ export interface OotdRelatedResponse {
   recommended: OotdRelatedCardResponse[];
 }
 
-export interface OotdTagCreateRequest {
-  itemId: number;
-  bbox: Bbox;
-  labelText: string;
-  status: 'CONFIRMED';
-}
-
 export interface OotdTagAnalyzeRequest {
   bbox: Bbox;
 }
@@ -104,12 +97,6 @@ export interface OotdTagAnalyzeResponse {
   categoryLarge: string | null;
   categorySmall: string | null;
   matchedItemIds: number[];
-}
-
-export interface OotdTagUpdateRequest {
-  itemId: number;
-  bbox: Bbox;
-  labelText: string;
 }
 
 export interface OotdTagResponse {
@@ -153,23 +140,3 @@ export interface OotdTagBatchResponse {
 }
 
 export type ApiItemStatus = 'OWNED' | 'ON_SALE' | 'SOLD' | 'TRANSFERRED' | 'ARCHIVED';
-
-export interface ItemListResponse {
-  itemId: number;
-  brandName: string;
-  itemName: string;
-  representativeImageUrl: string | null;
-  itemStatus: ApiItemStatus;
-  ootdVerifiedWearCount: number;
-  lastWornAt: string | null;
-  purchaseOfferEnabled: boolean;
-}
-
-export interface ItemListPage {
-  content: ItemListResponse[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-  hasNext: boolean;
-}

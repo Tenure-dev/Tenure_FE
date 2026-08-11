@@ -21,9 +21,6 @@ const OotdCreatePage = () => {
     createOotd(image, {
       onSuccess: (res) => {
         // 자동태그 게시 → 상세로 이동. 상세에서 AI 태그 준비되면 자동 확정(confirm)된다.
-        // 촬영/작성 단계가 히스토리에 쌓여 있으면(카메라→작성) 뒤로가기(브라우저/기기 back
-        // 포함)로 그 화면들에 다시 들어갈 수 있어, 현재 단계를 피드로 replace한 뒤 상세를
-        // push한다 — 상세에서 뒤로가기 하면 무조건 피드(홈)로 가게 된다.
         navigate('/feed', { replace: true });
         navigate(`/ootd/${res.ootdId}`, { state: { toast: '게시되었습니다.', fromPublish: true } });
       },

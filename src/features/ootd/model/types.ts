@@ -26,16 +26,6 @@ export interface TaggedItem {
   bbox: Bbox;
 }
 
-export interface ClosetItem {
-  id: number;
-  brand: string;
-  name: string;
-  imageUrl: string | null;
-  lastWornDaysAgo: number | null;
-  verifiedCount: number;
-  purchaseOfferEnabled: boolean;
-}
-
 export interface OotdAuthor {
   id: number;
   name: string;
@@ -58,8 +48,6 @@ export interface OotdPost {
   isBlocked: boolean;
   taggedItems: TaggedItem[];
 }
-
-export const MAX_TAGGED_ITEMS = 5;
 
 export const REPORT_REASONS = [
   '사람이 직접 착용한 OOTD가 아님',

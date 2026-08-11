@@ -28,10 +28,6 @@ const SHEET_CLOSE_THRESHOLD_PX = 40;
 const SHEET_OPEN_THRESHOLD_PX = 80;
 // 이 정도 이하로만 움직였으면 드래그가 아니라 탭으로 간주한다.
 const SHEET_TAP_THRESHOLD_PX = 6;
-// 펼친 상태의 목표 높이(화면의 70%까지만, 그 이상은 올라가지 않음). 편집 화면
-// TagResultSheet와 동일하게 CSS vh 대신 실측 window.innerHeight로 px 높이를 직접 계산해
-// height를 애니메이션한다 — 모바일 브라우저 주소창 표시/숨김 전환 중 vh 계산이 실제 보이는
-// 높이와 어긋나 시트 아래로 사진이 비치던 문제를 원천적으로 피할 수 있다.
 const OPEN_HEIGHT_RATIO = 0.7;
 const getOpenHeight = () => window.innerHeight * OPEN_HEIGHT_RATIO;
 
@@ -170,7 +166,7 @@ const TaggedItemRow = ({ item, isOwner, onToggleWish }: TaggedItemRowProps) => {
         </div>
       </div>
 
-      {!isDeleted && (
+      {!isDeleted && !isOwner && (
         <button
           type="button"
           onClick={() => onToggleWish(item.itemId, item.wished)}
@@ -202,7 +198,6 @@ const TaggedItemsSheet = ({
   const [height, setHeight] = useState(TAGGED_ITEMS_PEEK_HEIGHT_PX);
   const [isDragging, setIsDragging] = useState(false);
 
-  // 드래그 중이 아닐 때 open이 바뀌면(다른 경로로 열리고/닫히고) 목표 높이로 맞춘다.
   useEffect(() => {
     if (dragRef.current) return;
     setHeight(open ? getOpenHeight() : TAGGED_ITEMS_PEEK_HEIGHT_PX);
@@ -220,8 +215,7 @@ const TaggedItemsSheet = ({
 
   const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!dragRef.current) return;
-    const delta = dragRef.current.startY - e.clientY; // 위로 끌면 +
-    // 실측 높이 기준으로 클램프하기 때문에 펼친 높이 이상으로는 애초에 올라갈 수 없다.
+    const delta = dragRef.current.startY - e.clientY;
     const next = Math.min(
       Math.max(dragRef.current.startH + delta, TAGGED_ITEMS_PEEK_HEIGHT_PX),
       getOpenHeight(),
@@ -237,8 +231,8 @@ const TaggedItemsSheet = ({
     if (!dragRef.current) return;
     const { startH, wasOpen } = dragRef.current;
     const current = sheetRef.current?.offsetHeight ?? height;
-    const movedDown = startH - current; // 접는 방향(아래로 끔) = +
-    const movedUp = current - startH; // 펴는 방향(위로 끔) = +
+    const movedDown = startH - current;
+    const movedUp = current - startH;
     dragRef.current = null;
     setIsDragging(false);
 

@@ -1,8 +1,6 @@
 import { api } from '@/shared/lib/api';
 import type {
-  ApiItemStatus,
   FollowResponse,
-  ItemListPage,
   OotdDetailResponse,
   OotdRelatedResponse,
   OotdTagAnalyzeRequest,
@@ -10,9 +8,6 @@ import type {
   OotdTagBatchRequest,
   OotdTagBatchResponse,
   OotdTagConfirmResponse,
-  OotdTagCreateRequest,
-  OotdTagResponse,
-  OotdTagUpdateRequest,
 } from './types';
 
 export const getOotdDetail = (ootdId: number): Promise<OotdDetailResponse> =>
@@ -33,14 +28,6 @@ export const unfollowUser = (userId: number): Promise<FollowResponse> =>
 export const getRelatedOotds = (ootdId: number): Promise<OotdRelatedResponse> =>
   api.get(`/ootds/${ootdId}/related`);
 
-export const createTag = (
-  ootdId: number,
-  request: OotdTagCreateRequest,
-): Promise<OotdTagResponse> => api.post(`/ootds/${ootdId}/tags`, request);
-
-export const updateTag = (tagId: number, request: OotdTagUpdateRequest): Promise<OotdTagResponse> =>
-  api.patch(`/ootds/tags/${tagId}`, request);
-
 export const confirmTags = (ootdId: number): Promise<OotdTagConfirmResponse> =>
   api.post(`/ootds/${ootdId}/tags/confirm`);
 
@@ -55,16 +42,6 @@ export const createTagsBatch = (
   ootdId: number,
   request: OotdTagBatchRequest,
 ): Promise<OotdTagBatchResponse> => api.post(`/ootds/${ootdId}/tags/batch`, request);
-
-export interface GetMyItemsParams {
-  query?: string;
-  itemStatus?: ApiItemStatus;
-  page?: number;
-  size?: number;
-}
-
-export const getMyItems = (params: GetMyItemsParams = {}): Promise<ItemListPage> =>
-  api.get('/items', { params });
 
 export const wishItem = (itemId: number): Promise<void> => api.post(`/items/${itemId}/wish`);
 export const unwishItem = (itemId: number): Promise<void> => api.delete(`/items/${itemId}/wish`);

@@ -5,8 +5,6 @@ import { getItemDetail } from '@/features/mypage/api/itemsApi';
 import { getTradeList } from '@/features/trade/api/tradeApi';
 import type { WishlistItem } from '../model/types';
 
-// TradeDetailPage로 보낼 수 있는 건 결제~구매확정 단계뿐 — SETTLED 이후(정산 완료)는
-// 거래가 끝난 상태라 위시리스트의 '거래중'(TRADING 상품 상태) 표시와는 이미 어긋난다.
 const ACTIVE_TRADE_STATUSES = ['PAID', 'SHIPPED', 'DELIVERED', 'PURCHASE_CONFIRMED'] as const;
 
 export interface WishlistItemRowProps {
@@ -26,13 +24,7 @@ const WishlistItemRow = ({ item, onToggleNotify }: WishlistItemRowProps) => {
   const navigate = useNavigate();
   const badge = getBadge(item.saleStatus);
 
-  // 위시리스트는 itemId만 내려오므로 상품 상세로 가려면 productId를 먼저 조회해야 한다
-  // (판매 전환 이력이 없는 아이템은 productId가 없어 item 모드로 대체한다).
-  // 거래중이면 먼저 "내가 참여한 거래" 목록에서 이 아이템을 찾아본다 — GET /trades는
-  // 참여자(구매자/판매자)의 거래만 돌려주므로(TradeController.java:42), 여기서 찾아지면
-  // 내가 그 거래의 당사자라는 뜻이라 거래 상세로 바로 보낼 수 있다. 못 찾으면(제3자로서
-  // 위시만 걸어둔 경우) 상품 상세로 보낸다 — /trade/:id는 참여자가 아니면 404라서
-  // 무작정 보낼 수 없다(TradeService.java:170-178).
+  // 거래중이면 내가 참여한 거래인지 먼저 확인해 거래 상세로, 아니면(제3자 위시) 상품 상세로 보낸다.
   const handleClick = async () => {
     try {
       if (item.saleStatus === 'TRADING') {

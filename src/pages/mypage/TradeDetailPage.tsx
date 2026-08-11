@@ -319,6 +319,17 @@ const TradeDetailPage = () => {
         </div>
       </div>
 
+      {trade.tradeRequestNote != null && (
+        <>
+          <SectionTitle>거래 요청사항</SectionTitle>
+          <div className="border-b border-[#F0F0F0] px-[16px] pb-[16px]">
+            <div className="rounded-[8px] border border-[#F0F0F0] px-[14px] py-[12px]">
+              <p className="text-[13px] leading-[1.6] text-[#111111]">{trade.tradeRequestNote}</p>
+            </div>
+          </div>
+        </>
+      )}
+
       <SectionTitle>{isBuyer ? '결제 정보' : '정산 정보'}</SectionTitle>
       <div className="border-b border-[#F0F0F0] px-[16px] pb-[16px]">
         {isBuyer ? (

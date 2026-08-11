@@ -17,6 +17,10 @@ import SettingsPage from '@/pages/mypage/SettingsPage';
 import NotificationSettingsPage from '@/pages/mypage/NotificationSettingsPage';
 import AccountVisibilityPage from '@/pages/mypage/AccountVisibilityPage';
 import WithdrawPage from '@/pages/mypage/WithdrawPage';
+import AddressManagePage from '@/pages/mypage/AddressManagePage';
+import AddressFormPage from '@/pages/mypage/AddressFormPage';
+import DefaultShippingFeePage from '@/pages/mypage/DefaultShippingFeePage';
+import SettlementAccountPage from '@/pages/mypage/SettlementAccountPage';
 import ProductDetailPage from '@/pages/product/ProductDetailPage';
 import ProductEditPage from '@/pages/product/ProductEditPage';
 import ProductReportPage from '@/pages/product/ProductReportPage';
@@ -111,6 +115,11 @@ export const router = createBrowserRouter([
           { path: 'settings/notifications', element: <NotificationSettingsPage /> },
           { path: 'settings/visibility', element: <AccountVisibilityPage /> },
           { path: 'settings/withdraw', element: <WithdrawPage /> },
+          { path: 'settings/addresses', element: <AddressManagePage /> },
+          { path: 'settings/addresses/new', element: <AddressFormPage /> },
+          { path: 'settings/addresses/:addressId/edit', element: <AddressFormPage /> },
+          { path: 'settings/shipping-fee', element: <DefaultShippingFeePage /> },
+          { path: 'settings/settlement-account', element: <SettlementAccountPage /> },
           { path: 'test', element: <TestPage /> },
           { path: 'ootd/camera', element: <OotdCameraPage /> },
           { path: 'ootd/create', element: <OotdCreatePage /> },

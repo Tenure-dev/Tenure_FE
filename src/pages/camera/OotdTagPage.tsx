@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import chevon from '@/shared/assets/chevron-left.svg';
 import { cn } from '@/shared/lib/cn';
 import type { Bbox } from '@/features/ootd/model/item';
 import { useSimilarItems } from '@/features/ootd/api/useSimilarItems';
 import OotdTagEditor, { type EditorTag } from '@/features/ootd/ui/OotdTagEditor';
+import { BackHeader } from '@/shared/components';
 
 // 미리보기('태그 수정')에서 돌아올 때 넘어오는 state
 type NavState = {
@@ -59,24 +59,23 @@ const OotdTagPage = () => {
         )}
       >
         {/* 헤더 */}
-        <header className="flex items-center gap-2 p-4">
-          <button type="button" onClick={() => navigate(-1)} aria-label="뒤로">
-            <img src={chevon} width={24} height={24} alt="" />
-          </button>
-          <h1 className="text-title-2 font-semibold">{title}</h1>
-          {!isPending && (
-            <button
-              type="button"
-              onClick={handleComplete}
-              disabled={tagCount === 0}
-              className={`text-body-1 ml-auto font-semibold ${
-                tagCount > 0 ? 'text-success' : 'text-text-disabled'
-              }`}
-            >
-              완료({tagCount})
-            </button>
-          )}
-        </header>
+        <BackHeader
+          title={title}
+          rightActions={
+            !isPending ? (
+              <button
+                type="button"
+                onClick={handleComplete}
+                disabled={tagCount === 0}
+                className={`text-body-1 font-semibold ${
+                  tagCount > 0 ? 'text-success' : 'text-text-disabled'
+                }`}
+              >
+                완료({tagCount})
+              </button>
+            ) : undefined
+          }
+        />
 
         {/* 진행바 */}
         <div className="bg-bg-tertiary h-1 w-full">

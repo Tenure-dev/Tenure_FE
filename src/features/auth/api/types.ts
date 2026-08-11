@@ -81,6 +81,20 @@ export type UpdateProfileRequest = Partial<
   Pick<UserProfile, 'username' | 'gender' | 'heightCm' | 'weightKg' | 'profileImageUrl'>
 >;
 
+export interface SettlementAccount {
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+}
+
+// BE: PATCH /users/me/settings도 보낸 필드만 수정하는 부분 업데이트다.
+// defaultShippingFee/settlementAccount 중 보내지 않은 쪽은 서버가 건드리지 않으므로,
+// 호출부는 실제로 바꾸는 필드만 담아 보내야 한다.
+export interface AccountSettingsUpdateRequest {
+  defaultShippingFee?: number;
+  settlementAccount?: SettlementAccount;
+}
+
 export interface ProfileImageUploadResponse {
   imageUrl: string;
 }

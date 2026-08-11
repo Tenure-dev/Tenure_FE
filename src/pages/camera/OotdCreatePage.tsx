@@ -1,10 +1,10 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import chevon from '@/shared/assets/chevron-left.svg';
 import TagLoading from './component/TagLoading';
 import { useCreateOotd } from '@/features/ootd/api/useCreateOotd';
 import { useCreateManualOotd } from '@/features/ootd/api/useCreateManualOotd';
 import { useOotdDraftStore } from '@/store/useOotdDraftStore';
 import { dataUrlToFile } from '@/shared/lib/dataUrlToFile';
+import BackHeader from '@/shared/components/BackHeader';
 
 const OotdCreatePage = () => {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ const OotdCreatePage = () => {
     createOotd(image, {
       onSuccess: (res) => {
         // 자동태그 게시 → 상세로 이동. 상세에서 AI 태그 준비되면 자동 확정(confirm)된다.
-        // fromPublish: 상세에서 뒤로가기 시 작성 화면이 아니라 피드로 보내기 위함.
+        navigate('/feed', { replace: true });
         navigate(`/ootd/${res.ootdId}`, { state: { toast: '게시되었습니다.', fromPublish: true } });
       },
       onError: () => {
@@ -54,11 +54,11 @@ const OotdCreatePage = () => {
     return (
       <div className="bg-bg-white flex h-dvh w-full flex-col">
         {creatingManual ? (
-          // 태그 작성 준비: 문구 표시
-          <TagLoading title="태그를 작성할 준비를 하고 있어요!" subtitle="잠시만 기다려 주세요!" />
-        ) : (
-          // 자동 게시: 스피너만 (문구 없음)
+          // 태그 작성 준비: 문구 표시 x
           <TagLoading />
+        ) : (
+          // 자동 게시: 문구
+          <TagLoading title="태그를 작성할 준비를 하고 있어요!" subtitle="잠시만 기다려 주세요!" />
         )}
       </div>
     );
@@ -67,12 +67,7 @@ const OotdCreatePage = () => {
   return (
     <div className="bg-bg-white text-text-primary flex min-h-dvh flex-col">
       {/* 헤더 */}
-      <header className="flex items-center gap-3 px-5 py-4">
-        <button type="button" onClick={() => navigate(-1)} aria-label="뒤로">
-          <img src={chevon} width={24} height={24} alt="뒤로가기" />
-        </button>
-        <h1 className="text-title-2 font-medium">새 게시물 작성</h1>
-      </header>
+      <BackHeader title="새 게시물 작성" />
 
       {/* 진행바 */}
       <div className="bg-bg-tertiary h-1 w-full">

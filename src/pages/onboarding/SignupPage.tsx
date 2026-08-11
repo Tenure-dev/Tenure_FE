@@ -27,7 +27,7 @@ import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 
 // TODO(#100): 백엔드 SMTP(Gmail)가 Render 포트 차단으로 발송 불가 상태라 임시로 이메일 인증을 스킵.
 // 백엔드가 SendGrid/Mailgun 등으로 전환 완료하면 false로 되돌릴 것.
-const SKIP_EMAIL_VERIFICATION = true;
+const SKIP_EMAIL_VERIFICATION = false;
 
 const TOTAL_STEPS = 4;
 type Step = 1 | 2 | 3 | 4;

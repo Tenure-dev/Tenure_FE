@@ -39,6 +39,7 @@ type Props = {
   untouchedVariant?: TagBubbleVariant; // 손 안 댄 기존 태그 말풍선 색(기본 black). 상세 편집은 default(흰색).
   scrollable?: boolean;
   onSheetExpandedChange?: (expanded: boolean) => void; // 결과 시트가 최대 높이일 때 통지
+  onLoadingChange?: (loading: boolean) => void;
   className?: string;
 };
 
@@ -65,12 +66,11 @@ const toOotdItemFromDetail = (d: ItemDetailResponse): OotdItem => ({
   name: d.itemName,
   thumbnail: resolveFileUrl(d.representativeImageUrl),
   meta: [
-    d.lastWornAt ? `최근 착용 ${getDaysAgo(d.lastWornAt)}일 전` : null,
+    d.lastWornAt ? `최근 착용 ${getDaysAgo(d.lastWornAt)}일 전` : '최근 착용일 없음',
     `OOTD 인증 : ${d.ootdVerifiedWearCount}회`,
-  ]
-    .filter(Boolean)
-    .join(' · '),
+  ].join(' · '),
   isNew: false,
+  categoryName: d.categorySmall,
 });
 
 // OOTD 생성/상세 편집이 공유하는 태그 에디터. 사진 위 bbox 박스 편집 + 유사 아이템 시트 + 새 아이템 등록.
@@ -83,9 +83,14 @@ const OotdTagEditor = ({
   untouchedVariant = 'black',
   scrollable = false,
   onSheetExpandedChange,
+  onLoadingChange,
   className,
 }: Props) => {
   const { data: recommended = [], isPending } = useSimilarItems();
+  useEffect(() => {
+    onLoadingChange?.(isPending);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPending]);
   const [addedItems, setAddedItems] = useState<OotdItem[]>([]); // 새로 등록한 아이템
   const [analyzedItems, setAnalyzedItems] = useState<Record<string, OotdItem[]>>({});
   const [sheetHeight, setSheetHeight] = useState(RESULT_SHEET_DEFAULT_H);
@@ -160,12 +165,17 @@ const OotdTagEditor = ({
     try {
       const res = await analyzeTagArea(ootdId, { bbox });
       if (res.matchedItemIds.length === 0) {
-        setAnalyzedItems((prev) => {
-          if (!(boxId in prev)) return prev;
-          const next = { ...prev };
-          delete next[boxId];
-          return next;
-        });
+        if (res.categorySmall) {
+          const scoped = recommended.filter((item) => item.categoryName === res.categorySmall);
+          setAnalyzedItems((prev) => ({ ...prev, [boxId]: scoped }));
+        } else {
+          setAnalyzedItems((prev) => {
+            if (!(boxId in prev)) return prev;
+            const next = { ...prev };
+            delete next[boxId];
+            return next;
+          });
+        }
         return;
       }
       const details = await Promise.all(res.matchedItemIds.map((id) => getItemDetail(id)));
@@ -263,7 +273,13 @@ const OotdTagEditor = ({
 
   if (isPending) {
     return (
-      <div className={cn('bg-bg-white relative', !scrollable && 'overflow-hidden', className)}>
+      <div
+        className={cn(
+          'bg-bg-white relative flex flex-col',
+          !scrollable && 'overflow-hidden',
+          className,
+        )}
+      >
         <TagLoading />
       </div>
     );
@@ -272,7 +288,7 @@ const OotdTagEditor = ({
   return (
     <div
       className={cn('bg-bg-white relative', !scrollable && 'overflow-hidden', className)}
-      style={scrollable ? { paddingBottom: sheetHeight } : undefined}
+      style={scrollable && !newItemOpen ? { paddingBottom: sheetHeight } : undefined}
     >
       {/* 사진 영역: 빈 곳 탭하면 박스 생성 */}
       <div className="relative z-0 w-full overflow-hidden" onClick={handleAreaClick}>

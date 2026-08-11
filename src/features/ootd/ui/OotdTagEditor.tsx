@@ -282,7 +282,7 @@ const OotdTagEditor = ({
   return (
     <div
       className={cn('bg-bg-white relative', !scrollable && 'overflow-hidden', className)}
-      style={scrollable ? { paddingBottom: sheetHeight } : undefined}
+      style={scrollable && !newItemOpen ? { paddingBottom: sheetHeight } : undefined}
     >
       {/* 사진 영역: 빈 곳 탭하면 박스 생성 */}
       <div className="relative z-0 w-full overflow-hidden" onClick={handleAreaClick}>

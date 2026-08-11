@@ -177,7 +177,7 @@ const NewItemSheet = ({ onBack, onSubmit, bbox, ootdId }: Props) => {
           <span className="bg-bg-secondary h-1 w-10 rounded-full" />
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 overflow-y-auto">
           <h2 className="text-title-2 mb-5 font-semibold">새 아이템 등록</h2>
           <div className="mb-4">
             <label className="text-body-3 mb-1.5 block font-medium">대표 이미지</label>
@@ -241,7 +241,8 @@ const NewItemSheet = ({ onBack, onSubmit, bbox, ootdId }: Props) => {
           </div>
         </div>
 
-        <div className="mt-4 flex shrink-0 gap-2">
+        {/* 여기로 이동 */}
+        <div className="flex gap-2">
           <button
             type="button"
             onClick={onBack}
@@ -249,6 +250,7 @@ const NewItemSheet = ({ onBack, onSubmit, bbox, ootdId }: Props) => {
           >
             뒤로 가기
           </button>
+
           <button
             type="button"
             onClick={handleSubmit}

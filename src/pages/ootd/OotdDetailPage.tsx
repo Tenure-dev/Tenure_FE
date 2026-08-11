@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Bookmark, Heart } from 'lucide-react';
 import { FollowButton, Toast } from '@/shared/components';
@@ -55,6 +56,7 @@ const bboxEq = (a: Bbox, b: Bbox) =>
 const OotdDetailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const ootdId = Number(id);
 
@@ -334,6 +336,10 @@ const OotdDetailPage = () => {
     setShowDeleteConfirm(false);
     try {
       await deleteOotd(post.id);
+      // 삭제된 글이 목록 캐시에 남지 않도록 관련 목록 무효화 (마이페이지·피드·유저 프로필 피드)
+      queryClient.invalidateQueries({ queryKey: ['ootds'] });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
       navigate('/', { state: { toast: '게시물이 삭제되었습니다.' } });
     } catch (e) {
       showToast(e instanceof Error ? e.message : '삭제 중 오류가 발생했어요.');

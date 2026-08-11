@@ -83,7 +83,8 @@ const PostGridItem = ({ item }: { item: MyPostItem }) => {
 
 const MyPostsFeed = () => {
   const { data, isPending, isError, fetchNextPage, hasNextPage } = useMyPosts();
-  const items = data?.pages.flatMap((page) => page.content) ?? [];
+  // ARCHIVED(미공개 초안)는 마이페이지 게시물에서 숨기고 공개 글만 표시
+  const items = (data?.pages.flatMap((page) => page.content) ?? []).filter((it) => !it.archived);
   const sentinelRef = useInfiniteScroll({ hasMore: !!hasNextPage, onLoadMore: fetchNextPage });
 
   if (isPending)

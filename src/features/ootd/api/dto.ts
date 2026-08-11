@@ -28,4 +28,6 @@ export interface SimilarItemResponse {
   representativeImageUrl: string | null;
   categoryId: number;
   categoryName: string;
+  lastWornAt: string | null;
+  ootdVerifiedWearCount: number;
 }

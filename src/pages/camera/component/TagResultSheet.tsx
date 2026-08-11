@@ -1,7 +1,6 @@
-import { useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { cn } from '@/shared/lib/cn';
 import type { OotdItem } from '@/features/ootd/model/item';
-import { SIMILAR_COUNT } from '@/features/ootd/mock';
 import imageUpload from '@/shared/assets/image-upload.svg';
 import TagItemRow from './TagItemRow';
 
@@ -17,6 +16,10 @@ type Props = {
   onSearchOpen: () => void;
   onSearchClose: () => void;
   onNewItem: () => void;
+  onBbox: () => void;
+  overlay?: 'absolute' | 'fixed';
+  onHeightChange?: (height: number) => void;
+  onExpandedChange?: (expanded: boolean) => void; // 시트가 최대 높이에 도달했는지
 };
 
 const SearchIcon = () => (
@@ -27,9 +30,9 @@ const SearchIcon = () => (
 );
 
 // 3단계 스냅 높이
-const COLLAPSED = 100; // 맨 아래 (선택 완료 버튼만)
-const MIDDLE = 178; // 중간 (분석한 결과 헤더 + 검색까지) — 기본
-const TOP_GAP = 48; // 끝까지 올렸을 때 헤더 아래로 남기는 여백
+export const COLLAPSED = 100; // 맨 아래 (선택 완료 버튼만)
+export const MIDDLE = 178; // 중간 (분석한 결과 헤더 + 검색까지) — 기본
+const TOP_GAP = 48; // 끝까지 올렸을 때 화면 위로 남기는 여백
 
 const TagResultSheet = ({
   items,
@@ -43,11 +46,29 @@ const TagResultSheet = ({
   onSearchOpen,
   onSearchClose,
   onNewItem,
+  onBbox,
+  overlay = 'absolute',
+  onHeightChange,
+  onExpandedChange,
 }: Props) => {
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
   const [height, setHeight] = useState(MIDDLE);
   const [dragging, setDragging] = useState(false);
+
+  useEffect(() => {
+    onHeightChange?.(height);
+    // 최대 높이 근처(40px 이내)면 '펼쳐짐'으로 간주 → 헤더 숨김 트리거
+    onExpandedChange?.(height >= window.innerHeight - TOP_GAP - 40);
+  }, [height, onHeightChange, onExpandedChange]);
+
+  // 박스가 비활성→활성으로 바뀌면(말풍선 클릭 등) 시트를 중간 높이로 올린다.
+  // (effect 대신 이전 값 비교로 렌더 중 조정 — React 권장 패턴)
+  const [prevActive, setPrevActive] = useState(active);
+  if (active !== prevActive) {
+    setPrevActive(active);
+    if (active) setHeight(MIDDLE);
+  }
 
   const collapsed = height <= COLLAPSED; // 접힌 상태면 버튼 닫힌 색
 
@@ -57,9 +78,8 @@ const TagResultSheet = ({
     return `${item.brand} ${item.name}`.toLowerCase().includes(q);
   });
 
-  // 끝까지 올렸을 때 최대 높이 (헤더 아래 살짝 남김)
-  const getMaxH = () =>
-    (sheetRef.current?.parentElement?.clientHeight ?? window.innerHeight) - TOP_GAP;
+  // 끝까지 올렸을 때 최대 높이 (화면 절반까지만)
+  const getMaxH = () => window.innerHeight - TOP_GAP;
 
   // 드래그로 자유롭게, 놓으면 3단계 중 가까운 곳으로 스냅
   const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
@@ -90,7 +110,8 @@ const TagResultSheet = ({
       ref={sheetRef}
       style={{ height }}
       className={cn(
-        'bg-bg-white absolute inset-x-0 bottom-0 flex flex-col rounded-t-2xl shadow-xl',
+        'bg-bg-white inset-x-0 bottom-0 mx-auto flex max-w-[768px] flex-col rounded-t-2xl shadow-xl',
+        overlay === 'fixed' ? 'fixed' : 'absolute',
         !dragging && 'transition-[height] duration-200',
       )}
     >
@@ -105,7 +126,10 @@ const TagResultSheet = ({
         <span className="bg-bg-secondary h-1 w-10 rounded-full" />
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-5">
+      <div
+        onDragStart={(e) => e.preventDefault()}
+        className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-5 select-none"
+      >
         {!active ? (
           <div className="flex h-full flex-col items-center justify-center pb-8 text-center">
             <p className="text-body-2 text-text-secondary leading-relaxed">
@@ -158,7 +182,7 @@ const TagResultSheet = ({
               </button>
             </div>
             <p className="text-body-3 text-text-secondary mt-1">
-              유사한 아이템 {SIMILAR_COUNT}개 찾았습니다.
+              유사한 아이템 {items.length}개 찾았습니다.
             </p>
           </div>
         )}
@@ -195,7 +219,10 @@ const TagResultSheet = ({
         <button
           type="button"
           disabled={count === 0}
-          onClick={() => setHeight(COLLAPSED)}
+          onClick={() => {
+            setHeight(COLLAPSED);
+            onBbox();
+          }}
           className={cn(
             'text-btn-2 w-full rounded-md py-3.5 font-medium',
             count > 0 && !collapsed
@@ -203,7 +230,7 @@ const TagResultSheet = ({
               : 'bg-disabled text-text-inverse',
           )}
         >
-          선택 완료{count > 0 ? ` (${count})` : ''}
+          선택 완료
         </button>
       </div>
     </div>

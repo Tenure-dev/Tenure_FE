@@ -1,15 +1,26 @@
 import { useParams } from 'react-router-dom';
 import { BackHeader } from '@/shared/components';
 import { useProductDetail } from '@/features/product/model/useProductDetail';
+import { useItemOotdCandidatesQuery } from '@/features/mypage/model/useItemOotdCandidatesQuery';
 
 const OotdGridPage = () => {
-  const { productId = '' } = useParams();
-  const { data } = useProductDetail(Number(productId));
-  const images = data?.representativeOotds ?? [];
+  const { productId = '', itemId = '' } = useParams();
+  const isItemMode = !!itemId && !productId;
+
+  const { data: productData } = useProductDetail(isItemMode ? NaN : Number(productId));
+  const { data: itemOotdData } = useItemOotdCandidatesQuery(
+    Number(itemId),
+    { size: 50 },
+    { enabled: isItemMode },
+  );
+
+  const images = isItemMode
+    ? (itemOotdData?.content ?? []).map((o) => ({ ootdId: o.ootdId, imageUrl: o.imageUrl }))
+    : (productData?.representativeOotds ?? []);
 
   return (
     <div className="bg-bg-secondary flex min-h-screen flex-col">
-      <BackHeader title="대표 OOTD" />
+      <BackHeader title={isItemMode ? '태그된 OOTD' : '대표 OOTD'} />
       <div className="columns-2 gap-0.5 px-0.5 pt-0.5 pb-4">
         {images.map((ootd) => (
           <div key={ootd.ootdId} className="mb-0.5 overflow-hidden">

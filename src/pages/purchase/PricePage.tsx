@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Delete } from 'lucide-react';
 import { BackHeader, Button } from '@/shared/components';
-import { useProductDetail } from '@/features/product/model/useProductDetail';
+import { useItemDetailQuery } from '@/features/mypage/model/useItemDetailQuery';
+import { useUserQuery } from '@/features/user/model/useUserQuery';
 import { useOfferStore } from '@/store/offerStore';
 import { cn } from '@/shared/lib/cn';
 import StepProgress from './components/StepProgress';
@@ -13,13 +14,17 @@ type View = 'form' | 'numpad';
 const NUMPAD_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', '←'];
 
 const PricePage = () => {
-  const { productId = '' } = useParams();
+  const { itemId = '' } = useParams();
   const navigate = useNavigate();
   const setItemId = useOfferStore((s) => s.setItemId);
   const setPrice = useOfferStore((s) => s.setPrice);
   const setSellerNickname = useOfferStore((s) => s.setSellerNickname);
 
-  const { data, isLoading, isError } = useProductDetail(Number(productId));
+  const { data, isLoading, isError } = useItemDetailQuery(Number(itemId));
+  const { data: ownerData } = useUserQuery(data?.ownerUserId ?? 0, {
+    enabled: !!data?.ownerUserId,
+  });
+
   const [view, setView] = useState<View>('form');
   const [digits, setDigits] = useState('');
 
@@ -40,7 +45,7 @@ const PricePage = () => {
   }
 
   const price = parseInt(digits || '0', 10);
-  const sellerNickname = data.seller.username;
+  const sellerNickname = ownerData?.username ?? '';
 
   const handleKey = (key: string) => {
     if (key === '←') {
@@ -55,10 +60,10 @@ const PricePage = () => {
   const handleConfirmNumpad = () => setView('form');
 
   const handleSubmit = () => {
-    setItemId(data.item.itemId);
+    setItemId(data.itemId);
     setPrice(price);
     setSellerNickname(sellerNickname);
-    navigate(`/product/${productId}/purchase/checkout`);
+    navigate(`/product/${itemId}/offer/checkout`, { replace: true });
   };
 
   if (view === 'numpad') {
@@ -119,11 +124,11 @@ const PricePage = () => {
       <StepProgress currentStep={1} />
 
       <ItemSummaryCard
-        imageUrl={data.mainImageUrl}
-        brand={data.item.brandName}
-        name={data.item.itemName}
+        imageUrl={data.representativeImageUrl}
+        brand={data.brandName}
+        name={data.itemName}
         sellerNickname={sellerNickname}
-        subline={`미판매 · OOTD 인증 ${data.item.ootdVerifiedWearCount}회`}
+        subline={`미판매 · OOTD 인증 ${data.ootdVerifiedWearCount}회`}
       />
 
       <div className="flex flex-1 flex-col px-4 pt-6">

@@ -1,11 +1,14 @@
 import { useState } from 'react';
+import { cn } from '@/shared/lib/cn';
 import { useNavigate, useParams } from 'react-router-dom';
 import { circleCheck } from '@/shared/assets';
 import { BackHeader, CTAButton } from '@/shared/components';
+import { useUserStore } from '@/store/userStore';
 import { getSizeSystem } from '@/shared/lib/itemSizeData';
 import type { ItemDetailResponse } from '@/features/mypage/model/items';
 import { useItemDetailQuery } from '@/features/mypage/model/useItemDetailQuery';
 import { useCreateProduct } from '@/features/mypage/model/useCreateProduct';
+import { useItemOotdCandidatesQuery } from '@/features/mypage/model/useItemOotdCandidatesQuery';
 import { SaleFormBody, OotdPickerView } from '@/features/product/ui/saleForm';
 import type {
   SaleForm,
@@ -43,6 +46,8 @@ const SaleConversionPage = () => {
 
 const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
   const navigate = useNavigate();
+  const grade = useUserStore((s) => s.user?.grade);
+  const isBasic = grade === 'BASIC';
   const [view, setView] = useState<View>('form');
   const [tempOotdIds, setTempOotdIds] = useState<number[]>([]);
   const [openSections, setOpenSections] = useState<Set<SectionKey>>(
@@ -50,6 +55,7 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
   );
 
   const { mutate } = useCreateProduct(item.itemId);
+  const { data: ootdData } = useItemOotdCandidatesQuery(item.itemId);
 
   const [form, setForm] = useState<SaleForm>(() => ({
     mainImageUrl: item.representativeImageUrl ?? '',
@@ -60,8 +66,8 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
     sizeSystem: getSizeSystem(item.categoryLarge ?? '', item.sizeValue ?? ''),
     sizeValue: item.sizeValue ?? '',
     wearingTarget: MYPAGE_TO_PRODUCT_TARGET[item.wearingTarget] ?? '',
-    feePolicy: '',
-    shippingFee: '',
+    feePolicy: isBasic ? 'SELLER_PAYS' : '',
+    shippingFee: isBasic ? '0' : '',
     price: '',
     attachedOotdIds: [],
     measurements: {},
@@ -127,19 +133,12 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
     setView('form');
   };
 
-  const selectedOotds: { id: number; imageUrl: string }[] = [];
+  const ootdCandidates = (ootdData?.content ?? []).map(({ ootdId, imageUrl }) => ({
+    id: ootdId,
+    imageUrl,
+  }));
 
-  if (view === 'ootd-picker') {
-    return (
-      <OotdPickerView
-        items={[]}
-        selectedIds={tempOotdIds}
-        onToggle={toggleTempOotd}
-        onConfirm={confirmOotdSelection}
-        onBack={() => setView('form')}
-      />
-    );
-  }
+  const selectedOotds = ootdCandidates.filter(({ id }) => form.attachedOotdIds.includes(id));
 
   if (view === 'loading') {
     return (
@@ -171,25 +170,42 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
   }
 
   return (
-    <div className="bg-bg-white mx-auto min-h-screen max-w-md">
-      <BackHeader title="판매 전환" />
-      <SaleFormBody
-        form={form}
-        openSections={openSections}
-        onToggleSection={toggleSection}
-        onFormChange={(updates) => setForm((prev) => ({ ...prev, ...updates }))}
-        onOpenOotdPicker={openOotdPicker}
-        onRemoveOotd={(id) =>
-          setForm((prev) => ({
-            ...prev,
-            attachedOotdIds: prev.attachedOotdIds.filter((i) => i !== id),
-          }))
-        }
-        selectedOotds={selectedOotds}
-        submitLabel="판매하기"
-        onSubmit={handleSubmit}
-      />
-    </div>
+    <>
+      <div
+        className={cn(
+          'bg-bg-white mx-auto min-h-screen max-w-md',
+          view === 'ootd-picker' && 'invisible',
+        )}
+      >
+        <BackHeader title="판매 전환" />
+        <SaleFormBody
+          form={form}
+          openSections={openSections}
+          onToggleSection={toggleSection}
+          onFormChange={(updates) => setForm((prev) => ({ ...prev, ...updates }))}
+          onOpenOotdPicker={openOotdPicker}
+          onRemoveOotd={(id) =>
+            setForm((prev) => ({
+              ...prev,
+              attachedOotdIds: prev.attachedOotdIds.filter((i) => i !== id),
+            }))
+          }
+          selectedOotds={selectedOotds}
+          submitLabel="판매하기"
+          onSubmit={handleSubmit}
+          isBasic={isBasic}
+        />
+      </div>
+      {view === 'ootd-picker' && (
+        <OotdPickerView
+          items={ootdCandidates}
+          selectedIds={tempOotdIds}
+          onToggle={toggleTempOotd}
+          onConfirm={confirmOotdSelection}
+          onBack={() => setView('form')}
+        />
+      )}
+    </>
   );
 };
 

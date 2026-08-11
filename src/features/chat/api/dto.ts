@@ -63,5 +63,8 @@ export interface ChatRoomDetailResponse {
   lastWornAt: string | null;
   tradeId: number | null;
   productId: number;
+  itemId: number;
   buyer: boolean;
+  purchaseIntentId: number | null; // SENT 구매 의사 ID, 없으면 null
+  purchaseOfferId: number | null; // SENT 구매 제안 ID, 없으면 null
 }

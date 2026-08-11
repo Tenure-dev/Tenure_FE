@@ -16,13 +16,18 @@ import {
 } from '@/features/auth/api/authApi';
 import { getMyInfo, uploadProfileImage } from '@/features/auth/api/userApi';
 import { toApiGender } from '@/features/auth/lib/gender';
-import { ACCESS_TOKEN_STORAGE_KEY, ApiError, USER_ID_STORAGE_KEY } from '@/shared/lib/api';
+import {
+  ACCESS_TOKEN_STORAGE_KEY,
+  ApiError,
+  USER_ID_STORAGE_KEY,
+  USER_NAME_STORAGE_KEY,
+} from '@/shared/lib/api';
 import { useUserStore } from '@/store/userStore';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 
 // TODO(#100): 백엔드 SMTP(Gmail)가 Render 포트 차단으로 발송 불가 상태라 임시로 이메일 인증을 스킵.
 // 백엔드가 SendGrid/Mailgun 등으로 전환 완료하면 false로 되돌릴 것.
-const SKIP_EMAIL_VERIFICATION = true;
+const SKIP_EMAIL_VERIFICATION = false;
 
 const TOTAL_STEPS = 4;
 type Step = 1 | 2 | 3 | 4;
@@ -286,13 +291,14 @@ const SignupPage = () => {
     localStorage.setItem(USER_ID_STORAGE_KEY, String(userId));
     try {
       // 회원가입 응답에는 accessToken이 포함되지 않으므로, 동일 자격증명으로 로그인해 토큰을 발급받는다.
-      const { accessToken } = await login({ email, password });
+      const { accessToken, username } = await login({ email, password });
       localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
+      localStorage.setItem(USER_NAME_STORAGE_KEY, username);
       setUser(await getMyInfo());
     } catch (error) {
       console.error(error);
     }
-    navigate('/loading');
+    navigate('/loading', { replace: true });
   };
 
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {

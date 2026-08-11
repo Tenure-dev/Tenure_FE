@@ -28,7 +28,10 @@ export interface ChatRoomView {
   opponentName: string;
   opponentAvatar: string;
   productId: number;
+  itemId: number;
   tradeId: number | null;
+  purchaseIntentId: number | null;
+  purchaseOfferId: number | null;
 }
 
 // 상세 응답 → 바 값으로 변환
@@ -46,5 +49,8 @@ export const toChatRoomView = (r: ChatRoomDetailResponse): ChatRoomView => ({
   opponentName: r.opponentUsername,
   opponentAvatar: resolveFileUrl(r.opponentProfileImage),
   productId: r.productId,
+  itemId: r.itemId,
   tradeId: r.tradeId,
+  purchaseIntentId: r.purchaseIntentId,
+  purchaseOfferId: r.purchaseOfferId,
 });

@@ -88,17 +88,15 @@ export interface OotdRelatedResponse {
   recommended: OotdRelatedCardResponse[];
 }
 
-export interface OotdTagCreateRequest {
-  itemId: number;
+export interface OotdTagAnalyzeRequest {
   bbox: Bbox;
-  labelText: string;
-  status: 'CONFIRMED';
 }
 
-export interface OotdTagUpdateRequest {
-  itemId: number;
-  bbox: Bbox;
-  labelText: string;
+export interface OotdTagAnalyzeResponse {
+  labelText: string | null;
+  categoryLarge: string | null;
+  categorySmall: string | null;
+  matchedItemIds: number[];
 }
 
 export interface OotdTagResponse {
@@ -123,24 +121,22 @@ export interface OotdTagConfirmResponse {
   publicationStatus: OotdPublicationStatus;
 }
 
-export type ApiItemStatus = 'OWNED' | 'ON_SALE' | 'SOLD' | 'TRANSFERRED' | 'ARCHIVED';
-
-export interface ItemListResponse {
+// POST /ootds/{ootdId}/tags/batch — 기존 태그를 전부 삭제하고 이 목록으로 교체(모두 CONFIRMED).
+// 최소 1개 이상이어야 함(빈 목록은 400).
+export interface OotdTagBatchItem {
   itemId: number;
-  brandName: string;
-  itemName: string;
-  representativeImageUrl: string | null;
-  itemStatus: ApiItemStatus;
-  ootdVerifiedWearCount: number;
-  lastWornAt: string | null;
-  purchaseOfferEnabled: boolean;
+  bbox: Bbox;
+  labelText: string;
 }
 
-export interface ItemListPage {
-  content: ItemListResponse[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-  hasNext: boolean;
+export interface OotdTagBatchRequest {
+  tags: OotdTagBatchItem[];
 }
+
+export interface OotdTagBatchResponse {
+  ootdId: number;
+  savedCount: number;
+  tags: OotdTagResponse[];
+}
+
+export type ApiItemStatus = 'OWNED' | 'ON_SALE' | 'SOLD' | 'TRANSFERRED' | 'ARCHIVED';

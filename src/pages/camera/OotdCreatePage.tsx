@@ -54,11 +54,11 @@ const OotdCreatePage = () => {
     return (
       <div className="bg-bg-white flex h-dvh w-full flex-col">
         {creatingManual ? (
-          // 태그 작성 준비: 문구 표시
-          <TagLoading title="태그를 작성할 준비를 하고 있어요!" subtitle="잠시만 기다려 주세요!" />
-        ) : (
-          // 자동 게시: 스피너만 (문구 없음)
+          // 태그 작성 준비: 문구 표시 x
           <TagLoading />
+        ) : (
+          // 자동 게시: 문구
+          <TagLoading title="태그를 작성할 준비를 하고 있어요!" subtitle="잠시만 기다려 주세요!" />
         )}
       </div>
     );

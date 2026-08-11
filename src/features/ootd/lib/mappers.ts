@@ -5,6 +5,7 @@ import type { ItemStatus, OotdPost, TaggedItem } from '../model/types';
 const toItemStatus = (tag: TagInfoResponse): ItemStatus => {
   if (tag.itemStatus === 'ARCHIVED') return '삭제됨';
   if (tag.itemStatus === 'SOLD' || tag.itemStatus === 'TRANSFERRED') return '판매완료';
+  if (tag.productStatus === 'TRADING') return '거래중';
   if (tag.itemStatus === 'ON_SALE' && tag.onSale) return '판매중';
   return tag.purchaseOfferEnabled ? '미판매_제안가능' : '미판매_제안불가';
 };

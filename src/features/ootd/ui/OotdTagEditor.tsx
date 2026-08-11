@@ -39,6 +39,7 @@ type Props = {
   untouchedVariant?: TagBubbleVariant; // 손 안 댄 기존 태그 말풍선 색(기본 black). 상세 편집은 default(흰색).
   scrollable?: boolean;
   onSheetExpandedChange?: (expanded: boolean) => void; // 결과 시트가 최대 높이일 때 통지
+  onLoadingChange?: (loading: boolean) => void;
   className?: string;
 };
 
@@ -82,9 +83,14 @@ const OotdTagEditor = ({
   untouchedVariant = 'black',
   scrollable = false,
   onSheetExpandedChange,
+  onLoadingChange,
   className,
 }: Props) => {
   const { data: recommended = [], isPending } = useSimilarItems();
+  useEffect(() => {
+    onLoadingChange?.(isPending);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPending]);
   const [addedItems, setAddedItems] = useState<OotdItem[]>([]); // 새로 등록한 아이템
   const [analyzedItems, setAnalyzedItems] = useState<Record<string, OotdItem[]>>({});
   const [sheetHeight, setSheetHeight] = useState(RESULT_SHEET_DEFAULT_H);

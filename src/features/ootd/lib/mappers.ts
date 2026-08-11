@@ -1,6 +1,6 @@
 import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
-import type { ItemListResponse, OotdDetailResponse, TagInfoResponse } from '../api/types';
-import type { ClosetItem, ItemStatus, OotdPost, TaggedItem } from '../model/types';
+import type { OotdDetailResponse, TagInfoResponse } from '../api/types';
+import type { ItemStatus, OotdPost, TaggedItem } from '../model/types';
 
 const toItemStatus = (tag: TagInfoResponse): ItemStatus => {
   if (tag.itemStatus === 'ARCHIVED') return '삭제됨';
@@ -48,20 +48,4 @@ export const toOotdPost = (
   isFollowing: detail.author.following,
   isBlocked: prev?.isBlocked ?? false,
   taggedItems: detail.tags.map(toTaggedItem),
-});
-
-const daysAgo = (dateStr: string | null): number | null => {
-  if (!dateStr) return null;
-  const diffMs = Date.now() - new Date(dateStr).getTime();
-  return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-};
-
-export const toClosetItem = (item: ItemListResponse): ClosetItem => ({
-  id: item.itemId,
-  brand: item.brandName,
-  name: item.itemName,
-  imageUrl: resolveImageUrl(item.representativeImageUrl),
-  lastWornDaysAgo: daysAgo(item.lastWornAt),
-  verifiedCount: item.ootdVerifiedWearCount,
-  purchaseOfferEnabled: item.purchaseOfferEnabled,
 });

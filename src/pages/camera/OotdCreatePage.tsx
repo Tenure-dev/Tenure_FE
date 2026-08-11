@@ -21,7 +21,7 @@ const OotdCreatePage = () => {
     createOotd(image, {
       onSuccess: (res) => {
         // 자동태그 게시 → 상세로 이동. 상세에서 AI 태그 준비되면 자동 확정(confirm)된다.
-        // fromPublish: 상세에서 뒤로가기 시 작성 화면이 아니라 피드로 보내기 위함.
+        navigate('/feed', { replace: true });
         navigate(`/ootd/${res.ootdId}`, { state: { toast: '게시되었습니다.', fromPublish: true } });
       },
       onError: () => {

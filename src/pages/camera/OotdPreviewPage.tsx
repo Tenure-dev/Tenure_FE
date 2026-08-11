@@ -42,6 +42,7 @@ const OotdPreviewPage = () => {
       {
         onSuccess: (id) => {
           clearDraft(); // 게시 완료 → 다음 촬영은 새 임시 OOTD로 시작
+          navigate('/feed', { replace: true });
           navigate(`/ootd/${id}`, {
             state: { toast: '게시물이 등록되었습니다.', fromPublish: true },
           });

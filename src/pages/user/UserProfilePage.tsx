@@ -118,7 +118,7 @@ const UserProfilePage = () => {
         userId={id}
         username={profile.username}
       />
-      g
+
       <FollowButton following={following} onToggle={handleToggleFollow} />
       <UserFeed userId={id} />
       <UserMoreSheet

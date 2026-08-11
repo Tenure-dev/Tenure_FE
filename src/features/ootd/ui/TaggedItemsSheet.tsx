@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { Bell, BellRing } from 'lucide-react';
 import { CTAButton } from '@/shared/components';
 import { cn } from '@/shared/lib/cn';
@@ -28,6 +28,12 @@ const SHEET_CLOSE_THRESHOLD_PX = 40;
 const SHEET_OPEN_THRESHOLD_PX = 80;
 // 이 정도 이하로만 움직였으면 드래그가 아니라 탭으로 간주한다.
 const SHEET_TAP_THRESHOLD_PX = 6;
+// 펼친 상태의 목표 높이(화면의 70%까지만, 그 이상은 올라가지 않음). 편집 화면
+// TagResultSheet와 동일하게 CSS vh 대신 실측 window.innerHeight로 px 높이를 직접 계산해
+// height를 애니메이션한다 — 모바일 브라우저 주소창 표시/숨김 전환 중 vh 계산이 실제 보이는
+// 높이와 어긋나 시트 아래로 사진이 비치던 문제를 원천적으로 피할 수 있다.
+const OPEN_HEIGHT_RATIO = 0.7;
+const getOpenHeight = () => window.innerHeight * OPEN_HEIGHT_RATIO;
 
 const STATUS_LABEL: Record<TaggedItem['status'], string> = {
   판매중: '판매중',
@@ -190,18 +196,37 @@ const TaggedItemsSheet = ({
   onViewRelatedOotd,
   onToggleWish,
 }: TaggedItemsSheetProps) => {
+  const sheetRef = useRef<HTMLDivElement>(null);
   // 드래그 중에만 값이 존재. wasOpen은 드래그 시작 시점의 open 상태(스냅 방향 판단용).
-  const [drag, setDrag] = useState<{ startY: number; wasOpen: boolean; deltaY: number } | null>(
-    null,
-  );
+  const dragRef = useRef<{ startY: number; startH: number; wasOpen: boolean } | null>(null);
+  const [height, setHeight] = useState(TAGGED_ITEMS_PEEK_HEIGHT_PX);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // 드래그 중이 아닐 때 open이 바뀌면(다른 경로로 열리고/닫히고) 목표 높이로 맞춘다.
+  useEffect(() => {
+    if (dragRef.current) return;
+    setHeight(open ? getOpenHeight() : TAGGED_ITEMS_PEEK_HEIGHT_PX);
+  }, [open]);
 
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    setDrag({ startY: e.clientY, wasOpen: open, deltaY: 0 });
+    dragRef.current = {
+      startY: e.clientY,
+      startH: sheetRef.current?.offsetHeight ?? height,
+      wasOpen: open,
+    };
+    setIsDragging(true);
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    setDrag((prev) => (prev ? { ...prev, deltaY: e.clientY - prev.startY } : prev));
+    if (!dragRef.current) return;
+    const delta = dragRef.current.startY - e.clientY; // 위로 끌면 +
+    // 실측 높이 기준으로 클램프하기 때문에 펼친 높이 이상으로는 애초에 올라갈 수 없다.
+    const next = Math.min(
+      Math.max(dragRef.current.startH + delta, TAGGED_ITEMS_PEEK_HEIGHT_PX),
+      getOpenHeight(),
+    );
+    setHeight(next);
   };
 
   // 탭(거의 움직임 없음)과 드래그를 여기서 함께 판정한다. 별도 onClick을 쓰면, 드래그로
@@ -209,31 +234,31 @@ const TaggedItemsSheet = ({
   // 무관하게) open이 이미 false로 바뀐 걸 보고 handleHeaderClick이 즉시 다시 열어버리는
   // 문제가 있었다. 그래서 열기/닫기/탭을 전부 pointerup 하나로만 판단한다.
   const handlePointerUp = () => {
-    if (!drag) return;
-    const { wasOpen, deltaY } = drag;
-    setDrag(null);
-    const isTap = Math.abs(deltaY) < SHEET_TAP_THRESHOLD_PX;
+    if (!dragRef.current) return;
+    const { startH, wasOpen } = dragRef.current;
+    const current = sheetRef.current?.offsetHeight ?? height;
+    const movedDown = startH - current; // 접는 방향(아래로 끔) = +
+    const movedUp = current - startH; // 펴는 방향(위로 끔) = +
+    dragRef.current = null;
+    setIsDragging(false);
+
+    const isTap = Math.abs(movedUp) < SHEET_TAP_THRESHOLD_PX;
     if (wasOpen) {
       // 펼쳐진 상태에서 아래로 조금만 내려도 접는다(바깥 탭 닫기와 동일한 결과).
-      if (deltaY > SHEET_CLOSE_THRESHOLD_PX) onClose();
-    } else if (deltaY < -SHEET_OPEN_THRESHOLD_PX || isTap) {
+      if (movedDown > SHEET_CLOSE_THRESHOLD_PX) {
+        onClose();
+        setHeight(TAGGED_ITEMS_PEEK_HEIGHT_PX);
+      } else {
+        setHeight(getOpenHeight());
+      }
+    } else if (movedUp > SHEET_OPEN_THRESHOLD_PX || isTap) {
       // 접힌(peek) 상태에서 위로 충분히 올리거나, 핸들을 탭만 해도 펼친다.
       onOpen();
+      setHeight(getOpenHeight());
+    } else {
+      setHeight(TAGGED_ITEMS_PEEK_HEIGHT_PX);
     }
   };
-
-  const isDragging = drag !== null;
-
-  let transform: string;
-  if (drag) {
-    transform = drag.wasOpen
-      ? `translateY(${Math.max(0, drag.deltaY)}px)`
-      : `translateY(calc(100% - ${TAGGED_ITEMS_PEEK_HEIGHT_PX + Math.max(0, -drag.deltaY)}px))`;
-  } else {
-    transform = open
-      ? 'translateY(0)'
-      : `translateY(calc(100% - ${TAGGED_ITEMS_PEEK_HEIGHT_PX}px))`;
-  }
 
   return (
     <div className="pointer-events-none fixed inset-0 z-40">
@@ -247,12 +272,13 @@ const TaggedItemsSheet = ({
       />
 
       <div
+        ref={sheetRef}
         className={cn(
           'bg-bg-white pointer-events-auto absolute inset-x-0 bottom-0 mx-auto flex max-w-[768px]',
           'min-w-[320px] flex-col overflow-hidden rounded-t-2xl shadow-[0_-8px_24px_rgba(0,0,0,0.12)]',
-          isDragging ? '' : 'transition-transform duration-300 ease-out',
+          isDragging ? '' : 'transition-[height] duration-300 ease-out',
         )}
-        style={{ height: '70vh', transform }}
+        style={{ height }}
       >
         <div
           onPointerDown={handlePointerDown}

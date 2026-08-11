@@ -6,6 +6,7 @@ export interface OotdItem {
   thumbnail?: string; // 아바타 이미지 (신규 아이템은 없을 수 있음)
   meta: string; // '최근 착용 7일 전 · OOTD 인증 : 2회' / '신규 아이템'
   isNew?: boolean; // 새로 등록한 아이템
+  categoryName?: string; // 세부 카테고리(categorySmall). 박스 분석 결과로 폴백 목록을 좁힐 때 사용.
 }
 
 // 새 아이템 등록 폼 값

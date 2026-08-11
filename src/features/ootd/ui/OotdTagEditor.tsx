@@ -65,12 +65,11 @@ const toOotdItemFromDetail = (d: ItemDetailResponse): OotdItem => ({
   name: d.itemName,
   thumbnail: resolveFileUrl(d.representativeImageUrl),
   meta: [
-    d.lastWornAt ? `최근 착용 ${getDaysAgo(d.lastWornAt)}일 전` : null,
+    d.lastWornAt ? `최근 착용 ${getDaysAgo(d.lastWornAt)}일 전` : '최근 착용일 없음',
     `OOTD 인증 : ${d.ootdVerifiedWearCount}회`,
-  ]
-    .filter(Boolean)
-    .join(' · '),
+  ].join(' · '),
   isNew: false,
+  categoryName: d.categorySmall,
 });
 
 // OOTD 생성/상세 편집이 공유하는 태그 에디터. 사진 위 bbox 박스 편집 + 유사 아이템 시트 + 새 아이템 등록.
@@ -160,12 +159,21 @@ const OotdTagEditor = ({
     try {
       const res = await analyzeTagArea(ootdId, { bbox });
       if (res.matchedItemIds.length === 0) {
-        setAnalyzedItems((prev) => {
-          if (!(boxId in prev)) return prev;
-          const next = { ...prev };
-          delete next[boxId];
-          return next;
-        });
+        // 확정 매칭(matchedItemIds)은 없어도 분석된 세부 카테고리는 있으면, 그걸로 전체
+        // 추천을 좁혀서 보여준다 — 아니면 재분석해도 매번 똑같은 전체 목록만 보여서 이 박스가
+        // 실제로 다시 분석됐다는 게 화면에 전혀 드러나지 않는다. 카테고리 정보조차 없으면
+        // (labelText 자체가 null) 좁힐 기준이 없어 기존처럼 전체 추천으로 폴백한다.
+        if (res.categorySmall) {
+          const scoped = recommended.filter((item) => item.categoryName === res.categorySmall);
+          setAnalyzedItems((prev) => ({ ...prev, [boxId]: scoped }));
+        } else {
+          setAnalyzedItems((prev) => {
+            if (!(boxId in prev)) return prev;
+            const next = { ...prev };
+            delete next[boxId];
+            return next;
+          });
+        }
         return;
       }
       const details = await Promise.all(res.matchedItemIds.map((id) => getItemDetail(id)));

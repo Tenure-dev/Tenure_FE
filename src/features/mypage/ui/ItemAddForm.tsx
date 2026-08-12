@@ -409,6 +409,7 @@ const ItemAddForm = ({ onSuccess }: ItemAddFormProps) => {
         onClose={() => setPickerState({ step: 'idle' })}
         onFileSelected={handleFileSelected}
         onPickFromPost={() => setPickerState({ step: 'post-picking' })}
+        onError={showError}
       />
       <PostPickerView
         open={pickerState.step === 'post-picking'}

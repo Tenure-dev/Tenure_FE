@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { SegmentedControl, Toast } from '@/shared/components';
 import FeedGrid from '@/shared/components/feed/FeedGrid';
 import { useToast } from '@/shared/hooks/useToast';
+import { useInfiniteScroll } from '@/shared/hooks/useInfiniteScroll';
 import FeedHeader from './components/FeedHeader';
 import FeedIntro from './components/FeedIntro';
 
@@ -36,9 +37,14 @@ const FeedPage = () => {
 
   const { data: followings = [] } = useFollowings();
 
-  const { data } = useFeedQuery({
+  const { data, fetchNextPage, hasNextPage } = useFeedQuery({
     tab: activeTab === '팔로우' ? 'following' : 'all',
     userId: selectedUserId ? Number(selectedUserId) : undefined,
+  });
+
+  const sentinelRef = useInfiniteScroll({
+    hasMore: Boolean(hasNextPage),
+    onLoadMore: fetchNextPage,
   });
 
   const items = useMemo<FeedCard[]>(
@@ -86,6 +92,7 @@ const FeedPage = () => {
 
       <div className="bg-bg-tertiary flex-1 px-4 pt-4 pb-6 md:px-6">
         <FeedGrid items={items} />
+        {hasNextPage && <div ref={sentinelRef} className="h-1" />}
       </div>
 
       <Toast message={toastMessage} onClose={hideToast} />

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MoreVertical } from 'lucide-react';
-import { BackHeader, BottomSheet, Toast } from '@/shared/components';
+import { BackHeader, BottomSheet, ConfirmDialog, Toast } from '@/shared/components';
 import { edit } from '@/shared/assets';
 import useToast from '@/shared/hooks/useToast';
 import {
@@ -14,6 +14,7 @@ import { useItemDetailQuery } from '@/features/mypage/model/useItemDetailQuery';
 import { useFrequentlyWornQuery } from '@/features/mypage/model/useFrequentlyWornQuery';
 import { useUpdateItemMutation } from '@/features/mypage/model/useUpdateItemMutation';
 import { useUpdateOfferSettingMutation } from '@/features/mypage/model/useUpdateOfferSettingMutation';
+import { useDeleteItemMutation } from '@/features/mypage/model/useDeleteItemMutation';
 import type { ItemDetail } from '@/features/mypage/model/items';
 
 const ItemDetailPage = () => {
@@ -22,6 +23,7 @@ const ItemDetailPage = () => {
   const { data: frequentlyWornWith = [] } = useFrequentlyWornQuery(Number(itemId));
   const { mutate: updateItem } = useUpdateItemMutation(Number(itemId));
   const { mutate: updateOfferSetting } = useUpdateOfferSettingMutation(Number(itemId));
+  const { mutate: deleteItem } = useDeleteItemMutation();
   const navigate = useNavigate();
   const { message, show, hide } = useToast();
   const item: ItemDetail | undefined = data && {
@@ -32,6 +34,7 @@ const ItemDetailPage = () => {
   const [syncedItemId, setSyncedItemId] = useState<number | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [actionSheetOpen, setActionSheetOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   if (item && syncedItemId !== item.itemId) {
     setSyncedItemId(item.itemId);
@@ -43,6 +46,16 @@ const ItemDetailPage = () => {
   const myUserId = Number(localStorage.getItem('userId'));
   const isOwner = item.ownerUserId === myUserId;
   const isForSale = item.itemStatus === 'ON_SALE';
+
+  const handleDeleteItem = () => {
+    deleteItem(Number(itemId), {
+      onSuccess: () => navigate('/mypage/items', { replace: true }),
+      onError: (error) => {
+        setDeleteDialogOpen(false);
+        show(error.message);
+      },
+    });
+  };
 
   const handleToggleProposal = () => {
     const next = !allowProposal;
@@ -69,9 +82,11 @@ const ItemDetailPage = () => {
               <button type="button" aria-label="수정" onClick={() => setEditOpen(true)}>
                 <img src={edit} alt="" className="size-5" />
               </button>
-              <button type="button" aria-label="더보기" onClick={() => setActionSheetOpen(true)}>
-                <MoreVertical className="size-5" />
-              </button>
+              {!isForSale && (
+                <button type="button" aria-label="더보기" onClick={() => setActionSheetOpen(true)}>
+                  <MoreVertical className="size-5" />
+                </button>
+              )}
             </div>
           ) : undefined
         }
@@ -120,7 +135,26 @@ const ItemDetailPage = () => {
         >
           판매 전환
         </button>
+        <button
+          type="button"
+          className="text-body-1 font-regular w-full py-3 text-center text-red-500"
+          onClick={() => {
+            setActionSheetOpen(false);
+            setDeleteDialogOpen(true);
+          }}
+        >
+          아이템 삭제
+        </button>
       </BottomSheet>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="아이템을 삭제할까요?"
+        description="삭제된 아이템은 복구할 수 없습니다."
+        confirmLabel="삭제"
+        onCancel={() => setDeleteDialogOpen(false)}
+        onConfirm={handleDeleteItem}
+      />
 
       <Toast message={message} onClose={hide} />
     </div>

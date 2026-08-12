@@ -7,8 +7,10 @@ export interface ImageCropViewProps {
   onConfirm: (croppedDataUrl: string) => void;
 }
 
-const SQUARE_SIZE = 320;
-const OUTPUT_SIZE = 512;
+const CROP_WIDTH = 288;
+const CROP_HEIGHT = 384;
+const OUTPUT_W = 384;
+const OUTPUT_H = 512;
 
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
 
@@ -21,12 +23,12 @@ const ImageCropView = ({ imageUrl, onCancel, onConfirm }: ImageCropViewProps) =>
     originY: number;
   } | null>(null);
 
-  const [imgSize, setImgSize] = useState({ width: SQUARE_SIZE, height: SQUARE_SIZE });
+  const [imgSize, setImgSize] = useState({ width: CROP_WIDTH, height: CROP_HEIGHT });
   const [offset, setOffset] = useState({ x: 0, y: 0 });
 
   const clampOffset = (x: number, y: number, size: { width: number; height: number }) => {
-    const maxX = Math.max(0, (size.width - SQUARE_SIZE) / 2);
-    const maxY = Math.max(0, (size.height - SQUARE_SIZE) / 2);
+    const maxX = Math.max(0, (size.width - CROP_WIDTH) / 2);
+    const maxY = Math.max(0, (size.height - CROP_HEIGHT) / 2);
     return { x: clamp(x, -maxX, maxX), y: clamp(y, -maxY, maxY) };
   };
 
@@ -34,7 +36,7 @@ const ImageCropView = ({ imageUrl, onCancel, onConfirm }: ImageCropViewProps) =>
     const img = imgRef.current;
     if (!img) return;
     const { naturalWidth, naturalHeight } = img;
-    const scale = Math.max(SQUARE_SIZE / naturalWidth, SQUARE_SIZE / naturalHeight);
+    const scale = Math.max(CROP_WIDTH / naturalWidth, CROP_HEIGHT / naturalHeight);
     const nextSize = { width: naturalWidth * scale, height: naturalHeight * scale };
     setImgSize(nextSize);
     setOffset({ x: 0, y: 0 });
@@ -72,23 +74,14 @@ const ImageCropView = ({ imageUrl, onCancel, onConfirm }: ImageCropViewProps) =>
     }
 
     const scale = imgSize.width / img.naturalWidth;
-    const sourceSize = SQUARE_SIZE / scale;
-    const sourceLeft = (imgSize.width / 2 - SQUARE_SIZE / 2 - offset.x) / scale;
-    const sourceTop = (imgSize.height / 2 - SQUARE_SIZE / 2 - offset.y) / scale;
+    const sourceW = CROP_WIDTH / scale;
+    const sourceH = CROP_HEIGHT / scale;
+    const sourceLeft = (imgSize.width / 2 - CROP_WIDTH / 2 - offset.x) / scale;
+    const sourceTop = (imgSize.height / 2 - CROP_HEIGHT / 2 - offset.y) / scale;
 
-    canvas.width = OUTPUT_SIZE;
-    canvas.height = OUTPUT_SIZE;
-    ctx.drawImage(
-      img,
-      sourceLeft,
-      sourceTop,
-      sourceSize,
-      sourceSize,
-      0,
-      0,
-      OUTPUT_SIZE,
-      OUTPUT_SIZE,
-    );
+    canvas.width = OUTPUT_W;
+    canvas.height = OUTPUT_H;
+    ctx.drawImage(img, sourceLeft, sourceTop, sourceW, sourceH, 0, 0, OUTPUT_W, OUTPUT_H);
     onConfirm(canvas.toDataURL('image/jpeg', 0.92));
   };
 
@@ -117,7 +110,7 @@ const ImageCropView = ({ imageUrl, onCancel, onConfirm }: ImageCropViewProps) =>
       <div className="flex flex-1 items-center justify-center">
         <div
           className="relative touch-none overflow-hidden rounded-2xl"
-          style={{ width: SQUARE_SIZE, height: SQUARE_SIZE }}
+          style={{ width: CROP_WIDTH, height: CROP_HEIGHT }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}

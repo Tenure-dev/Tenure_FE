@@ -137,6 +137,9 @@ export const getSearchHome = async (): Promise<SearchHomeData> => {
 
 export const getSearchRecent = (): Promise<SearchRecentResponse> => api.get('/search/recent');
 
+export const getSuggestionKeywords = (keyword: string): Promise<string[]> =>
+  api.get('/search/suggestions', { params: { keyword } });
+
 export const deleteRecentKeyword = (keywordId: number): Promise<void> =>
   api.delete(`/search/recent-keywords/${keywordId}`);
 

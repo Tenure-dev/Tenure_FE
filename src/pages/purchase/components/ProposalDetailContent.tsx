@@ -293,7 +293,11 @@ const ProposalDetailContent = ({
         <div className="border-border-light border-b-5 p-[16px]">
           <SectionTitle>{isBuyer ? '판매자 정보' : '구매자 정보'}</SectionTitle>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-[12px]">
+            <button
+              type="button"
+              className="flex items-center gap-[12px]"
+              onClick={() => navigate(`/users/${counterpart.userId}`)}
+            >
               <div className="bg-bg-quaternary size-[60px] shrink-0 overflow-hidden rounded-full">
                 {counterpart.profileImageUrl && (
                   <img
@@ -304,7 +308,7 @@ const ProposalDetailContent = ({
                 )}
               </div>
               <p className="text-body-1 text-text-primary font-semibold">{counterpart.username}</p>
-            </div>
+            </button>
             <Button
               variant="ghost"
               size="36"

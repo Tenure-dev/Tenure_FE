@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DoubleButton } from '@/shared/components';
 import { clearAuthStorage } from '@/shared/lib/api';
+import packageJson from '../../../package.json';
 
 interface SettingsRowItem {
   label: string;
-  onClick: () => void;
+  value?: string;
+  onClick?: () => void;
 }
 
 interface SettingsSectionData {
@@ -14,14 +16,18 @@ interface SettingsSectionData {
   items: SettingsRowItem[];
 }
 
-const SettingsRow = ({ label, onClick }: SettingsRowItem) => (
+const SettingsRow = ({ label, value, onClick }: SettingsRowItem) => (
   <button
     type="button"
     onClick={onClick}
     className="flex h-[52px] w-full items-center justify-between border-b border-[#F0F0F0] px-[16px] text-[15px] text-[#111111]"
   >
     <span>{label}</span>
-    <ChevronRight size={18} className="text-[#767676]" />
+    {value ? (
+      <span className="text-[13px] text-[#767676]">{value}</span>
+    ) : (
+      <ChevronRight size={18} className="text-[#767676]" />
+    )}
   </button>
 );
 
@@ -29,7 +35,7 @@ const SettingsSection = ({ title, items }: SettingsSectionData) => (
   <section className="mt-[24px] first:mt-0">
     {title && <p className="px-[16px] pb-2 text-[12px] text-[#767676]">{title}</p>}
     {items.map((item) => (
-      <SettingsRow key={item.label} label={item.label} onClick={item.onClick} />
+      <SettingsRow key={item.label} label={item.label} value={item.value} onClick={item.onClick} />
     ))}
   </section>
 );
@@ -58,11 +64,9 @@ const SettingsPage = () => {
     {
       title: '거래',
       items: [
-        { label: '배송지 관리', onClick: () => {} },
-        { label: '정산 계좌 관리', onClick: () => {} },
-        { label: '기본 배송비', onClick: () => {} },
-        { label: '수수료 부담 기본값', onClick: () => {} },
-        { label: '구매 제안 받기 기본값', onClick: () => {} },
+        { label: '배송지 관리', onClick: () => navigate('/settings/addresses') },
+        { label: '정산 계좌 관리', onClick: () => navigate('/settings/settlement-account') },
+        { label: '기본 배송비', onClick: () => navigate('/settings/shipping-fee') },
       ],
     },
     {
@@ -72,7 +76,7 @@ const SettingsPage = () => {
         { label: '문의하기', onClick: () => {} },
         { label: '약관', onClick: () => {} },
         { label: '개인정보 처리방침', onClick: () => {} },
-        { label: '버전 정보', onClick: () => {} },
+        { label: '버전 정보', value: `v${packageJson.version}` },
       ],
     },
   ];

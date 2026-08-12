@@ -1,22 +1,26 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { heartOotd, saveOotd, unheartOotd, unsaveOotd } from './reaction';
 import type { MyPostsResponse } from './dto';
 
 type ToggleArgs = { ootdId: number; active: boolean }; // active=true → 등록, false → 취소
+type MyPostsInfinite = InfiniteData<MyPostsResponse>;
 
 const MY_POSTS_KEY = ['ootds', 'me'];
 
-// 게시물 목록 캐시에서 특정 게시물의 hearted/saved 플래그만 바꾼다.
+// 무한스크롤 캐시(모든 페이지)에서 특정 게시물의 hearted/saved 플래그만 바꾼다.
 const patchFlag = (
-  data: MyPostsResponse | undefined,
+  data: MyPostsInfinite | undefined,
   ootdId: number,
   field: 'hearted' | 'saved',
   value: boolean,
-): MyPostsResponse | undefined =>
+): MyPostsInfinite | undefined =>
   data
     ? {
         ...data,
-        content: data.content.map((p) => (p.ootdId === ootdId ? { ...p, [field]: value } : p)),
+        pages: data.pages.map((page) => ({
+          ...page,
+          content: page.content.map((p) => (p.ootdId === ootdId ? { ...p, [field]: value } : p)),
+        })),
       }
     : data;
 
@@ -29,8 +33,8 @@ export const useToggleHeart = () => {
       active ? heartOotd(ootdId) : unheartOotd(ootdId),
     onMutate: async ({ ootdId, active }) => {
       await queryClient.cancelQueries({ queryKey: MY_POSTS_KEY });
-      const previous = queryClient.getQueryData<MyPostsResponse>(MY_POSTS_KEY);
-      queryClient.setQueryData<MyPostsResponse>(MY_POSTS_KEY, (old) =>
+      const previous = queryClient.getQueryData<MyPostsInfinite>(MY_POSTS_KEY);
+      queryClient.setQueryData<MyPostsInfinite>(MY_POSTS_KEY, (old) =>
         patchFlag(old, ootdId, 'hearted', active),
       );
       return { previous };
@@ -52,8 +56,8 @@ export const useToggleSave = () => {
       active ? saveOotd(ootdId) : unsaveOotd(ootdId),
     onMutate: async ({ ootdId, active }) => {
       await queryClient.cancelQueries({ queryKey: MY_POSTS_KEY });
-      const previous = queryClient.getQueryData<MyPostsResponse>(MY_POSTS_KEY);
-      queryClient.setQueryData<MyPostsResponse>(MY_POSTS_KEY, (old) =>
+      const previous = queryClient.getQueryData<MyPostsInfinite>(MY_POSTS_KEY);
+      queryClient.setQueryData<MyPostsInfinite>(MY_POSTS_KEY, (old) =>
         patchFlag(old, ootdId, 'saved', active),
       );
       return { previous };

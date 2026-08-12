@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import { Toggle } from '@/shared/components';
+import { cn } from '@/shared/lib/cn';
 
 type NotificationKey = 'chat' | 'interest' | 'follow' | 'notice' | 'marketing';
 
@@ -76,36 +78,6 @@ const SERVICE_ITEMS: NotificationItem[] = [
   },
 ];
 
-const Toggle = ({
-  on,
-  onToggle,
-  label,
-  disabled = false,
-}: {
-  on: boolean;
-  onToggle: () => void;
-  label: string;
-  disabled?: boolean;
-}) => (
-  <button
-    type="button"
-    role="switch"
-    aria-checked={on}
-    aria-label={label}
-    aria-disabled={disabled}
-    onClick={disabled ? undefined : onToggle}
-    className={`relative h-[24px] w-[42px] shrink-0 rounded-full transition-colors ${
-      on ? 'bg-[#00AAFF]' : 'bg-[#E2E6E8]'
-    } ${disabled ? 'opacity-40' : ''}`}
-  >
-    <span
-      className={`absolute top-1/2 size-[20px] -translate-y-1/2 rounded-full bg-white transition-transform ${
-        on ? 'translate-x-[20px]' : 'translate-x-[2px]'
-      }`}
-    />
-  </button>
-);
-
 const NotificationRow = ({
   label,
   description,
@@ -124,7 +96,12 @@ const NotificationRow = ({
       <p className="text-[14px] font-semibold text-[#111111]">{label}</p>
       <p className="text-[12px] leading-[1.5] text-[#767676]">{description}</p>
     </div>
-    <Toggle on={on} onToggle={onToggle} label={label} disabled={disabled} />
+    <div
+      className={cn('shrink-0', disabled && 'pointer-events-none opacity-40')}
+      aria-disabled={disabled}
+    >
+      <Toggle checked={on} onChange={onToggle} />
+    </div>
   </div>
 );
 

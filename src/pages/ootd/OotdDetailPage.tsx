@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Bookmark, Heart } from 'lucide-react';
 import { FollowButton, Toast } from '@/shared/components';
 import { useToast } from '@/shared/hooks/useToast';
+import { cn } from '@/shared/lib/cn';
 import { USER_ID_STORAGE_KEY } from '@/shared/lib/api';
 import { type Bbox, type OotdPost, type TaggedItem } from '@/features/ootd/model/types';
 import { useTagNavigation } from '@/features/ootd/lib/useTagNavigation';
 import {
+  confirmTags,
   createTagsBatch,
   deleteOotd,
   followUser,
@@ -28,6 +31,7 @@ import MoreMenu from '@/features/ootd/ui/MoreMenu';
 import OotdTagEditor, { type EditorTag } from '@/features/ootd/ui/OotdTagEditor';
 import ViewHeader from './components/ViewHeader';
 import EditHeader from './components/EditHeader';
+import TagLoading from '../camera/component/TagLoading';
 
 // 계정당 한 번만 보여주는 안내 모달. 로그인 세션이 아니라 계정(userId) 단위로 영구 기록한다.
 const INTRO_SEEN_KEY_PREFIX = 'ootd-intro-seen';
@@ -53,6 +57,7 @@ const bboxEq = (a: Bbox, b: Bbox) =>
 const OotdDetailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const ootdId = Number(id);
 
@@ -69,6 +74,9 @@ const OotdDetailPage = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const [mode, setMode] = useState<'view' | 'edit'>('view');
+  // 편집 중 결과 시트가 최대치로 올라가면 EditHeader를 접어 숨긴다.
+  const [sheetExpanded, setSheetExpanded] = useState(false);
+  const [editorLoading, setEditorLoading] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   // 편집 중 태그 상태(에디터가 onChange로 통지). 완료 전까지 서버 미반영 → 뒤로가기/취소 시 그대로 버림.
   const [editorTags, setEditorTags] = useState<EditorTag[]>([]);
@@ -77,6 +85,14 @@ const OotdDetailPage = () => {
   const { goToDetail } = useTagNavigation();
 
   const initialToastRef = useRef((location.state as { toast?: string } | null)?.toast ?? null);
+  // 게시 직후 상세로 진입한 경우: 뒤로가기를 작성 화면이 아니라 피드로 보낸다.
+  const fromPublishRef = useRef(
+    (location.state as { fromPublish?: boolean } | null)?.fromPublish ?? false,
+  );
+  const handleBack = () => {
+    if (fromPublishRef.current) navigate('/feed', { replace: true });
+    else navigate(-1);
+  };
 
   useEffect(() => {
     if (initialToastRef.current) {
@@ -95,6 +111,45 @@ const OotdDetailPage = () => {
     return detail;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ootdId]);
+
+  // 자동태그 글 자동 확정: 내 글이고 AI 태그가 준비되면(AUTO_UNCONFIRMED) 조회 시점에 confirm 처리.
+  // ANALYZING이면 준비될 때까지 폴링. (별도 '확인완료' 버튼 없이 "봤으면 확정")
+  useEffect(() => {
+    if (!Number.isFinite(ootdId) || currentUserId == null) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const tick = async () => {
+      try {
+        const detail = await getOotdDetail(ootdId);
+        if (cancelled) return;
+        if (detail.author.userId !== currentUserId) return; // 내 글 아니면 확정 안 함
+        if (detail.tagStatus === 'ANALYZING') {
+          timer = setTimeout(tick, 1500); // AI 분석 중 → 준비될 때까지 폴링
+          return;
+        }
+        if (detail.tagStatus === 'AUTO_UNCONFIRMED') {
+          // 태그 0개면 확정할 것도 없음(백엔드 confirm 불필요) → 스킵
+          if ((detail.tags?.length ?? 0) === 0) return;
+          try {
+            await confirmTags(ootdId);
+            if (!cancelled) await refreshPost(); // CONFIRMED 반영
+          } catch {
+            // 확정 실패는 무시
+          }
+        }
+      } catch {
+        // 조회 실패는 무시
+      }
+    };
+
+    void tick();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ootdId, currentUserId]);
 
   const loadPost = useCallback(async () => {
     const requestId = ++loadRequestIdRef.current;
@@ -156,12 +211,14 @@ const OotdDetailPage = () => {
   const handleStartEdit = () => {
     if (!post) return;
     setEditorTags(post.taggedItems.map(toEditorTag));
+    setSheetExpanded(false);
     setMode('edit');
     setShowMoreMenu(false);
   };
 
   const resetEditState = () => {
     setEditorTags([]);
+    setSheetExpanded(false);
     setMode('view');
   };
 
@@ -281,6 +338,10 @@ const OotdDetailPage = () => {
     setShowDeleteConfirm(false);
     try {
       await deleteOotd(post.id);
+      // 삭제된 글이 목록 캐시에 남지 않도록 관련 목록 무효화 (마이페이지·피드·유저 프로필 피드)
+      queryClient.invalidateQueries({ queryKey: ['ootds'] });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
       navigate('/', { state: { toast: '게시물이 삭제되었습니다.' } });
     } catch (e) {
       showToast(e instanceof Error ? e.message : '삭제 중 오류가 발생했어요.');
@@ -321,11 +382,7 @@ const OotdDetailPage = () => {
   }
 
   if (loading || !post) {
-    return (
-      <div className="bg-bg-white flex min-h-screen flex-col items-center justify-center">
-        <div className="border-brand size-10 animate-spin rounded-full border-4 border-t-transparent" />
-      </div>
-    );
+    return <TagLoading />;
   }
 
   const isDeadEnd = (status: TaggedItem['status']) => status === '삭제됨';
@@ -336,14 +393,24 @@ const OotdDetailPage = () => {
       style={mode === 'view' ? { paddingBottom: TAGGED_ITEMS_PEEK_HEIGHT_PX } : undefined}
     >
       {mode === 'view' ? (
-        <ViewHeader onBack={() => navigate(-1)} onMoreClick={() => setShowMoreMenu(true)} />
+        <ViewHeader onBack={handleBack} onMoreClick={() => setShowMoreMenu(true)} />
       ) : (
-        <EditHeader
-          changeCount={changeCount}
-          canComplete={canComplete}
-          onCancel={handleCancelEdit}
-          onComplete={handleComplete}
-        />
+        // 결과 시트를 최대치로 올리면 EditHeader가 위로 접혀 사라진다.
+        <div
+          className={cn(
+            'shrink-0 overflow-hidden transition-all duration-300 ease-out',
+            sheetExpanded || editorLoading
+              ? 'max-h-0 -translate-y-full opacity-0'
+              : 'max-h-24 translate-y-0 opacity-100',
+          )}
+        >
+          <EditHeader
+            changeCount={changeCount}
+            canComplete={canComplete}
+            onCancel={handleCancelEdit}
+            onComplete={handleComplete}
+          />
+        </div>
       )}
 
       <div className="relative flex flex-1 flex-col">
@@ -362,7 +429,7 @@ const OotdDetailPage = () => {
                   <TagPin
                     key={tag.id}
                     item={tag}
-                    onClick={isDeadEnd(tag.status) ? () => {} : () => goToDetail(tag)}
+                    onClick={isDeadEnd(tag.status) ? () => {} : () => goToDetail(tag, post.isOwner)}
                     interactive={!isDeadEnd(tag.status)}
                   />
                 ))}
@@ -412,7 +479,8 @@ const OotdDetailPage = () => {
             scrollable
             initialTags={post.taggedItems.map(toEditorTag)}
             onChange={setEditorTags}
-            // 새 아이템 등록 시 bbox 영역을 대표 이미지로 크롭·업로드(cropImage가 crossOrigin으로 원격 이미지 지원).
+            onSheetExpandedChange={setSheetExpanded}
+            onLoadingChange={setEditorLoading}
             // 손 안 댄 기존 태그는 게시글처럼 흰색 말풍선, 누르거나 새로 추가한 것만 검정.
             untouchedVariant="default"
             className="flex-1"
@@ -484,12 +552,7 @@ const OotdDetailPage = () => {
         onConfirm={handleDiscardConfirm}
       />
 
-      {isSaving && (
-        <div className="bg-bg-white fixed inset-0 z-50 flex flex-col items-center justify-center gap-4">
-          <div className="border-brand size-10 animate-spin rounded-full border-4 border-t-transparent" />
-          <p className="text-body-2 text-text-secondary">게시물 수정 중입니다!!!</p>
-        </div>
-      )}
+      {isSaving && <TagLoading title="게시물 수정 중입니다!!!" />}
 
       <Toast message={toastMessage} onClose={hideToast} />
     </div>

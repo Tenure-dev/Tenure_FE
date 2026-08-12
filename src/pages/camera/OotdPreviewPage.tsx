@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import chevron from '@/shared/assets/chevron-left.svg';
 import type { Bbox } from '@/features/ootd/model/item';
-import { dataUrlToFile } from '@/shared/lib/dataUrlToFile';
 import { usePublishOotd } from '@/features/ootd/api/usePublishOotd';
-import { Toast } from '@/shared/components';
+import { useOotdDraftStore } from '@/store/useOotdDraftStore';
+import { BackHeader, Toast } from '@/shared/components';
 import { useToast } from '@/shared/hooks/useToast';
 import TagLoading from './component/TagLoading';
 import TagBubble, { type TagBubbleTail } from '@/features/ootd/ui/TagBubble';
@@ -17,12 +16,14 @@ type PreviewTag = { itemId: number; bbox: Bbox; labelText: string };
 const OotdPreviewPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const state = location.state as { photo?: string; tags?: PreviewTag[] } | null;
+  const state = location.state as { photo?: string; ootdId?: number; tags?: PreviewTag[] } | null;
   const photo = state?.photo ?? null;
+  const ootdId = state?.ootdId;
   const tags = state?.tags ?? [];
 
   const [phase, setPhase] = useState<Phase>('loading');
   const { mutate: publish, isPending: posting } = usePublishOotd();
+  const clearDraft = useOotdDraftStore((s) => s.clear);
   const { message: toast, show: showToast, hide: hideToast } = useToast();
 
   // 선택완료 후 로딩 → 미리보기
@@ -32,15 +33,19 @@ const OotdPreviewPage = () => {
     return () => clearTimeout(timer);
   }, [phase]);
 
-  // 게시하기: 이미지 게시 → ootdId 받고 → 태그 일괄 등록 → 상세로 이동
+  // 게시하기: 모아둔 태그를 batch로 일괄 등록 → confirm으로 공개 전환 → 상세로 이동.
+  // ootdId는 태그 작성 진입 시 manual-tag로 미리 생성해 둔 값.
   const handlePost = () => {
-    if (!photo) return;
-    const image = dataUrlToFile(photo, 'ootd.jpg');
+    if (ootdId == null) return;
     publish(
-      { image, tags },
+      { ootdId, tags },
       {
-        onSuccess: (ootdId) => {
-          navigate(`/ootd/${ootdId}`, { state: { toast: '게시물이 등록되었습니다.' } });
+        onSuccess: (id) => {
+          clearDraft(); // 게시 완료 → 다음 촬영은 새 임시 OOTD로 시작
+          navigate('/feed', { replace: true });
+          navigate(`/ootd/${id}`, {
+            state: { toast: '게시물이 등록되었습니다.', fromPublish: true },
+          });
         },
         onError: () => showToast('게시에 실패했어요. 잠시 후 다시 시도해주세요.'),
       },
@@ -57,13 +62,7 @@ const OotdPreviewPage = () => {
 
   return (
     <div className="bg-bg-white text-text-primary flex min-h-dvh w-full flex-col">
-      {/* 헤더 */}
-      <header className="flex items-center gap-3 px-5 py-4">
-        <button type="button" onClick={() => navigate(-1)} aria-label="뒤로">
-          <img src={chevron} width={24} height={24} alt="뒤로가기" />
-        </button>
-        <h1 className="text-title-2 font-medium">게시물 미리보기</h1>
-      </header>
+      <BackHeader title="게시물 미리보기" />
 
       {/* 진행바 (마지막 단계) */}
       <div className="bg-bg-tertiary h-1 w-full">
@@ -104,7 +103,7 @@ const OotdPreviewPage = () => {
       <div className="mt-auto flex gap-2 px-5 pb-6">
         <button
           type="button"
-          onClick={() => navigate('/ootd/tag', { state: { photo, tags } })}
+          onClick={() => navigate('/ootd/tag', { state: { photo, ootdId, tags } })}
           className="bg-gray-bg text-btn-2 text-text-primary flex-1 rounded-md py-3.5 font-medium"
         >
           태그 수정

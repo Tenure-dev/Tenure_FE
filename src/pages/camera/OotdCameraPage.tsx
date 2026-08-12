@@ -11,11 +11,13 @@ import ratio11 from '@/shared/assets/1-1.svg';
 import close from '@/shared/assets/close.svg';
 import next from '@/shared/assets/next.svg';
 
-// 탭 시 순환하는 촬영 비율 (value = 가로/세로)
+// 탭 시 순환하는 촬영 비율.
+// value = 최종 사진 비율(가로/세로). widthRef = 가로 화각(줌) 기준 비율.
+// 세 비율 모두 widthRef=3/4로 통일 → 가로 화각(줌) 동일, 세로만 비율대로 담는다.
 const RATIOS = [
-  { label: '3:4', icon: ratio34, value: 3 / 4, aspect: 'aspect-[3/4]' },
-  { label: '4:5', icon: ratio45, value: 4 / 5, aspect: 'aspect-[4/5]' },
-  { label: '1:1', icon: ratio11, value: 1, aspect: 'aspect-square' },
+  { label: '3:4', icon: ratio34, value: 3 / 4, widthRef: 3 / 4, aspect: 'aspect-[3/4]' },
+  { label: '4:5', icon: ratio45, value: 4 / 5, widthRef: 3 / 4, aspect: 'aspect-[4/5]' },
+  { label: '1:1', icon: ratio11, value: 1, widthRef: 3 / 4, aspect: 'aspect-square' },
 ] as const;
 
 const OotdCameraPage = () => {
@@ -24,11 +26,21 @@ const OotdCameraPage = () => {
   const [captured, setCaptured] = useState<string | null>(null);
   const [ratioIndex, setRatioIndex] = useState(0);
   const ratio = RATIOS[ratioIndex];
+  const [dims, setDims] = useState({ w: 0, h: 0 });
+
+  // 가로 화각(줌)을 widthRef에 맞추는 확대 배율을 실제 영상 프레임(vw×vh)으로 계산한다.
+  // object-cover가 가로/세로 중 무엇에 맞춰 채우는지는 스트림 방향(데스크톱=가로, 폰=세로)에
+  // 따라 달라서, 고정값(value/widthRef)을 쓰면 세로 스트림에서 줌이 튄다.
+  // min(vw, value·vh) / min(vw, widthRef·vh)는 캡처 크롭폭과도 일치(WYSIWYG).
+  const zoom =
+    dims.w && dims.h
+      ? Math.min(dims.w, ratio.value * dims.h) / Math.min(dims.w, ratio.widthRef * dims.h)
+      : 1;
 
   const cycleRatio = () => setRatioIndex((i) => (i + 1) % RATIOS.length);
 
   const handleShoot = () => {
-    const photo = capture(ratio.value);
+    const photo = capture(ratio.value, ratio.widthRef);
     if (photo) setCaptured(photo);
   };
 
@@ -57,7 +69,7 @@ const OotdCameraPage = () => {
       {/* 프리뷰 영역: 남은 공간에 맞춰 최대 높이 제한 (화면 밖으로 안 넘침) */}
       <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
         <div
-          className="relative w-full overflow-hidden bg-black"
+          className="relative mt-10 w-full overflow-hidden bg-black"
           // iOS Safari는 flex 아이템의 aspect-ratio를 종종 무시해서,
           // padding-bottom 퍼센트(= 100/(가로/세로))로 높이를 확실히 만든다.
           style={{ height: 0, paddingBottom: `${100 / ratio.value}%` }}
@@ -67,13 +79,19 @@ const OotdCameraPage = () => {
             autoPlay
             playsInline
             muted
+            onLoadedMetadata={(e) =>
+              setDims({ w: e.currentTarget.videoWidth, h: e.currentTarget.videoHeight })
+            }
             className={cn(
               // 비율 박스를 꽉 채우고 넘치는 부분은 중앙 크롭 → 촬영 결과와 일치(WYSIWYG)
               'absolute inset-0 size-full object-cover',
-              facingMode === 'user' && '-scale-x-100',
               captured && 'hidden',
             )}
+            // zoom 배율로 균일 확대 → 가로 화각을 widthRef 기준으로 고정. 전면(user)은 X축 반전.
+            style={{ transform: `scale(${(facingMode === 'user' ? -1 : 1) * zoom}, ${zoom})` }}
           />
+          {/* TODO(debug): 확인 후 제거 */}
+
           {captured && (
             <img
               src={captured}

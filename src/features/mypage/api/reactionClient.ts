@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { USER_ID_STORAGE_KEY } from '@/shared/lib/api';
+import { ACCESS_TOKEN_STORAGE_KEY } from '@/shared/lib/api';
 
 // 하트/저장 API는 204 No Content(본문 없음)를 반환한다.
 // 공용 api 인터셉터는 빈 본문을 실패로 처리(onError 롤백 유발)하므로,
@@ -8,10 +8,10 @@ const reactionClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
 });
 
-// 공용 api와 동일하게 X-USER-ID 헤더 부착
+// 공용 api와 동일하게 Authorization: Bearer 토큰 부착
 reactionClient.interceptors.request.use((config) => {
-  const userId = localStorage.getItem(USER_ID_STORAGE_KEY);
-  if (userId) config.headers.set('X-USER-ID', userId);
+  const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  if (accessToken) config.headers.set('Authorization', `Bearer ${accessToken}`);
   return config;
 });
 

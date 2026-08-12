@@ -112,9 +112,12 @@ export const useCamera = () => {
     setFacingMode((mode) => (mode === 'user' ? 'environment' : 'user'));
   }, []);
 
-  // 현재 프레임을 지정 비율(가로/세로)로 중앙 크롭해 dataURL 반환
+  // 현재 프레임을 중앙 크롭해 dataURL 반환.
+  // targetRatio(=W/H) = 최종 사진 비율. widthRatio = 가로 화각(줌) 기준 비율.
+  // 예: 4:5를 3:4와 같은 줌으로 찍으려면 targetRatio=4/5, widthRatio=3/4
+  //     → 가로는 3:4 크롭폭 그대로, 세로만 4:5로 덜 담음(줌 동일).
   const capture = useCallback(
-    (targetRatio: number) => {
+    (targetRatio: number, widthRatio: number = targetRatio) => {
       const video = videoRef.current;
       if (!video) return null;
 
@@ -122,14 +125,12 @@ export const useCamera = () => {
       const vh = video.videoHeight;
       if (!vw || !vh) return null;
 
-      // 프리뷰(object-cover)와 동일하게, targetRatio(=W/H)에 맞춰 중앙 크롭.
-      // 세로가 부족하면 세로를 꽉 쓰고 가로를 크롭(가로가 부족하면 반대).
+      // 가로 크롭폭은 widthRatio(=화각) 기준. 세로가 부족하면 세로 꽉 기준으로 가로 결정.
       let sw = vw;
-      let sh = vw / targetRatio;
-      if (sh > vh) {
-        sh = vh;
-        sw = vh * targetRatio;
-      }
+      if (vw / widthRatio > vh) sw = vh * widthRatio;
+      // 세로는 최종 비율(targetRatio)로. 프레임을 넘으면 클램프.
+      let sh = sw / targetRatio;
+      if (sh > vh) sh = vh;
       const sx = (vw - sw) / 2;
       const sy = (vh - sh) / 2;
 

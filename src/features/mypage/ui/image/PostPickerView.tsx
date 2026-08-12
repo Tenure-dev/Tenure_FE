@@ -14,7 +14,8 @@ export interface PostPickerViewProps {
 
 const PostPickerView = ({ open, onClose, onSelect }: PostPickerViewProps) => {
   const { data } = useMyPosts(open);
-  const posts = data?.content.length ? data.content : MOCK_POSTS;
+  const loaded = data?.pages.flatMap((page) => page.content) ?? [];
+  const posts = loaded.length ? loaded : MOCK_POSTS;
 
   if (!open) return null;
 

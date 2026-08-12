@@ -1,4 +1,5 @@
-export type ItemStatus = '판매중' | '미판매_제안가능' | '미판매_제안불가' | '판매완료' | '삭제됨';
+export type ItemStatus =
+  '판매중' | '거래중' | '미판매_제안가능' | '미판매_제안불가' | '판매완료' | '삭제됨';
 
 export interface Bbox {
   x: number;
@@ -26,16 +27,6 @@ export interface TaggedItem {
   bbox: Bbox;
 }
 
-export interface ClosetItem {
-  id: number;
-  brand: string;
-  name: string;
-  imageUrl: string | null;
-  lastWornDaysAgo: number | null;
-  verifiedCount: number;
-  purchaseOfferEnabled: boolean;
-}
-
 export interface OotdAuthor {
   id: number;
   name: string;
@@ -58,8 +49,6 @@ export interface OotdPost {
   isBlocked: boolean;
   taggedItems: TaggedItem[];
 }
-
-export const MAX_TAGGED_ITEMS = 5;
 
 export const REPORT_REASONS = [
   '사람이 직접 착용한 OOTD가 아님',

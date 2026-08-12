@@ -31,5 +31,6 @@ export type ChatMessage = {
   text?: string;
   images?: string[]; // 첨부 이미지
   time: string; // '오후 6:30'
+  createdAt: string; // 원본 ISO 시각 (날짜 구분선 계산용)
   unread?: number; // 내 메시지 옆 안읽음 수
 };

@@ -13,7 +13,20 @@ export const createOotd = (image: File, tags?: OotdTagInput[]) => {
     formData.append('tags', JSON.stringify({ tags }));
   }
 
-  return api.post<OotdCreateResponse>('/ootds', formData, {
+  return api.post<OotdCreateResponse>('/ootds/auto-tag', formData, {
+    headers: { 'Content-Type': undefined },
+  });
+};
+
+export const createManualOotd = (image: File, tags?: OotdTagInput[]) => {
+  const formData = new FormData();
+  formData.append('image', image);
+  formData.append('source', 'CAMERA');
+  if (tags && tags.length > 0) {
+    formData.append('tags', JSON.stringify({ tags }));
+  }
+
+  return api.post<OotdCreateResponse>('/ootds/manual-tag', formData, {
     headers: { 'Content-Type': undefined },
   });
 };

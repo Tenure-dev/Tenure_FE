@@ -24,12 +24,10 @@ const ChatRoomPage = ({
   role = 'buyer',
   saleStatus = 'onSale',
   tradeStatus = 'none',
-  offerEnabled = true,
 }: {
   role?: ChatRole;
   saleStatus?: SaleStatus;
   tradeStatus?: TradeStatus;
-  offerEnabled?: boolean;
 }) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -125,9 +123,11 @@ const ChatRoomPage = ({
           role={roleView}
           saleStatus={saleStatusView}
           tradeStatus={tradeStatusView}
-          offerEnabled={offerEnabled}
           tradeId={room.tradeId}
           productId={room.productId}
+          itemId={room.itemId}
+          purchaseIntentId={room.purchaseIntentId}
+          purchaseOfferId={room.purchaseOfferId}
         />
       )}
       <ChatMessages

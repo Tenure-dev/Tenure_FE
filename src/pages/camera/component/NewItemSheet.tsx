@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { cn } from '@/shared/lib/cn';
 import calendar from '@/shared/assets/calendar.svg';
 import type { Bbox, OotdItem, WearTarget } from '@/features/ootd/model/item';
-import { createTagDraftItem, toWearingTarget, uploadItemImage } from '@/features/ootd/api/item';
-import { cropImageToBbox } from '@/features/ootd/lib/cropImage';
+import {
+  createTagDraftItem,
+  toWearingTarget,
+  createItemRepresentativeImage,
+} from '@/features/ootd/api/item';
 import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 import { Toast } from '@/shared/components';
 import { useToast } from '@/shared/hooks/useToast';
@@ -12,8 +15,8 @@ import DatePickerSheet from './DatePickerSheet';
 type Props = {
   onBack: () => void;
   onSubmit: (item: OotdItem) => void;
-  photo?: string | null; // 촬영 사진(dataURL) — bbox 크롭용
-  bbox?: Bbox; // 활성 박스 bbox — 이 영역만 대표 이미지로 업로드
+  bbox?: Bbox; // 활성 박스 bbox — 이 영역으로 대표 이미지 생성
+  ootdId?: number; // 대표 이미지 생성 대상 OOTD
 };
 
 const TARGETS: WearTarget[] = ['남성복', '여성복', '공용'];
@@ -57,33 +60,62 @@ const TextField = ({
   </div>
 );
 
-const NewItemSheet = ({ onBack, onSubmit, photo, bbox }: Props) => {
+// 핸들을 이 정도 이상 아래로 끌어내리면 닫힘으로 판단
+const DISMISS_THRESHOLD_PX = 120;
+
+const NewItemSheet = ({ onBack, onSubmit, bbox, ootdId }: Props) => {
   const [brand, setBrand] = useState('');
   const [name, setName] = useState('');
   const [target, setTarget] = useState<WearTarget>('남성복');
   const [date, setDate] = useState('');
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
+  // 핸들을 눌러 아래로 끌면 시트가 따라 내려가고, 충분히 내리면 닫힌다(다른 시트들과 동일한 제스처).
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragStartYRef = useRef<number | null>(null);
+
+  const handleHandlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    dragStartYRef.current = e.clientY;
+    setDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const handleHandlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragStartYRef.current == null) return;
+    setDragY(Math.max(0, e.clientY - dragStartYRef.current));
+  };
+  const handleHandlePointerUp = () => {
+    if (dragStartYRef.current == null) return;
+    dragStartYRef.current = null;
+    setDragging(false);
+    if (dragY > DISMISS_THRESHOLD_PX) {
+      onBack();
+    } else {
+      setDragY(0);
+    }
+  };
+
   const canSubmit = brand.trim() !== '' && name.trim() !== '';
 
-  // 대표 이미지 미리보기 — bbox 영역을 크롭해 objectURL로 표시 (업로드될 이미지 확인용)
-  const [preview, setPreview] = useState<string | null>(null);
+  // 대표 이미지 — 진입 시 백엔드가 원본 OOTD에서 생성한 3:4 대표 이미지를 그대로 미리보기로 표시하고,
+  // 등록 시 이 URL을 재사용한다(중복 생성 방지).
+  const [repImageUrl, setRepImageUrl] = useState<string | undefined>(undefined);
   useEffect(() => {
-    if (!photo || !bbox) return; // preview 기본값이 null이라 별도 초기화 불필요
-    let url: string | null = null;
+    if (ootdId == null || !bbox) return;
     let cancelled = false;
-    cropImageToBbox(photo, bbox)
-      .then((file) => {
-        if (cancelled) return;
-        url = URL.createObjectURL(file);
-        setPreview(url);
+    createItemRepresentativeImage(ootdId, bbox)
+      .then((res) => {
+        if (!cancelled) setRepImageUrl(res.representativeImageUrl);
       })
-      .catch(() => setPreview(null));
+      .catch(() => {
+        if (!cancelled) setRepImageUrl(undefined);
+      });
     return () => {
       cancelled = true;
-      if (url) URL.revokeObjectURL(url);
     };
-  }, [photo, bbox]);
+  }, [ootdId, bbox]);
+
+  const preview = repImageUrl ? resolveFileUrl(repImageUrl) : null;
 
   const [submitting, setSubmitting] = useState(false);
   const { message: toast, show: showToast, hide: hideToast } = useToast();
@@ -92,17 +124,8 @@ const NewItemSheet = ({ onBack, onSubmit, photo, bbox }: Props) => {
     if (!canSubmit || submitting) return;
     setSubmitting(true);
     try {
-      // bbox 영역만 크롭해 대표 이미지로 업로드 → URL 확보 (실패해도 아이템 등록은 진행)
-      let representativeImageUrl: string | undefined;
-      if (photo && bbox) {
-        try {
-          const cropped = await cropImageToBbox(photo, bbox);
-          const uploaded = await uploadItemImage(cropped);
-          representativeImageUrl = uploaded.imageUrl;
-        } catch {
-          // 이미지 업로드 실패는 무시하고 아이템만 등록
-        }
-      }
+      // 진입 시 생성해 둔 대표 이미지 URL을 재사용 (없으면 대표 이미지 없이 등록)
+      const representativeImageUrl = repImageUrl;
 
       // 'YY.MM.DD' → '20YY-MM-DD' (없으면 생략)
       const firstOwnedAt = date ? `20${date.replace(/\./g, '-')}` : undefined;
@@ -129,24 +152,44 @@ const NewItemSheet = ({ onBack, onSubmit, photo, bbox }: Props) => {
   };
 
   return (
-    <div className="absolute inset-0 z-10 flex flex-col justify-end bg-black/30">
+    <div
+      className="absolute inset-0 z-10 flex flex-col justify-end bg-black/30"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onBack(); // 배경 자체를 눌렀을 때만 닫기(내부 클릭 버블링 무시)
+      }}
+    >
       <div
         className={cn(
-          'bg-bg-white flex h-[calc(100%-48px)] flex-col rounded-t-2xl px-5 pt-3 pb-6',
+          'bg-bg-white flex h-[calc(100%-48px)] flex-col rounded-t-2xl px-5 pt-3 pb-6 select-none',
+          !dragging && 'transition-transform duration-200 ease-out',
           datePickerOpen && 'hidden',
         )}
+        style={{ transform: dragY ? `translateY(${dragY}px)` : undefined }}
       >
-        <div className="mb-2 flex shrink-0 justify-center">
+        <div
+          onPointerDown={handleHandlePointerDown}
+          onPointerMove={handleHandlePointerMove}
+          onPointerUp={handleHandlePointerUp}
+          onPointerCancel={handleHandlePointerUp}
+          onDragStart={(e) => e.preventDefault()}
+          className="mb-2 flex shrink-0 touch-none justify-center py-1 select-none"
+        >
           <span className="bg-bg-secondary h-1 w-10 rounded-full" />
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 overflow-y-auto">
           <h2 className="text-title-2 mb-5 font-semibold">새 아이템 등록</h2>
           <div className="mb-4">
             <label className="text-body-3 mb-1.5 block font-medium">대표 이미지</label>
-            <div className="border-border-secondary bg-bg-secondary flex size-24 items-center justify-center overflow-hidden rounded-md border">
+            <div className="border-border-secondary bg-bg-secondary flex aspect-[3/4] w-24 items-center justify-center overflow-hidden rounded-md border">
               {preview ? (
-                <img src={preview} alt="대표 이미지 미리보기" className="size-full object-cover" />
+                <img
+                  src={preview}
+                  alt="대표 이미지 미리보기"
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                  className="size-full object-cover"
+                />
               ) : (
                 <span className="text-body-4 text-text-tertiary">이미지 없음</span>
               )}
@@ -198,7 +241,8 @@ const NewItemSheet = ({ onBack, onSubmit, photo, bbox }: Props) => {
           </div>
         </div>
 
-        <div className="mt-4 flex shrink-0 gap-2">
+        {/* 여기로 이동 */}
+        <div className="flex gap-2">
           <button
             type="button"
             onClick={onBack}
@@ -206,6 +250,7 @@ const NewItemSheet = ({ onBack, onSubmit, photo, bbox }: Props) => {
           >
             뒤로 가기
           </button>
+
           <button
             type="button"
             onClick={handleSubmit}

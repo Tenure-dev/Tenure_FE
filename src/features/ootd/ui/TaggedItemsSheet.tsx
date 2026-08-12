@@ -33,6 +33,7 @@ const getOpenHeight = () => window.innerHeight * OPEN_HEIGHT_RATIO;
 
 const STATUS_LABEL: Record<TaggedItem['status'], string> = {
   판매중: '판매중',
+  거래중: '거래중',
   미판매_제안가능: '미판매 · 구매제안 가능',
   미판매_제안불가: '미판매 · 구매제안 불가능',
   판매완료: '판매 완료',
@@ -166,7 +167,7 @@ const TaggedItemRow = ({ item, isOwner, onToggleWish }: TaggedItemRowProps) => {
         </div>
       </div>
 
-      {!isDeleted && !isOwner && (
+      {!isDeleted && !isSoldOut && !isOwner && (
         <button
           type="button"
           onClick={() => onToggleWish(item.itemId, item.wished)}

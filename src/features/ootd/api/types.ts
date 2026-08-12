@@ -23,7 +23,7 @@ export interface ItemInfoResponse {
   representativeImageUrl: string | null;
 }
 
-export type ApiProductStatus = 'ON_SALE' | 'SOLD' | 'TRANSFERRED';
+export type ApiProductStatus = 'ON_SALE' | 'TRADING' | 'SOLD' | 'HIDDEN';
 
 export interface TagInfoResponse {
   tagId: number;

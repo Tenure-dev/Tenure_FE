@@ -51,6 +51,7 @@ const IntentDetailPage = () => {
       title={title}
       status={data.status}
       remainingSeconds={data.remainingSeconds}
+      itemId={data.product.itemId}
       itemNavigationPath={`/product/${data.product.productId}`}
       brandName={data.product.brandName}
       itemName={data.product.itemName}

@@ -190,7 +190,9 @@ const ProductDetailPageContent = ({
         <ItemTitle brand={brandName} name={itemName} saleStatus={saleStatus} price={price} />
       </ItemImageSection>
 
-      {showListingSections && seller && <SellerInfoSection seller={seller} />}
+      {showListingSections && seller && (
+        <SellerInfoSection seller={seller} onClick={() => navigate(`/users/${seller.id}`)} />
+      )}
 
       {showListingSections && sellerDescription && (
         <ProductDescriptionSection description={sellerDescription} />

@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
-import { buildRelatedKeywords } from '../lib/buildRelatedKeywords';
+import { useQuery } from '@tanstack/react-query';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+import { getSuggestionKeywords } from '../api/searchApi';
 import type { RecentSearchItem, RecentViewedUser } from '../model/types';
 import RecentSearches from './RecentSearches';
 import RecentViewedUsers from './RecentViewedUsers';
@@ -29,10 +30,19 @@ const SearchSuggestionsOverlay = ({
   onRemoveRecentKeyword,
   onClearAllRecentKeywords,
 }: SearchSuggestionsOverlayProps) => {
-  const relatedKeywords = useMemo(
-    () => buildRelatedKeywords(query, suggestions),
-    [query, suggestions],
-  );
+  const trimmedQuery = query.trim();
+  const debouncedQuery = useDebouncedValue(trimmedQuery, 300);
+
+  const { data: matchedKeywords = [] } = useQuery({
+    queryKey: ['search', 'suggestions', debouncedQuery],
+    queryFn: () => getSuggestionKeywords(debouncedQuery),
+    enabled: debouncedQuery.length > 0,
+    staleTime: 30 * 1000,
+  });
+
+  const relatedKeywords = trimmedQuery
+    ? [trimmedQuery, ...matchedKeywords.filter((k) => k !== trimmedQuery)].slice(0, 8)
+    : [];
 
   return (
     <div className="flex-1 pb-10">

@@ -1,4 +1,5 @@
-export type ItemStatus = '판매중' | '미판매_제안가능' | '미판매_제안불가' | '판매완료' | '삭제됨';
+export type ItemStatus =
+  '판매중' | '거래중' | '미판매_제안가능' | '미판매_제안불가' | '판매완료' | '삭제됨';
 
 export interface Bbox {
   x: number;

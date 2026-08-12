@@ -4,6 +4,7 @@ import { ChevronRight, Clock } from 'lucide-react';
 import { BackHeader, Button, DoubleButton } from '@/shared/components';
 import { cn } from '@/shared/lib/cn';
 import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
+import { createOrGetChatRoom } from '@/features/chat/api/room';
 
 interface CounterpartUser {
   userId: number;
@@ -34,6 +35,7 @@ export interface ProposalDetailContentProps {
   title: string;
   status: string;
   remainingSeconds: number;
+  itemId: number;
   itemNavigationPath: string;
   brandName: string;
   itemName: string;
@@ -133,6 +135,7 @@ const ProposalDetailContent = ({
   title,
   status,
   remainingSeconds: initialRemaining,
+  itemId,
   itemNavigationPath,
   brandName,
   itemName,
@@ -152,6 +155,18 @@ const ProposalDetailContent = ({
   const navigate = useNavigate();
   const [remaining, setRemaining] = useState(initialRemaining);
   const [dialog, setDialog] = useState<'accept' | 'reject' | 'cancel' | null>(null);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+
+  const handleChat = async () => {
+    if (isChatLoading) return;
+    setIsChatLoading(true);
+    try {
+      const { chatRoomId } = await createOrGetChatRoom(itemId);
+      navigate(`/chat/${chatRoomId}`);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (remaining <= 0) return;
@@ -294,6 +309,8 @@ const ProposalDetailContent = ({
               variant="ghost"
               size="36"
               className="bg-text-primary font-regular text-text-inverse"
+              onClick={handleChat}
+              disabled={isChatLoading}
             >
               채팅하기
             </Button>

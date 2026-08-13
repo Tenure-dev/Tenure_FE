@@ -6,6 +6,7 @@ import { useItemDetailQuery } from '@/features/mypage/model/useItemDetailQuery';
 import { useUserQuery } from '@/features/user/model/useUserQuery';
 import { useOfferStore } from '@/store/offerStore';
 import { cn } from '@/shared/lib/cn';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 import StepProgress from './components/StepProgress';
 import ItemSummaryCard from './components/ItemSummaryCard';
 
@@ -124,7 +125,7 @@ const PricePage = () => {
       <StepProgress currentStep={1} />
 
       <ItemSummaryCard
-        imageUrl={data.representativeImageUrl}
+        imageUrl={resolveImageUrl(data.representativeImageUrl)}
         brand={data.brandName}
         name={data.itemName}
         sellerNickname={sellerNickname}

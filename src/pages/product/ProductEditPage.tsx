@@ -6,6 +6,7 @@ import type { ProductDetailResponse } from '@/features/product/api/dto';
 import type { FeePolicy, WearingTarget } from '@/features/product/api/dto';
 import { useProductDetail } from '@/features/product/model/useProductDetail';
 import { useUpdateProduct } from '@/features/product/model/useUpdateProduct';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 import { SaleFormBody, OotdPickerView } from '@/features/product/ui/saleForm';
 import type { SaleForm, SectionKey, FormMeasurements } from '@/features/product/ui/saleForm';
 import { DEFAULT_CONDITION_FLAGS } from '@/features/product/ui/saleForm';
@@ -59,7 +60,7 @@ const ProductEditContent = ({
     categorySmall: data.item.categorySmall,
     sizeSystem: data.item.sizeSystem,
     sizeValue: data.item.sizeValue,
-    wearingTarget: '',
+    wearingTarget: 'UNISEX',
     feePolicy: data.feePolicy,
     shippingFee: String(data.shippingFee),
     price: data.price != null ? String(data.price) : '',
@@ -85,7 +86,10 @@ const ProductEditContent = ({
 
   const { mutate, isPending } = useUpdateProduct(productId);
 
-  const ootdItems = data.representativeOotds.map((o) => ({ id: o.ootdId, imageUrl: o.imageUrl }));
+  const ootdItems = data.representativeOotds.map((o) => ({
+    id: o.ootdId,
+    imageUrl: resolveImageUrl(o.imageUrl),
+  }));
   const selectedOotds = ootdItems.filter((o) => form.attachedOotdIds.includes(o.id));
 
   const toggleSection = (key: SectionKey) =>
@@ -133,6 +137,7 @@ const ProductEditContent = ({
         shippingFee: Number(form.shippingFee),
         feePolicy: form.feePolicy as FeePolicy,
         mainImageUrl: form.mainImageUrl,
+        representativeImageUrl: form.mainImageUrl,
         measurements: Object.keys(measurements).length > 0 ? measurements : undefined,
         conditionFlags: form.conditionFlags,
         sellerDescription: form.sellerDescription || undefined,

@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { BackHeader } from '@/shared/components';
 import { useProductDetail } from '@/features/product/model/useProductDetail';
 import { useItemOotdCandidatesQuery } from '@/features/mypage/model/useItemOotdCandidatesQuery';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 
 const OotdGridPage = () => {
   const { productId = '', itemId = '' } = useParams();
@@ -15,8 +16,11 @@ const OotdGridPage = () => {
   );
 
   const images = isItemMode
-    ? (itemOotdData?.content ?? []).map((o) => ({ ootdId: o.ootdId, imageUrl: o.imageUrl }))
-    : (productData?.representativeOotds ?? []);
+    ? (itemOotdData?.content ?? []).map((o) => ({ ootdId: o.ootdId, imageUrl: resolveImageUrl(o.imageUrl) }))
+    : (productData?.representativeOotds ?? []).map((o) => ({
+        ootdId: o.ootdId,
+        imageUrl: resolveImageUrl(o.imageUrl),
+      }));
 
   return (
     <div className="bg-bg-secondary flex min-h-screen flex-col">

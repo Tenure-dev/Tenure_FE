@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { BackHeader, CTAButton } from '@/shared/components';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 
 export interface OotdPickerViewProps {
   items: { id: number; imageUrl: string }[];
@@ -43,9 +44,16 @@ const OotdPickerView = ({
                   tabIndex={0}
                   onClick={() => onToggle(ootd.id)}
                   onKeyDown={(e) => e.key === 'Enter' && onToggle(ootd.id)}
-                  className="relative mb-2 cursor-pointer break-inside-avoid overflow-hidden rounded-lg"
+                  className="bg-gray-bg relative mb-2 aspect-[3/4] cursor-pointer break-inside-avoid overflow-hidden rounded-lg"
                 >
-                  <img src={ootd.imageUrl} alt="" className="w-full object-cover" />
+                  <img
+                    src={resolveImageUrl(ootd.imageUrl)}
+                    alt=""
+                    className="size-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.visibility = 'hidden';
+                    }}
+                  />
                   {selected && (
                     <div className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-full bg-black/75">
                       <span className="text-body-3 font-semibold text-white">{selIdx + 1}</span>

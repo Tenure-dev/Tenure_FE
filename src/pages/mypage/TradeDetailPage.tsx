@@ -7,6 +7,7 @@ import { useTradeDetail } from '@/features/trade/api/useTradeDetail';
 import { useTradeStatusChange } from '@/features/trade/api/useTradeStatusChange';
 import type { TradeStatus } from '@/features/trade/api/types';
 import { buildTradeTimeline } from '@/features/trade/lib/buildTradeTimeline';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 
 const SectionTitle = ({ children }: { children: ReactNode }) => (
   <p className="px-[16px] pt-[24px] pb-[8px] text-[12px] text-[#767676]">{children}</p>
@@ -276,7 +277,7 @@ const TradeDetailPage = () => {
         <div className="flex items-center gap-3">
           {trade.counterpart.profileImageUrl ? (
             <img
-              src={trade.counterpart.profileImageUrl}
+              src={resolveImageUrl(trade.counterpart.profileImageUrl)}
               alt={trade.counterpart.username}
               className="size-[40px] shrink-0 rounded-full object-cover"
             />

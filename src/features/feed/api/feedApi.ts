@@ -1,7 +1,12 @@
 import { api } from '@/shared/lib/api';
+import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 import type { FeedResponse, FeedParams, FollowedUser } from '../model/types';
 
 export const getFeed = (params?: FeedParams) => api.get<FeedResponse>('/feed', { params });
 
 export const getFollowings = (userId: number) =>
-  api.get<FollowedUser[]>(`/users/${userId}/followings`);
+  api
+    .get<FollowedUser[]>(`/users/${userId}/followings`)
+    .then((users) =>
+      users.map((user) => ({ ...user, profileImageUrl: resolveFileUrl(user.profileImageUrl) })),
+    );

@@ -5,6 +5,7 @@ import { circleCheck } from '@/shared/assets';
 import { BackHeader, CTAButton } from '@/shared/components';
 import { useUserStore } from '@/store/userStore';
 import { getSizeSystem } from '@/shared/lib/itemSizeData';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 import type { ItemDetailResponse } from '@/features/mypage/model/items';
 import { useItemDetailQuery } from '@/features/mypage/model/useItemDetailQuery';
 import { useCreateProduct } from '@/features/mypage/model/useCreateProduct';
@@ -19,12 +20,6 @@ import type {
 import { DEFAULT_CONDITION_FLAGS } from '@/features/product/ui/saleForm';
 
 type View = 'form' | 'ootd-picker' | 'loading' | 'complete';
-
-const MYPAGE_TO_PRODUCT_TARGET: Record<string, WearingTarget> = {
-  MENSWEAR: 'MALE',
-  WOMENSWEAR: 'FEMALE',
-  UNISEX: 'UNISEX',
-};
 
 const SaleConversionPage = () => {
   const { itemId } = useParams<{ itemId: string }>();
@@ -58,14 +53,14 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
   const { data: ootdData } = useItemOotdCandidatesQuery(item.itemId);
 
   const [form, setForm] = useState<SaleForm>(() => ({
-    mainImageUrl: item.representativeImageUrl ?? '',
+    mainImageUrl: resolveImageUrl(item.representativeImageUrl) ?? '',
     brandName: item.brandName ?? '',
     itemName: item.itemName ?? '',
     categoryLarge: item.categoryLarge ?? '',
     categorySmall: item.categorySmall ?? '',
     sizeSystem: getSizeSystem(item.categoryLarge ?? '', item.sizeValue ?? ''),
     sizeValue: item.sizeValue ?? '',
-    wearingTarget: MYPAGE_TO_PRODUCT_TARGET[item.wearingTarget] ?? '',
+    wearingTarget: item.wearingTarget ?? 'UNISEX',
     feePolicy: isBasic ? 'SELLER_PAYS' : '',
     shippingFee: isBasic ? '0' : '',
     price: '',
@@ -104,6 +99,7 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
         shippingFee: Number(form.shippingFee),
         feePolicy: form.feePolicy as FeePolicy,
         mainImageUrl: form.mainImageUrl,
+        representativeImageUrl: form.mainImageUrl,
         measurements: Object.keys(measurements).length > 0 ? measurements : undefined,
         conditionFlags: form.conditionFlags,
         sellerDescription: form.sellerDescription || undefined,
@@ -135,7 +131,7 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
 
   const ootdCandidates = (ootdData?.content ?? []).map(({ ootdId, imageUrl }) => ({
     id: ootdId,
-    imageUrl,
+    imageUrl: resolveImageUrl(imageUrl),
   }));
 
   const selectedOotds = ootdCandidates.filter(({ id }) => form.attachedOotdIds.includes(id));

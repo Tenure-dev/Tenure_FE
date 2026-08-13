@@ -1,5 +1,6 @@
 import { ChevronRight } from 'lucide-react';
 import type { ItemSeller } from '../model/types';
+import { SELLER_GRADE_LABEL } from '../lib/productAdapters';
 
 export interface SellerInfoSectionProps {
   seller: ItemSeller;
@@ -26,7 +27,7 @@ const SellerInfoSection = ({ seller, onClick }: SellerInfoSectionProps) => {
         <div className="flex flex-col gap-0.5">
           <span className="text-body-1 text-text-primary">{seller.nickname}</span>
           <span className="text-body-4 text-text-secondary">
-            팔로워 {seller.followerCount} · 레코드 사용자
+            팔로워 {seller.followerCount} · {SELLER_GRADE_LABEL[seller.grade ?? 'BASIC']}
           </span>
         </div>
       </div>

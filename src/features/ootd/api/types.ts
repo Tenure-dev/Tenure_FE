@@ -96,6 +96,7 @@ export interface OotdTagAnalyzeResponse {
   labelText: string | null;
   categoryLarge: string | null;
   categorySmall: string | null;
+  confidence: number | null;
   matchedItemIds: number[];
 }
 

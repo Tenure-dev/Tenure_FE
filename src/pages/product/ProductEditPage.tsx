@@ -137,6 +137,7 @@ const ProductEditContent = ({
         shippingFee: Number(form.shippingFee),
         feePolicy: form.feePolicy as FeePolicy,
         mainImageUrl: form.mainImageUrl,
+        representativeImageUrl: form.mainImageUrl,
         measurements: Object.keys(measurements).length > 0 ? measurements : undefined,
         conditionFlags: form.conditionFlags,
         sellerDescription: form.sellerDescription || undefined,

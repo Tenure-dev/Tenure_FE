@@ -164,13 +164,6 @@ const OotdTagEditor = ({
     if (ootdId == null) return;
     try {
       const res = await analyzeTagArea(ootdId, { bbox });
-      console.log('[tag-analyze]', {
-        confidence: res.confidence,
-        labelText: res.labelText,
-        categoryLarge: res.categoryLarge,
-        categorySmall: res.categorySmall,
-        matchedItemIds: res.matchedItemIds,
-      });
       if (res.matchedItemIds.length === 0) {
         if (res.categorySmall) {
           const scoped = recommended.filter((item) => item.categoryName === res.categorySmall);

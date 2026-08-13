@@ -40,6 +40,7 @@ const NotificationPage = () => {
     mutationFn: markNotificationRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications', 'has-unread'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'list'] });
     },
   });
 

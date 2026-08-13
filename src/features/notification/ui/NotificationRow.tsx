@@ -53,12 +53,14 @@ const NotificationRow = ({ item, onRead }: NotificationRowProps) => {
           alt=""
           className="bg-gray-bg size-11 rounded-full object-cover"
         />
-        <span
-          className={cn(
-            'ring-bg-white absolute top-0 right-0 size-2.5 rounded-full ring-2',
-            item.urgent ? 'bg-error' : 'bg-warning',
-          )}
-        />
+        {!item.isRead && (
+          <span
+            className={cn(
+              'ring-bg-white absolute top-0 right-0 size-2.5 rounded-full ring-2',
+              item.urgent ? 'bg-error' : 'bg-warning',
+            )}
+          />
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">

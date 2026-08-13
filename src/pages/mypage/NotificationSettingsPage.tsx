@@ -2,9 +2,17 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { Toggle } from '@/shared/components';
-import { cn } from '@/shared/lib/cn';
 
-type NotificationKey = 'chat' | 'interest' | 'follow' | 'notice' | 'marketing';
+type NotificationKey =
+  | 'tradeRequest'
+  | 'requestStatus'
+  | 'requestAutoCancel'
+  | 'tradeStatus'
+  | 'chat'
+  | 'interest'
+  | 'follow'
+  | 'notice'
+  | 'marketing';
 
 interface NotificationItem {
   key: NotificationKey;
@@ -13,32 +21,30 @@ interface NotificationItem {
   defaultValue: boolean;
 }
 
-interface RequiredNotificationItem {
-  key: string;
-  label: string;
-  description: string;
-}
-
-const REQUIRED_ITEMS: RequiredNotificationItem[] = [
+const REQUIRED_ITEMS: NotificationItem[] = [
   {
     key: 'tradeRequest',
     label: '거래 요청',
     description: '상대방에게 거래 요청이 오면 알림을 받아요.',
+    defaultValue: true,
   },
   {
     key: 'requestStatus',
     label: '요청 상태',
     description: '보낸 거래 요청의 수락/거절 상태를 알려드려요.',
+    defaultValue: true,
   },
   {
     key: 'requestAutoCancel',
     label: '요청 자동 취소',
     description: '거래 요청이 자동으로 취소되면 알려드려요.',
+    defaultValue: true,
   },
   {
     key: 'tradeStatus',
     label: '거래 상태',
     description: '진행 중인 거래의 상태가 바뀌면 알려드려요.',
+    defaultValue: true,
   },
 ];
 
@@ -83,23 +89,18 @@ const NotificationRow = ({
   description,
   on,
   onToggle,
-  disabled = false,
 }: {
   label: string;
   description: string;
   on: boolean;
   onToggle: () => void;
-  disabled?: boolean;
 }) => (
   <div className="flex items-center justify-between gap-3 border-b border-[#F0F0F0] p-[16px]">
     <div className="flex flex-col gap-1">
       <p className="text-[14px] font-semibold text-[#111111]">{label}</p>
       <p className="text-[12px] leading-[1.5] text-[#767676]">{description}</p>
     </div>
-    <div
-      className={cn('shrink-0', disabled && 'pointer-events-none opacity-40')}
-      aria-disabled={disabled}
-    >
+    <div className="shrink-0">
       <Toggle checked={on} onChange={onToggle} />
     </div>
   </div>
@@ -110,7 +111,7 @@ const NotificationSettingsPage = () => {
 
   const [values, setValues] = useState<Record<NotificationKey, boolean>>(() => {
     const initial = {} as Record<NotificationKey, boolean>;
-    [...ACTIVITY_ITEMS, ...SERVICE_ITEMS].forEach((item) => {
+    [...REQUIRED_ITEMS, ...ACTIVITY_ITEMS, ...SERVICE_ITEMS].forEach((item) => {
       initial[item.key] = item.defaultValue;
     });
     return initial;
@@ -133,9 +134,8 @@ const NotificationSettingsPage = () => {
           key={item.key}
           label={item.label}
           description={item.description}
-          on
-          onToggle={() => {}}
-          disabled
+          on={values[item.key]}
+          onToggle={() => toggle(item.key)}
         />
       ))}
 

@@ -20,12 +20,6 @@ import { DEFAULT_CONDITION_FLAGS } from '@/features/product/ui/saleForm';
 
 type View = 'form' | 'ootd-picker' | 'loading' | 'complete';
 
-const MYPAGE_TO_PRODUCT_TARGET: Record<string, WearingTarget> = {
-  MENSWEAR: 'MALE',
-  WOMENSWEAR: 'FEMALE',
-  UNISEX: 'UNISEX',
-};
-
 const SaleConversionPage = () => {
   const { itemId } = useParams<{ itemId: string }>();
   const { data: item, isLoading } = useItemDetailQuery(Number(itemId));
@@ -65,7 +59,7 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
     categorySmall: item.categorySmall ?? '',
     sizeSystem: getSizeSystem(item.categoryLarge ?? '', item.sizeValue ?? ''),
     sizeValue: item.sizeValue ?? '',
-    wearingTarget: MYPAGE_TO_PRODUCT_TARGET[item.wearingTarget] ?? '',
+    wearingTarget: item.wearingTarget ?? 'UNISEX',
     feePolicy: isBasic ? 'SELLER_PAYS' : '',
     shippingFee: isBasic ? '0' : '',
     price: '',

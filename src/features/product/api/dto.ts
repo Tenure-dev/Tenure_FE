@@ -1,7 +1,7 @@
 export type ViewerMode = 'BUYER' | 'SELLER';
 export type AvailableAction = 'PURCHASE' | 'OFFER' | 'CHAT';
 export type FeePolicy = 'SELLER_PAYS' | 'BUYER_PAYS' | 'SPLIT';
-export type WearingTarget = 'MALE' | 'FEMALE' | 'UNISEX';
+export type WearingTarget = 'MENSWEAR' | 'WOMENSWEAR' | 'UNISEX';
 export type SellerGrade = 'BASIC' | 'RECORD';
 
 export type ProductStatus = 'ON_SALE' | 'TRADING' | 'SOLD' | 'HIDDEN';

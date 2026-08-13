@@ -59,7 +59,7 @@ const ProductEditContent = ({
     categorySmall: data.item.categorySmall,
     sizeSystem: data.item.sizeSystem,
     sizeValue: data.item.sizeValue,
-    wearingTarget: '',
+    wearingTarget: 'UNISEX',
     feePolicy: data.feePolicy,
     shippingFee: String(data.shippingFee),
     price: data.price != null ? String(data.price) : '',

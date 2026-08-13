@@ -97,9 +97,12 @@ const ItemDetailPage = () => {
       <div className="px-4 pt-1">
         <button
           type="button"
-          disabled={!item.productId}
-          onClick={() => navigate(`/product/${item.productId}`)}
-          className="bg-text-primary text-body-1 font-regular text-text-inverse w-full rounded-sm py-3 disabled:opacity-40"
+          onClick={() =>
+            navigate(
+              item.productId ? `/product/${item.productId}` : `/product?itemId=${item.itemId}`,
+            )
+          }
+          className="bg-text-primary text-body-1 font-regular text-text-inverse w-full rounded-sm py-3"
         >
           {isForSale ? '판매 페이지로' : '공개 페이지로'}
         </button>

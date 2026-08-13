@@ -1,10 +1,11 @@
 import { USER_ID_STORAGE_KEY } from '@/shared/lib/api';
 import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
+import { parseServerDate } from '@/shared/lib/parseServerDate';
 import type { ChatMessageResponse } from './dto';
 import type { ChatMessage } from '../model/types';
 
 const formatTime = (iso: string): string => {
-  const d = new Date(iso);
+  const d = parseServerDate(iso);
   const ampm = d.getHours() < 12 ? '오전' : '오후';
   const hh = d.getHours() % 12 === 0 ? 12 : d.getHours() % 12;
   return `${ampm} ${hh}:${d.getMinutes().toString().padStart(2, '0')}`;

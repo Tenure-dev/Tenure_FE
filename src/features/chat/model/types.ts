@@ -21,7 +21,7 @@ export type TradeStatus = 'none' | 'waiting' | 'created' | 'done';
 export type ChatProduct = {
   thumbnail: string;
   brand: string;
-  price: number;
+  price: number | null; // 상품 없음/제안금액 미확보 시 null → 가격 줄 숨김
   status: string; // '판매 중 · 최근 착용 1일 전' 등
 };
 

@@ -93,6 +93,9 @@ const OotdTagEditor = ({
   }, [isPending]);
   const [addedItems, setAddedItems] = useState<OotdItem[]>([]); // 새로 등록한 아이템
   const [analyzedItems, setAnalyzedItems] = useState<Record<string, OotdItem[]>>({});
+  // 특정 아이템 매칭 실패 시(matchedItemIds 없음) 카테고리만 저장 → 최신 recommended를 기준으로
+  // 매번 반응형으로 필터링(레이스/구식 스냅샷 방지). 카테고리를 못 알아냈으면 null.
+  const [analyzedCategory, setAnalyzedCategory] = useState<Record<string, string | null>>({});
   const [sheetHeight, setSheetHeight] = useState(RESULT_SHEET_DEFAULT_H);
   // 태그된 아이템 객체 보관 — 추천 목록이 갱신돼도 활성 박스 아이템이 목록에서 사라지지 않게
   const [tagged, setTagged] = useState<Record<string, OotdItem>>({});
@@ -145,7 +148,16 @@ const OotdTagEditor = ({
   const tagCount = boxes.filter((b) => b.itemId).length; // 아이템 부착된 박스 = 완성 태그
 
   const activeMatched = activeBoxId ? analyzedItems[activeBoxId] : undefined;
-  const baseItems = activeMatched ?? recommended;
+  // 박스가 아직 분석 전이면 undefined → 추천 전체. 분석했는데 특정 아이템을 못 맞췄으면 카테고리로
+  // 최신 recommended를 필터링(둘 다 없으면 빈 배열 → "유사한 아이템 없음" 상태로 이어짐).
+  const activeCategory = activeBoxId ? analyzedCategory[activeBoxId] : undefined;
+  const baseItems = useMemo(() => {
+    if (activeMatched) return activeMatched;
+    if (activeCategory !== undefined) {
+      return recommended.filter((item) => item.categoryName === activeCategory);
+    }
+    return recommended;
+  }, [activeMatched, activeCategory, recommended]);
   const items = useMemo(() => [...addedItems, ...baseItems], [addedItems, baseItems]);
 
   const itemLabel = (id?: string) => {
@@ -185,35 +197,48 @@ const OotdTagEditor = ({
     boxesRef.current = boxes;
   }, [boxes]);
 
+  // 박스별 최신 분석 요청 번호. 같은 박스를 짧게 두 번 이상 조정하면 요청이 겹칠 수 있는데,
+  // 먼저 보낸 요청이 나중에 응답으로 와서 최신 결과를 덮어쓰지 않도록 "가장 최근에 보낸 요청"만 반영한다.
+  const analysisSeqRef = useRef<Record<string, number>>({});
+
   const runAnalysis = async (boxId: string, bbox: Bbox) => {
     if (ootdId == null) return;
+    const seq = (analysisSeqRef.current[boxId] ?? 0) + 1;
+    analysisSeqRef.current[boxId] = seq;
+    const isStale = () => analysisSeqRef.current[boxId] !== seq;
     try {
       const res = await analyzeTagArea(ootdId, { bbox });
+      if (isStale()) return;
+      setAnalyzedItems((prev) => {
+        if (!(boxId in prev)) return prev;
+        const next = { ...prev };
+        delete next[boxId];
+        return next;
+      });
       if (res.matchedItemIds.length === 0) {
-        // 특정 아이템은 못 맞췄을 때: AI가 카테고리를 알아냈으면 그 카테고리 아이템을 앞에 두되,
-        // 나머지 보유 아이템도 모두 보여줘서 사용자가 다른 아이템도 고를 수 있게 한다.
-        const scoped = res.categorySmall
-          ? recommended.filter((item) => item.categoryName === res.categorySmall)
-          : [];
-        const scopedIds = new Set(scoped.map((it) => it.id));
-        const rest = recommended.filter((it) => !scopedIds.has(it.id));
-        const merged = [...scoped, ...rest];
-        if (merged.length === 0) {
-          setAnalyzedItems((prev) => {
-            if (!(boxId in prev)) return prev;
-            const next = { ...prev };
-            delete next[boxId];
-            return next;
-          });
-        } else {
-          setAnalyzedItems((prev) => ({ ...prev, [boxId]: merged }));
-        }
+        // 특정 아이템은 못 맞췄을 때: 카테고리만 기록해두고, 실제 목록은 최신 recommended를
+        // 그 카테고리로 필터링해 반응형으로 보여준다(카테고리 아이템이 없으면 "유사한 아이템 없음").
+        setAnalyzedCategory((prev) => ({ ...prev, [boxId]: res.categorySmall }));
         return;
       }
+      setAnalyzedCategory((prev) => {
+        if (!(boxId in prev)) return prev;
+        const next = { ...prev };
+        delete next[boxId];
+        return next;
+      });
       const details = await Promise.all(res.matchedItemIds.map((id) => getItemDetail(id)));
+      if (isStale()) return;
       setAnalyzedItems((prev) => ({ ...prev, [boxId]: details.map(toOotdItemFromDetail) }));
     } catch {
+      if (isStale()) return;
       setAnalyzedItems((prev) => {
+        if (!(boxId in prev)) return prev;
+        const next = { ...prev };
+        delete next[boxId];
+        return next;
+      });
+      setAnalyzedCategory((prev) => {
         if (!(boxId in prev)) return prev;
         const next = { ...prev };
         delete next[boxId];
@@ -261,6 +286,13 @@ const OotdTagEditor = ({
     });
     setActiveBoxId(nextId);
     setShowBoxUi(false); // 말풍선을 통한 활성화라 박스 테두리는 안 띄운다
+    // 상세 편집에서 복원된 기존 태그는 이번 세션에서 한 번도 분석된 적이 없어서(생성 시에만
+    // 분석이 도는 흐름), 그대로 두면 baseItems가 전체 recommended로 폴백돼 "처음 박스 했을 때
+    // 나온 아이템들"이 아니라 전체 목록이 보인다. 처음 활성화되는 시점에 그 위치를 한 번 분석해서
+    // 원래 태그할 때와 같은 후보 목록(+선택된 아이템)이 뜨게 한다.
+    if (nextId && !(nextId in analyzedItems) && !(nextId in analyzedCategory)) {
+      scheduleAnalysis(nextId);
+    }
   };
 
   // 이미지 빈 곳 탭 → 그 위치에 박스 생성 + 활성화 + 분석 API 호출
@@ -338,11 +370,11 @@ const OotdTagEditor = ({
           <img src={photo} data-tag-area="true" alt="촬영한 사진" className="block w-full" />
         )}
 
-        {/* 태그 박스 보기/숨기기 토글 */}
+        {/* 태그 말풍선 보기/숨기기 토글 */}
         <button
           type="button"
           onClick={() => setShowBox((v) => !v)}
-          aria-label={showBox ? '태그 박스 숨기기' : '태그 박스 보기'}
+          aria-label={showBox ? '태그 말풍선 숨기기' : '태그 말풍선 보기'}
           className="absolute top-4 right-4 z-30 flex size-10 items-center justify-center rounded-full bg-black/60"
         >
           {showBox ? (
@@ -352,21 +384,25 @@ const OotdTagEditor = ({
           )}
         </button>
 
-        {/* 박스들: 표시 중일 때만. 활성 박스만 테두리+스포트라이트+이동/리사이즈 */}
-        {showBox &&
-          boxes.map((b) => (
+        {/* 박스들은 항상 렌더링(꺼져 있어도 새로 탭한 박스는 위치를 잡을 수 있어야 함).
+            토글은 말풍선(라벨)만 숨긴다 — 지금 배치 중인 박스의 테두리/스포트라이트는 영향 없음. */}
+        {boxes.map((b) => {
+          const isActive = activeBoxId === b.id;
+          const showFrame = isActive && showBoxUi;
+          return (
             <TagBBox
               key={b.id}
               bbox={b.bbox}
-              label={b.label ?? ''}
-              active={activeBoxId === b.id}
-              showFrame={activeBoxId === b.id && showBoxUi}
+              label={showBox || showFrame ? (b.label ?? '') : ''}
+              active={isActive}
+              showFrame={showFrame}
               variant={b.touched ? 'black' : untouchedVariant}
-              onActivate={() => activateBox(activeBoxId === b.id ? null : b.id)}
+              onActivate={() => activateBox(isActive ? null : b.id)}
               onChange={(bb) => updateBox(b.id, bb)}
               onSettle={() => scheduleAnalysis(b.id)}
             />
-          ))}
+          );
+        })}
       </div>
 
       {/* 분석 결과 바텀시트 (활성 박스 기준) */}

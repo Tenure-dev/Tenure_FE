@@ -552,7 +552,11 @@ const OotdDetailPage = () => {
         onConfirm={handleDiscardConfirm}
       />
 
-      {isSaving && <TagLoading title="게시물 수정 중입니다!!!" />}
+      {isSaving && (
+        <div className="bg-bg-white fixed inset-0 z-50 overflow-hidden">
+          <TagLoading title="게시물을 수정하고 있어요!" />
+        </div>
+      )}
 
       <Toast message={toastMessage} onClose={hideToast} />
     </div>

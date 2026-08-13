@@ -16,8 +16,8 @@ type Props = {
 
 type Corner = 'nw' | 'ne' | 'sw' | 'se';
 
-const MIN_W = 0.2; // 박스 최소 가로(이미지 가로 대비 비율)
-const MIN_H = 0.15; // 박스 최소 세로(이미지 세로 대비 비율)
+const MIN_W = 0.08; // 박스 최소 가로(이미지 가로 대비 비율) — 안경/스카프 같은 작은 액세서리도 감쌀 수 있게
+const MIN_H = 0.06; // 박스 최소 세로(이미지 세로 대비 비율)
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
 
 // 이미지 위 태그: 말풍선은 항상 표시, 누르면 활성화되어 박스(+스포트라이트)가 뜨고

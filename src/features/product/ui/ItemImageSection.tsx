@@ -7,6 +7,7 @@ export interface ItemImageSectionProps {
   dimmed?: boolean;
   wished: boolean;
   onToggleWish: () => void;
+  showWishButton?: boolean;
   children?: ReactNode;
 }
 
@@ -15,6 +16,7 @@ const ItemImageSection = ({
   dimmed = false,
   wished,
   onToggleWish,
+  showWishButton = true,
   children,
 }: ItemImageSectionProps) => {
   return (
@@ -32,14 +34,16 @@ const ItemImageSection = ({
       {dimmed && <div className="absolute inset-0 bg-black/30" />}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 to-transparent" />
       {children && <div className="absolute inset-x-4 bottom-4 md:inset-x-6">{children}</div>}
-      <button
-        type="button"
-        onClick={onToggleWish}
-        aria-label={wished ? '관심 해제' : '관심 등록'}
-        className="absolute right-3 bottom-3 inline-flex size-9 items-center justify-center rounded-full bg-white/70 md:right-5"
-      >
-        <Bell size={18} className={wished ? 'fill-brand text-brand' : 'text-text-primary'} />
-      </button>
+      {showWishButton && (
+        <button
+          type="button"
+          onClick={onToggleWish}
+          aria-label={wished ? '관심 해제' : '관심 등록'}
+          className="absolute right-3 bottom-3 inline-flex size-9 items-center justify-center rounded-full bg-white/70 md:right-5"
+        >
+          <Bell size={18} className={wished ? 'fill-brand text-brand' : 'text-text-primary'} />
+        </button>
+      )}
     </div>
   );
 };

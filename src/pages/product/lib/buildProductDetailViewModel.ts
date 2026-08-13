@@ -1,8 +1,9 @@
 import type { ProductDetailResponse } from '@/features/product/api/dto';
-import type { ViewerRole, ProductSaleStatus } from '@/features/product/model/types';
+import type { ViewerRole, ProductSaleStatus, ItemSeller } from '@/features/product/model/types';
 import { getMeasurementSection } from '@/features/product/lib/measurementUtils';
 import { PRODUCT_STATUS_MAP, CONDITION_LABELS } from '@/features/product/lib/productAdapters';
 import type { ItemDetailResponse, HistoryOotdsResponse } from '@/features/mypage/model/items';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 
 export type ProductDetailViewModel = {
   role: ViewerRole;
@@ -23,7 +24,7 @@ export type ProductDetailViewModel = {
   offerAvailable: boolean;
   conditionChecks: { label: string; checked: boolean }[] | undefined;
   measurementSection: ReturnType<typeof getMeasurementSection>;
-  seller: { id: string; nickname: string; followerCount: number; avatarUrl?: string } | undefined;
+  seller: ItemSeller | undefined;
   sellerDescription: string | null;
   ootdItems: { id: string; imageUrl: string }[];
 };
@@ -51,7 +52,7 @@ export function buildProductDetailViewModel({
       brandName: item.brandName,
       itemName: item.itemName,
       price: undefined,
-      imageUrl: item.representativeImageUrl,
+      imageUrl: resolveImageUrl(item.representativeImageUrl),
       tenureRecord: {
         interestCount: item.wishCount,
         ootdVerifiedCount: item.ootdVerifiedWearCount,
@@ -68,7 +69,7 @@ export function buildProductDetailViewModel({
       sellerDescription: null,
       ootdItems: (taggedOotdsData?.content ?? []).map((ootd) => ({
         id: String(ootd.ootdId),
-        imageUrl: ootd.imageUrl,
+        imageUrl: resolveImageUrl(ootd.imageUrl),
       })),
     };
   }
@@ -80,7 +81,7 @@ export function buildProductDetailViewModel({
     brandName: product.item.brandName,
     itemName: product.item.itemName,
     price: product.price ?? undefined,
-    imageUrl: product.mainImageUrl,
+    imageUrl: resolveImageUrl(product.mainImageUrl),
     tenureRecord: {
       interestCount: product.item.wishCount,
       ootdVerifiedCount: product.item.ootdVerifiedWearCount,
@@ -105,12 +106,13 @@ export function buildProductDetailViewModel({
       id: String(product.seller.userId),
       nickname: product.seller.username,
       followerCount: 0,
-      avatarUrl: product.seller.profileImageUrl ?? undefined,
+      avatarUrl: resolveImageUrl(product.seller.profileImageUrl) ?? undefined,
+      grade: product.seller.grade,
     },
     sellerDescription: product.sellerDescription,
     ootdItems: product.representativeOotds.map((ootd) => ({
       id: String(ootd.ootdId),
-      imageUrl: ootd.imageUrl,
+      imageUrl: resolveImageUrl(ootd.imageUrl),
     })),
   };
 }

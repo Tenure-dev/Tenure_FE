@@ -1,4 +1,5 @@
 import { api } from '@/shared/lib/api';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 
 export type UserProfile = {
   userId: number;
@@ -10,4 +11,7 @@ export type UserProfile = {
   grade: string;
 };
 
-export const getUserProfile = (userId: number) => api.get<UserProfile>(`/users/${userId}`);
+export const getUserProfile = (userId: number) =>
+  api
+    .get<UserProfile>(`/users/${userId}`)
+    .then((profile) => ({ ...profile, profileImageUrl: resolveImageUrl(profile.profileImageUrl) }));

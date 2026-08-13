@@ -7,6 +7,7 @@ import { useItemDetailQuery } from '@/features/mypage/model/useItemDetailQuery';
 import { useOfferStore, type PaymentMethod } from '@/store/offerStore';
 import { useAddresses } from '@/features/purchase/model/useAddresses';
 import { cn } from '@/shared/lib/cn';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 import StepProgress from './components/StepProgress';
 import ItemSummaryCard from './components/ItemSummaryCard';
 
@@ -71,8 +72,8 @@ const CheckoutPage = () => {
   const isDirect = (state as { direct?: boolean } | null)?.direct === true;
 
   const displayImageUrl = isOfferFlow
-    ? (itemData?.representativeImageUrl ?? '')
-    : (productData?.mainImageUrl ?? '');
+    ? (resolveImageUrl(itemData?.representativeImageUrl) ?? '')
+    : (resolveImageUrl(productData?.mainImageUrl) ?? '');
   const displayBrand = isOfferFlow
     ? (itemData?.brandName ?? '')
     : (productData?.item.brandName ?? '');

@@ -1,4 +1,5 @@
 import { api } from '@/shared/lib/api';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 
 import type { UpdateProductRequest } from '@/features/product/api/dto';
 import type {
@@ -54,7 +55,13 @@ export const getHistoryOotds = (
   itemId: number,
   historyId: number,
   params?: { page?: number; size?: number },
-) => api.get<HistoryOotdsResponse>(`/items/${itemId}/histories/${historyId}/ootds`, { params });
+) =>
+  api
+    .get<HistoryOotdsResponse>(`/items/${itemId}/histories/${historyId}/ootds`, { params })
+    .then((res) => ({
+      ...res,
+      content: res.content.map((ootd) => ({ ...ootd, imageUrl: resolveImageUrl(ootd.imageUrl) })),
+    }));
 
 export const deleteItem = (itemId: number) =>
   api.delete<{ itemId: number; itemStatus: string }>(`/items/${itemId}`);

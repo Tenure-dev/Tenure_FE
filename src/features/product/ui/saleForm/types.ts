@@ -3,10 +3,10 @@ import type { Measurements } from '@/features/product/model/types';
 export type MeasurementKey = keyof Measurements;
 export type FormMeasurements = Partial<Record<MeasurementKey, string>>;
 
-export type WearingTarget = 'MALE' | 'FEMALE' | 'UNISEX';
+export type WearingTarget = 'MENSWEAR' | 'WOMENSWEAR' | 'UNISEX';
 export const WEARING_TARGET_LABELS: Record<WearingTarget, string> = {
-  MALE: '남성복',
-  FEMALE: '여성복',
+  MENSWEAR: '남성복',
+  WOMENSWEAR: '여성복',
   UNISEX: '공용',
 };
 

@@ -1,10 +1,9 @@
 import { useNavigate } from 'react-router-dom';
+import useIsWideLayout from '@/shared/hooks/useIsWideLayout';
 import { saveRecentOotd } from '../api/searchApi';
 import type { SearchOotdResponse } from '../api/types';
 import { useInfiniteScrollSentinel } from '../lib/useInfiniteScrollSentinel';
 import SearchOotdCard from './SearchOotdCard';
-
-const COLUMN_COUNT = 2;
 
 const splitIntoColumns = <T,>(items: T[], columnCount: number) => {
   const columns: T[][] = Array.from({ length: columnCount }, () => []);
@@ -37,7 +36,8 @@ const SearchOotdResultGrid = ({
 }: SearchOotdResultGridProps) => {
   const navigate = useNavigate();
   const sentinelRef = useInfiniteScrollSentinel(hasNext, onLoadMore);
-  const columns = splitIntoColumns(items, COLUMN_COUNT);
+  const isWideLayout = useIsWideLayout();
+  const columns = splitIntoColumns(items, isWideLayout ? 3 : 2);
 
   const handleClick = (id: number) => {
     saveRecentOotd(id);
@@ -46,7 +46,7 @@ const SearchOotdResultGrid = ({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
         {columns.map((column, columnIndex) => (
           <div key={columnIndex} className="flex flex-col gap-2">
             {column.map((item) => (

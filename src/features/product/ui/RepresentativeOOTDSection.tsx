@@ -1,4 +1,5 @@
 import { ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import type { RepresentativeOOTD } from '../model/types';
 
 export interface RepresentativeOOTDSectionProps {
@@ -22,12 +23,13 @@ const RepresentativeOOTDSection = ({
       </div>
       <div className="no-scrollbar flex gap-2 overflow-x-auto">
         {items.map((item) => (
-          <img
-            key={item.id}
-            src={item.imageUrl}
-            alt=""
-            className="size-[104px] shrink-0 rounded-md object-cover"
-          />
+          <Link key={item.id} to={`/ootd/${item.id}`} className="block shrink-0">
+            <img
+              src={item.imageUrl}
+              alt=""
+              className="size-[104px] rounded-md object-cover"
+            />
+          </Link>
         ))}
       </div>
     </div>

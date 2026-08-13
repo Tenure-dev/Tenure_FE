@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { BackHeader } from '@/shared/components';
 import { useProductDetail } from '@/features/product/model/useProductDetail';
 import { useItemOotdCandidatesQuery } from '@/features/mypage/model/useItemOotdCandidatesQuery';
@@ -27,9 +27,13 @@ const OotdGridPage = () => {
       <BackHeader title={isItemMode ? '태그된 OOTD' : '대표 OOTD'} />
       <div className="columns-2 gap-0.5 px-0.5 pt-0.5 pb-4">
         {images.map((ootd) => (
-          <div key={ootd.ootdId} className="mb-0.5 overflow-hidden">
+          <Link
+            key={ootd.ootdId}
+            to={`/ootd/${ootd.ootdId}`}
+            className="mb-0.5 block overflow-hidden"
+          >
             <img src={ootd.imageUrl} alt="" className="w-full object-cover" />
-          </div>
+          </Link>
         ))}
       </div>
     </div>

@@ -33,8 +33,13 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace(/^\/api-proxy/, ''),
           // 배포 서버 CORS 허용목록에 없는 브라우저 Origin(localhost)을 그대로 넘기면
           // Spring CORS 필터가 403을 내므로, 서버-서버 요청처럼 Origin/Referer 제거.
+          // proxyReq = HTTP 요청, proxyReqWs = WebSocket 업그레이드(핸드셰이크).
           configure: (proxy) => {
             proxy.on('proxyReq', (proxyReq) => {
+              proxyReq.removeHeader('origin');
+              proxyReq.removeHeader('referer');
+            });
+            proxy.on('proxyReqWs', (proxyReq) => {
               proxyReq.removeHeader('origin');
               proxyReq.removeHeader('referer');
             });

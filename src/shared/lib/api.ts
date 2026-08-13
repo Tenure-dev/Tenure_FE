@@ -15,6 +15,20 @@ interface BaseResponse<T> {
   data: T;
 }
 
+interface ValidationFieldError {
+  field: string;
+  reason: string;
+}
+
+const isValidationFieldErrors = (data: unknown): data is ValidationFieldError[] =>
+  Array.isArray(data) &&
+  data.length > 0 &&
+  data.every((d) => typeof d?.field === 'string' && typeof d?.reason === 'string');
+
+// 필드별 검증 실패(data: [{ field, reason }])면 그 reason들을, 아니면 message를 에러 메시지로 쓴다.
+const extractErrorMessage = (body: BaseResponse<unknown>): string =>
+  isValidationFieldErrors(body.data) ? body.data.map((d) => d.reason).join('\n') : body.message;
+
 export const clearAuthStorage = () => {
   localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
   localStorage.removeItem(USER_ID_STORAGE_KEY);
@@ -73,7 +87,7 @@ instance.interceptors.response.use(
     const body = response.data as BaseResponse<unknown>;
 
     if (!body.success) {
-      return Promise.reject(new ApiError(body.message, body.code));
+      return Promise.reject(new ApiError(extractErrorMessage(body), body.code));
     }
     // 실제로는 언래핑된 data를 반환하지만, axios 타입과 맞추기 위해 AxiosResponse로 단언한다.
     return body.data as unknown as AxiosResponse;
@@ -94,7 +108,7 @@ instance.interceptors.response.use(
         window.location.href = LOGIN_PATH;
       }
     }
-    const message = responseBody?.message || error.message;
+    const message = (responseBody && extractErrorMessage(responseBody)) || error.message;
 
     if (isAxios) {
       console.error(

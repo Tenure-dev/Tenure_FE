@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { cn } from '@/shared/lib/cn';
 import { useNavigate, useParams } from 'react-router-dom';
 import { circleCheck } from '@/shared/assets';
-import { BackHeader, CTAButton } from '@/shared/components';
+import { BackHeader, CTAButton, Toast } from '@/shared/components';
+import { useToast } from '@/shared/hooks/useToast';
 import { useUserStore } from '@/store/userStore';
 import { getSizeSystem } from '@/shared/lib/itemSizeData';
 import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
+import { buildMeasurementsPayload } from '@/features/product/lib/measurementUtils';
 import type { ItemDetailResponse } from '@/features/mypage/model/items';
 import { useItemDetailQuery } from '@/features/mypage/model/useItemDetailQuery';
 import { useCreateProduct } from '@/features/mypage/model/useCreateProduct';
@@ -51,6 +53,7 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
 
   const { mutate } = useCreateProduct(item.itemId);
   const { data: ootdData } = useItemOotdCandidatesQuery(item.itemId);
+  const { message: toastMessage, show: showToast, hide: hideToast } = useToast();
 
   const [form, setForm] = useState<SaleForm>(() => ({
     mainImageUrl: resolveImageUrl(item.representativeImageUrl) ?? '',
@@ -79,11 +82,7 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
     });
 
   const handleSubmit = () => {
-    const measurements = Object.fromEntries(
-      Object.entries(form.measurements)
-        .filter(([, v]) => v !== '' && v !== undefined)
-        .map(([k, v]) => [k, Number(v)]),
-    );
+    const measurements = buildMeasurementsPayload(form.categoryLarge, form.measurements);
 
     setView('loading');
     mutate(
@@ -100,14 +99,17 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
         feePolicy: form.feePolicy as FeePolicy,
         mainImageUrl: form.mainImageUrl,
         representativeImageUrl: form.mainImageUrl,
-        measurements: Object.keys(measurements).length > 0 ? measurements : undefined,
+        measurements,
         conditionFlags: form.conditionFlags,
         sellerDescription: form.sellerDescription || undefined,
         attachedOotdIds: form.attachedOotdIds,
       },
       {
         onSuccess: () => setView('complete'),
-        onError: () => setView('form'),
+        onError: (error) => {
+          setView('form');
+          showToast(error.message);
+        },
       },
     );
   };
@@ -201,6 +203,7 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
           onBack={() => setView('form')}
         />
       )}
+      <Toast message={toastMessage} onClose={hideToast} />
     </>
   );
 };

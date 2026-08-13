@@ -17,7 +17,8 @@ const ChatListItem = ({ room }: { room: ChatRoom }) => {
         <p className="text-body-1 font-medium">{room.name}</p>
         <p className="text-body-4 text-text-secondary truncate">{room.message}</p>
         <p className="text-body-4 text-text-tertiary mt-0.5 truncate font-medium">
-          {room.product} · {room.date}
+          {room.product}
+          {room.date && ` · ${room.date}`}
         </p>
       </div>
       {room.unread > 0 && (

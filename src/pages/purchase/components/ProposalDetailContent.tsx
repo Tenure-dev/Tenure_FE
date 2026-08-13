@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Clock } from 'lucide-react';
-import { BackHeader, Button, DoubleButton } from '@/shared/components';
+import { BackHeader, Button, DoubleButton, Toast } from '@/shared/components';
 import { cn } from '@/shared/lib/cn';
 import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 import { createOrGetChatRoom } from '@/features/chat/api/room';
@@ -36,6 +36,7 @@ export interface ProposalDetailContentProps {
   status: string;
   remainingSeconds: number;
   itemId: number;
+  purchaseOfferId?: number; // 구매 제안 상세에서 채팅 열 때 함께 전송(소유자 경로)
   itemNavigationPath: string;
   brandName: string;
   itemName: string;
@@ -136,6 +137,7 @@ const ProposalDetailContent = ({
   status,
   remainingSeconds: initialRemaining,
   itemId,
+  purchaseOfferId,
   itemNavigationPath,
   brandName,
   itemName,
@@ -156,13 +158,17 @@ const ProposalDetailContent = ({
   const [remaining, setRemaining] = useState(initialRemaining);
   const [dialog, setDialog] = useState<'accept' | 'reject' | 'cancel' | null>(null);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [toast, setToast] = useState<ReactNode>(null);
 
   const handleChat = async () => {
     if (isChatLoading) return;
     setIsChatLoading(true);
     try {
-      const { chatRoomId } = await createOrGetChatRoom(itemId);
+      const { chatRoomId } = await createOrGetChatRoom(itemId, purchaseOfferId);
       navigate(`/chat/${chatRoomId}`);
+    } catch {
+      // 방 생성 실패(권한/상태 등) 시 uncaught 크래시 방지 + 사용자 안내
+      setToast('채팅방을 열 수 없습니다.');
     } finally {
       setIsChatLoading(false);
     }
@@ -450,6 +456,7 @@ const ProposalDetailContent = ({
           onAccept();
         }}
       />
+      <Toast message={toast} onClose={() => setToast(null)} />
     </div>
   );
 };

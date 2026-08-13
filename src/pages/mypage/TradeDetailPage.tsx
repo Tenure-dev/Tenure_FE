@@ -8,6 +8,7 @@ import { useTradeStatusChange } from '@/features/trade/api/useTradeStatusChange'
 import type { TradeStatus } from '@/features/trade/api/types';
 import { buildTradeTimeline } from '@/features/trade/lib/buildTradeTimeline';
 import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
+import { createOrGetChatRoom } from '@/features/chat/api/room';
 
 const SectionTitle = ({ children }: { children: ReactNode }) => (
   <p className="px-[16px] pt-[24px] pb-[8px] text-[12px] text-[#767676]">{children}</p>
@@ -68,6 +69,7 @@ const TradeDetailPage = () => {
     Boolean((location.state as { shippingConfirmed?: boolean } | null)?.shippingConfirmed),
   );
   const shippingToastHandledRef = useRef(false);
+  const [isChatLoading, setIsChatLoading] = useState(false);
 
   useEffect(() => {
     if (!showShippingToast || shippingToastHandledRef.current) return;
@@ -144,6 +146,17 @@ const TradeDetailPage = () => {
         onError: (mutationError) => console.error(mutationError),
       },
     );
+  };
+
+  const handleChat = async () => {
+    if (isChatLoading) return;
+    setIsChatLoading(true);
+    try {
+      const { chatRoomId } = await createOrGetChatRoom(trade.itemId);
+      navigate(`/chat/${chatRoomId}`);
+    } finally {
+      setIsChatLoading(false);
+    }
   };
 
   return (
@@ -291,7 +304,7 @@ const TradeDetailPage = () => {
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="36">
+        <Button variant="ghost" size="36" onClick={handleChat} disabled={isChatLoading}>
           채팅하기
         </Button>
       </div>

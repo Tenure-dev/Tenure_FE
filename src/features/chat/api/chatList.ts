@@ -1,10 +1,14 @@
 import { api } from '@/shared/lib/api';
 import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
+import { parseServerDate } from '@/shared/lib/parseServerDate';
 import type { ChatRoomFilterType, ChatRoomListResponse, ChatRoomSummary } from './dto';
 import type { ChatRoom } from '../model/types';
 
-const formatChatDate = (iso: string): string => {
-  const d = new Date(iso);
+// 메시지 없는 방은 lastMessageAt이 null → 날짜 미표시(빈 문자열). 값 있으면 타임존 보정 후 표기.
+const formatChatDate = (iso: string | null | undefined): string => {
+  if (!iso) return '';
+  const d = parseServerDate(iso);
+  if (Number.isNaN(d.getTime())) return '';
   return `${d.getMonth() + 1}월 ${d.getDate()}일`;
 };
 
@@ -13,7 +17,7 @@ const toChatRoom = (s: ChatRoomSummary): ChatRoom => ({
   name: s.opponentUsername,
   avatar: resolveFileUrl(s.opponentProfileImgUrl),
   product: `${s.brandName} / ${s.itemName}`,
-  message: s.lastMessage,
+  message: s.lastMessage ?? '',
   date: formatChatDate(s.lastMessageAt),
   unread: s.unreadCount,
 });

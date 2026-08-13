@@ -7,6 +7,7 @@ import type { FeePolicy, WearingTarget } from '@/features/product/api/dto';
 import { useProductDetail } from '@/features/product/model/useProductDetail';
 import { useUpdateProduct } from '@/features/product/model/useUpdateProduct';
 import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
+import { buildMeasurementsPayload } from '@/features/product/lib/measurementUtils';
 import { SaleFormBody, OotdPickerView } from '@/features/product/ui/saleForm';
 import type { SaleForm, SectionKey, FormMeasurements } from '@/features/product/ui/saleForm';
 import { DEFAULT_CONDITION_FLAGS } from '@/features/product/ui/saleForm';
@@ -118,11 +119,7 @@ const ProductEditContent = ({
   };
 
   const handleSubmit = () => {
-    const measurements = Object.fromEntries(
-      Object.entries(form.measurements)
-        .filter(([, v]) => v !== '' && v !== undefined)
-        .map(([k, v]) => [k, Number(v)]),
-    );
+    const measurements = buildMeasurementsPayload(form.categoryLarge, form.measurements);
 
     mutate(
       {
@@ -138,7 +135,7 @@ const ProductEditContent = ({
         feePolicy: form.feePolicy as FeePolicy,
         mainImageUrl: form.mainImageUrl,
         representativeImageUrl: form.mainImageUrl,
-        measurements: Object.keys(measurements).length > 0 ? measurements : undefined,
+        measurements,
         conditionFlags: form.conditionFlags,
         sellerDescription: form.sellerDescription || undefined,
         attachedOotdIds: form.attachedOotdIds,

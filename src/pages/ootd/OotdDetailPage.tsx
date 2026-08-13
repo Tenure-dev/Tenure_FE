@@ -66,7 +66,7 @@ const OotdDetailPage = () => {
   const [loadError, setLoadError] = useState(false);
   const loadRequestIdRef = useRef(0);
   const [showIntro, setShowIntro] = useState(false);
-  const [tagsVisible, setTagsVisible] = useState(true);
+  const [tagsVisible, setTagsVisible] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showTaggedSheet, setShowTaggedSheet] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);

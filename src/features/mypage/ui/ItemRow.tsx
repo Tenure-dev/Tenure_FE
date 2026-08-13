@@ -1,4 +1,5 @@
 import { Button } from '@/shared/components';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 import { getDaysAgo } from '../lib/daysAgo';
 import { ITEM_STATUS_LABEL } from '../lib/statusLabel';
 import type { Item } from '../model/items';
@@ -25,9 +26,12 @@ const ItemRow = ({ item, onClick, onSaleConvert }: ItemRowProps) => {
     >
       <div className="bg-gray-bg size-[17vw] max-h-25 max-w-25 shrink-0 overflow-hidden rounded-lg">
         <img
-          src={item.representativeImageUrl}
+          src={resolveImageUrl(item.representativeImageUrl)}
           alt={item.itemName}
           className="size-full object-cover"
+          onError={(e) => {
+            e.currentTarget.style.visibility = 'hidden';
+          }}
         />
       </div>
       <div className="flex flex-1 flex-col gap-0.5">

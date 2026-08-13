@@ -1,3 +1,4 @@
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 import { formatDate } from '../lib/formatDate';
 import { WEARING_TARGET_LABEL } from '../lib/wearingTargetLabel';
 import type { ItemDetail } from '../model/items';
@@ -15,9 +16,12 @@ const ItemInfoSection = ({ item, allowProposal }: ItemInfoSectionProps) => {
       <div className="flex flex-col items-center gap-1">
         <div className="bg-gray-bg size-[28vw] max-h-46 max-w-46 overflow-hidden rounded-lg">
           <img
-            src={item.representativeImageUrl}
+            src={resolveImageUrl(item.representativeImageUrl)}
             alt={item.itemName}
             className="size-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.visibility = 'hidden';
+            }}
           />
         </div>
         <span className="text-body-4 font-regular text-text-secondary">대표사진</span>

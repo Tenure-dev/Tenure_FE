@@ -1,11 +1,16 @@
 import type { ProductSaleStatus } from '../model/types';
-import type { ProductStatus } from '../api/dto';
+import type { ProductStatus, SellerGrade } from '../api/dto';
 
 export const PRODUCT_STATUS_MAP: Record<ProductStatus, ProductSaleStatus> = {
   ON_SALE: 'onSale',
   TRADING: 'trading',
   SOLD: 'sold',
   HIDDEN: 'hidden',
+};
+
+export const SELLER_GRADE_LABEL: Record<SellerGrade, string> = {
+  BASIC: '기본 사용자',
+  RECORD: '레코드 사용자',
 };
 
 export const CONDITION_LABELS: Record<string, string> = {

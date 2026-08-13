@@ -10,6 +10,7 @@ export const useUpdateProduct = (productId: number) => {
     mutationFn: (data: UpdateProductRequest) => updateProduct(productId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productDetailQueryKey(productId) });
+      queryClient.invalidateQueries({ queryKey: ['items'] });
     },
   });
 };

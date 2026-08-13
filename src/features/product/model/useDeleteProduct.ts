@@ -13,6 +13,7 @@ export const useDeleteProduct = (productId: number) => {
       queryClient.setQueryData<ProductDetailResponse>(productDetailQueryKey(productId), (prev) =>
         prev ? { ...prev, productStatus: 'HIDDEN' } : prev,
       );
+      queryClient.invalidateQueries({ queryKey: ['items'] });
     },
   });
 };

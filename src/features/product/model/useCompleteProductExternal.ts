@@ -12,6 +12,7 @@ export const useCompleteProductExternal = (productId: number) => {
       queryClient.setQueryData<ProductDetailResponse>(productDetailQueryKey(productId), (prev) =>
         prev ? { ...prev, productStatus: 'SOLD' } : prev,
       );
+      queryClient.invalidateQueries({ queryKey: ['items'] });
     },
   });
 };

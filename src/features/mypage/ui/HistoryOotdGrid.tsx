@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { BackHeader } from '@/shared/components';
 import { useHistoryOotdsQuery } from '../model/useHistoryOotdsQuery';
 
@@ -16,9 +17,13 @@ const HistoryOotdGrid = ({ itemId, historyId, onClose }: Props) => {
       <BackHeader title="아이템 히스토리" onBack={onClose} />
       <div className="columns-2 gap-0.5 overflow-y-auto px-0.5 pb-4">
         {images.map((ootd) => (
-          <div key={ootd.ootdId} className="mb-0.5 overflow-hidden">
+          <Link
+            key={ootd.ootdId}
+            to={`/ootd/${ootd.ootdId}`}
+            className="mb-0.5 block overflow-hidden"
+          >
             <img src={ootd.imageUrl} alt="" className="w-full object-cover" />
-          </div>
+          </Link>
         ))}
       </div>
     </div>

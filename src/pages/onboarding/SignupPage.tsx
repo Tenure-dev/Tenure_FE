@@ -331,7 +331,7 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col bg-[#FFFFFF] font-sans">
+    <div className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-col bg-[#FFFFFF] font-sans">
       <StepHeader title={STEP_TITLES[step]} step={step} onBack={handleBack} />
 
       {step === 1 && (

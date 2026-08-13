@@ -82,7 +82,7 @@ const SettingsPage = () => {
   ];
 
   return (
-    <div className="relative min-h-screen w-full bg-[#FFFFFF]">
+    <div className="relative min-h-dvh w-full bg-[#FFFFFF]">
       <header className="flex h-[52px] items-center px-[16px]">
         <button
           type="button"

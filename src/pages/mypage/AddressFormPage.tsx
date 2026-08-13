@@ -36,7 +36,7 @@ const AddressFormPage = () => {
 
   if (isEditMode && isPending) {
     return (
-      <div className="mx-auto min-h-screen w-full max-w-[390px] bg-[#FFFFFF] font-sans">
+      <div className="mx-auto min-h-dvh w-full max-w-[390px] bg-[#FFFFFF] font-sans">
         <FormHeader title="배송지 수정" onBack={() => navigate(-1)} />
         <p className="px-[16px] py-[24px] text-center text-[13px] text-[#767676]">불러오는 중...</p>
       </div>
@@ -47,7 +47,7 @@ const AddressFormPage = () => {
 
   if (isEditMode && !target) {
     return (
-      <div className="mx-auto min-h-screen w-full max-w-[390px] bg-[#FFFFFF] font-sans">
+      <div className="mx-auto min-h-dvh w-full max-w-[390px] bg-[#FFFFFF] font-sans">
         <FormHeader title="배송지 수정" onBack={() => navigate(-1)} />
         <p className="px-[16px] py-[24px] text-center text-[13px] text-[#767676]">
           배송지 정보를 찾을 수 없습니다.
@@ -123,7 +123,7 @@ const AddressForm = ({ addressId, initial, onDone }: AddressFormProps) => {
   };
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-[390px] bg-[#FFFFFF] font-sans">
+    <div className="mx-auto min-h-dvh w-full max-w-[390px] bg-[#FFFFFF] font-sans">
       <FormHeader title={isEditMode ? '배송지 수정' : '배송지 추가'} onBack={onDone} />
 
       <div className="flex flex-col gap-[16px] px-[16px] py-[24px]">

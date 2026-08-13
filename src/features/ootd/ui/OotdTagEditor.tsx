@@ -107,6 +107,31 @@ const OotdTagEditor = ({
       tagId: t.tagId,
     })),
   );
+  // 편집 진입 시 기존 태그 아이템 상세를 미리 불러와 tagged 맵에 채운다.
+  // (그래야 기존 태그 말풍선을 눌렀을 때 그 아이템이 시트에 떠서 해제=태그 삭제가 가능)
+  useEffect(() => {
+    const ids = (initialTags ?? []).map((t) => t.itemId);
+    if (ids.length === 0) return;
+    let cancelled = false;
+    void Promise.all(ids.map((id) => getItemDetail(id).catch(() => null))).then((details) => {
+      if (cancelled) return;
+      setTagged((prev) => {
+        const next = { ...prev };
+        for (const d of details) {
+          if (!d) continue;
+          const it = toOotdItemFromDetail(d);
+          if (!(it.id in next)) next[it.id] = it; // 이번 세션에서 이미 담은 건 유지
+        }
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+    // 진입 시 1회만 (initialTags는 매 렌더 새 배열이라 deps에서 제외)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [activeBoxId, setActiveBoxId] = useState<string | null>(null);
   // 활성 박스의 테두리/스포트라이트/리사이즈 핸들 표시 여부. 사진 빈 곳을 탭해 새 박스를
   // 만들 때만 true — 기존 태그를 말풍선으로 활성화했을 때는 false로 두고 말풍선만 선택 표시한다.
@@ -165,16 +190,23 @@ const OotdTagEditor = ({
     try {
       const res = await analyzeTagArea(ootdId, { bbox });
       if (res.matchedItemIds.length === 0) {
-        if (res.categorySmall) {
-          const scoped = recommended.filter((item) => item.categoryName === res.categorySmall);
-          setAnalyzedItems((prev) => ({ ...prev, [boxId]: scoped }));
-        } else {
+        // 특정 아이템은 못 맞췄을 때: AI가 카테고리를 알아냈으면 그 카테고리 아이템을 앞에 두되,
+        // 나머지 보유 아이템도 모두 보여줘서 사용자가 다른 아이템도 고를 수 있게 한다.
+        const scoped = res.categorySmall
+          ? recommended.filter((item) => item.categoryName === res.categorySmall)
+          : [];
+        const scopedIds = new Set(scoped.map((it) => it.id));
+        const rest = recommended.filter((it) => !scopedIds.has(it.id));
+        const merged = [...scoped, ...rest];
+        if (merged.length === 0) {
           setAnalyzedItems((prev) => {
             if (!(boxId in prev)) return prev;
             const next = { ...prev };
             delete next[boxId];
             return next;
           });
+        } else {
+          setAnalyzedItems((prev) => ({ ...prev, [boxId]: merged }));
         }
         return;
       }
@@ -190,14 +222,24 @@ const OotdTagEditor = ({
     }
   };
 
+  // 분석(디바운스 대기 + API 응답 대기) 중인 박스 → 해당 박스가 활성일 때 목록에 스켈레톤 표시
+  const [analyzingBoxId, setAnalyzingBoxId] = useState<string | null>(null);
+
   // 박스 생성/이동/리사이즈가 연달아 일어나도, 멈춘 뒤 한 번만 분석 API 호출(디바운스)
   const analysisTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scheduleAnalysis = (boxId: string) => {
     if (ootdId == null) return;
     if (analysisTimer.current) clearTimeout(analysisTimer.current);
+    setAnalyzingBoxId(boxId); // 대기~응답 동안 스켈레톤 on
     analysisTimer.current = setTimeout(() => {
       const box = boxesRef.current.find((b) => b.id === boxId);
-      if (box) void runAnalysis(boxId, box.bbox);
+      if (!box) {
+        setAnalyzingBoxId((cur) => (cur === boxId ? null : cur));
+        return;
+      }
+      void runAnalysis(boxId, box.bbox).finally(() => {
+        setAnalyzingBoxId((cur) => (cur === boxId ? null : cur)); // 완료 → 스켈레톤 off
+      });
     }, ANALYSIS_DEBOUNCE_MS);
   };
   useEffect(
@@ -344,6 +386,7 @@ const OotdTagEditor = ({
         }}
         onNewItem={() => setNewItemOpen(true)}
         onBbox={() => activateBox(null)}
+        analyzing={analyzingBoxId != null && analyzingBoxId === activeBoxId}
         overlay={scrollable ? 'fixed' : 'absolute'}
         onHeightChange={scrollable ? setSheetHeight : undefined}
         onExpandedChange={onSheetExpandedChange}

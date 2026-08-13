@@ -1,3 +1,5 @@
+import type { SellerGrade } from '../api/dto';
+
 export type ProductSaleStatus = 'onSale' | 'trading' | 'sold' | 'hidden';
 
 export const ITEM_REPORT_REASONS = [
@@ -16,6 +18,7 @@ export interface ItemSeller {
   nickname: string;
   followerCount: number;
   avatarUrl?: string;
+  grade?: SellerGrade;
 }
 
 export interface ItemTenureRecord {

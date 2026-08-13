@@ -5,6 +5,7 @@ import { circleCheck } from '@/shared/assets';
 import { BackHeader, CTAButton } from '@/shared/components';
 import { useUserStore } from '@/store/userStore';
 import { getSizeSystem } from '@/shared/lib/itemSizeData';
+import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 import type { ItemDetailResponse } from '@/features/mypage/model/items';
 import { useItemDetailQuery } from '@/features/mypage/model/useItemDetailQuery';
 import { useCreateProduct } from '@/features/mypage/model/useCreateProduct';
@@ -52,7 +53,7 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
   const { data: ootdData } = useItemOotdCandidatesQuery(item.itemId);
 
   const [form, setForm] = useState<SaleForm>(() => ({
-    mainImageUrl: item.representativeImageUrl ?? '',
+    mainImageUrl: resolveImageUrl(item.representativeImageUrl) ?? '',
     brandName: item.brandName ?? '',
     itemName: item.itemName ?? '',
     categoryLarge: item.categoryLarge ?? '',
@@ -129,7 +130,7 @@ const SaleConversionContent = ({ item }: { item: ItemDetailResponse }) => {
 
   const ootdCandidates = (ootdData?.content ?? []).map(({ ootdId, imageUrl }) => ({
     id: ootdId,
-    imageUrl,
+    imageUrl: resolveImageUrl(imageUrl),
   }));
 
   const selectedOotds = ootdCandidates.filter(({ id }) => form.attachedOotdIds.includes(id));

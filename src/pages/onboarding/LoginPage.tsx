@@ -84,7 +84,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col justify-center bg-[#FFFFFF] px-[20px] pt-[64px] pb-[48px] font-sans">
+    <div className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-col justify-center bg-[#FFFFFF] px-[20px] pt-[64px] pb-[48px] font-sans">
       <div className="flex justify-center">
         <img src={logo} alt="Tenure" className="w-[160px]" />
       </div>

@@ -225,6 +225,10 @@ const TagResultSheet = ({
                   </div>
                 ))}
               </div>
+            ) : filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <p className="text-body-2 text-text-secondary">유사한 아이템이 없습니다.</p>
+              </div>
             ) : (
               <div className="flex flex-col gap-2">
                 {filtered.map((item) => (

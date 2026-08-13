@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import useIsWideLayout from '@/shared/hooks/useIsWideLayout';
 import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
 import { saveRecentOotd } from '../api/searchApi';
 import type { SearchOotdResponse } from '../api/types';
@@ -11,8 +12,6 @@ export interface OotdResultGridProps {
   onLoadMore: () => void;
 }
 
-const COLUMN_COUNT = 2;
-
 const splitIntoColumns = (items: SearchOotdResponse[], columnCount: number) => {
   const columns: SearchOotdResponse[][] = Array.from({ length: columnCount }, () => []);
   items.forEach((item, index) => columns[index % columnCount].push(item));
@@ -24,7 +23,8 @@ const splitIntoColumns = (items: SearchOotdResponse[], columnCount: number) => {
 const OotdResultGrid = ({ items, hasNext, loading, onLoadMore }: OotdResultGridProps) => {
   const navigate = useNavigate();
   const sentinelRef = useInfiniteScrollSentinel(hasNext, onLoadMore);
-  const columns = splitIntoColumns(items, COLUMN_COUNT);
+  const isWideLayout = useIsWideLayout();
+  const columns = splitIntoColumns(items, isWideLayout ? 3 : 2);
 
   const handleClick = (id: number) => {
     saveRecentOotd(id);
@@ -33,7 +33,7 @@ const OotdResultGrid = ({ items, hasNext, loading, onLoadMore }: OotdResultGridP
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
         {columns.map((column, columnIndex) => (
           <div key={columnIndex} className="flex flex-col gap-2">
             {column.map((item) => (

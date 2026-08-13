@@ -23,7 +23,7 @@ const AddressManagePage = () => {
   };
 
   return (
-    <div className="relative mx-auto min-h-screen w-full max-w-[390px] bg-[#FFFFFF] font-sans">
+    <div className="relative mx-auto min-h-dvh w-full max-w-[390px] bg-[#FFFFFF] font-sans">
       <header className="flex h-[52px] items-center border-b border-[#F0F0F0] px-[16px]">
         <button type="button" onClick={() => navigate(-1)} aria-label="뒤로가기">
           <ChevronLeft size={24} className="text-[#111111]" />

@@ -18,7 +18,7 @@ export interface NotificationDto {
   body: string;
   targetType: ApiTargetType;
   targetId: number;
-  isRead: boolean;
+  read: boolean;
   createdAt: string;
   imageUrl: string | null;
   brandName: string | null;

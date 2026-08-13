@@ -17,16 +17,17 @@ const TenureRecordSection = ({ record }: TenureRecordSectionProps) => {
       />
       <InfoGridRow
         items={[
+          { label: '최근 착용', value: record.lastWornDate },
           { label: '최초 보유 날짜', value: record.firstOwnedDate },
-          { label: '사이즈', value: record.size },
         ]}
       />
       <InfoGridRow
         items={[
+          { label: '사이즈', value: record.size },
           { label: '착용 대상', value: record.wornFor },
-          { label: '카테고리', value: record.category },
         ]}
       />
+      <InfoGridRow items={[{ label: '카테고리', value: record.category }]} />
     </AccordionSection>
   );
 };

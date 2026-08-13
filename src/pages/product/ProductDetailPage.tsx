@@ -186,6 +186,7 @@ const ProductDetailPageContent = ({
         dimmed={saleStatus === 'sold'}
         wished={wished}
         onToggleWish={toggleWish}
+        showWishButton={role !== 'seller'}
       >
         <ItemTitle brand={brandName} name={itemName} saleStatus={saleStatus} price={price} />
       </ItemImageSection>

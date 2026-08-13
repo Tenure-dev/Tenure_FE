@@ -16,6 +16,7 @@ import { useChatMessages } from '@/features/chat/api/useChatMessages';
 import { uploadChatImages } from '@/features/chat/api/messages';
 import { useMarkChatRead } from '@/features/chat/api/useMarkChatRead';
 import { useChatRoom } from '@/features/chat/api/useChatRoom';
+import { useOfferDetail } from '@/features/purchase/model/useOfferDetail';
 
 // role: 'buyer' | 'seller' (내 입장)
 // saleStatus: 'onSale' 판매중 / 'unlisted' 미판매
@@ -40,6 +41,13 @@ const ChatRoomPage = ({
   const { data: history, fetchNextPage, hasNextPage, isFetchingNextPage } = useChatMessages(roomId);
   const { mutate: markRead } = useMarkChatRead();
   const { data: room } = useChatRoom(roomId);
+  // 가격은 매핑된 room.product.price에 들어있다(ON_SALE 등은 상품가). 상품 row가 없어
+  // price가 null인데 구매 제안이 있으면, 제안 상세에서 제안금액을 가져와 대체 표시.
+  // (offerId 0이면 useOfferDetail이 disabled → 불필요한 호출 안 함)
+  const productPrice = room?.product.price ?? null;
+  const offerIdForPrice = productPrice == null ? (room?.purchaseOfferId ?? 0) : 0;
+  const { data: offer } = useOfferDetail(offerIdForPrice);
+  const barPrice = productPrice ?? offer?.amounts.offerAmount ?? null;
 
   // 방 진입 시 읽음 처리 (내 unreadCount 0 → 목록 뱃지 제거)
   useEffect(() => {
@@ -119,7 +127,7 @@ const ChatRoomPage = ({
       />
       {room && (
         <ChatProductBar
-          product={room.product}
+          product={{ ...room.product, price: barPrice }}
           role={roleView}
           saleStatus={saleStatusView}
           tradeStatus={tradeStatusView}

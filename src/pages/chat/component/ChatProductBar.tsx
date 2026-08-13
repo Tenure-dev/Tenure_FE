@@ -51,13 +51,14 @@ const ChatActions = ({
           variant="solid"
           size="36"
           className="text-body-2 font-regular w-full! flex-1"
+          disabled={itemId == null}
           onClick={
             isUnlisted
               ? itemId != null
                 ? () => navigate(`/items/${itemId}`)
                 : undefined
-              : productId != null
-                ? () => navigate(`/product/${productId}`)
+              : itemId != null
+                ? () => navigate(`/product?itemId=${itemId}`)
                 : undefined
           }
         >
@@ -94,13 +95,23 @@ const ChatActions = ({
       saleStatus === 'onSale' ? { label: '구매하기', filled: true } : { label: '보낸 요청 보기' };
   }
 
+  // 이동 대상(ID/파라미터)이 없으면 버튼을 비활성화해 '꺼진' 상태로 보이게 한다.
+  const rightDisabled = tradeStarted
+    ? tradeId == null
+    : right.label === '구매하기'
+      ? productId == null
+      : right.label === '보낸 요청 보기'
+        ? purchaseOfferId == null && purchaseIntentId == null
+        : true;
+
   return (
     <div className="flex gap-2">
       <Button
         variant="solid"
         size="36"
         className="text-body-2 font-regular w-full! flex-1"
-        onClick={productId != null ? () => navigate(`/product/${productId}`) : undefined}
+        disabled={itemId == null}
+        onClick={itemId != null ? () => navigate(`/product?itemId=${itemId}`) : undefined}
       >
         상품 상세
       </Button>
@@ -108,6 +119,7 @@ const ChatActions = ({
         variant={right.filled ? 'filled' : 'solid'}
         size="36"
         className="text-body-2 font-regular w-full! flex-1"
+        disabled={rightDisabled}
         onClick={
           tradeStarted
             ? goTradeDetail
@@ -163,14 +175,18 @@ const ChatProductBar = ({
         {saleStatus === 'unlisted' ? (
           <>
             <p className="text-body-3 text-text-secondary">미판매 상품</p>
-            <p className="text-body-3 text-text-secondary">
-              제안 금액 :{' '}
-              <span className="text-error font-semibold">{formatPrice(product.price)}</span>
-            </p>
+            {product.price != null && (
+              <p className="text-body-3 text-text-secondary">
+                제안 금액 :{' '}
+                <span className="text-error font-semibold">{formatPrice(product.price)}</span>
+              </p>
+            )}
           </>
         ) : (
           <>
-            <p className="text-body-2 text-error font-semibold">{formatPrice(product.price)}</p>
+            {product.price != null && (
+              <p className="text-body-2 text-error font-semibold">{formatPrice(product.price)}</p>
+            )}
             <p className="text-body-3 text-text-secondary">{product.status}</p>
           </>
         )}

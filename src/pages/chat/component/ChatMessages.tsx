@@ -1,12 +1,13 @@
 import { Fragment, useEffect, useRef } from 'react';
 import type { ChatMessage } from '@/features/chat/model/types';
+import { parseServerDate } from '@/shared/lib/parseServerDate';
 import MessageBubble from './MessageBubble';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
 // ISO → '2026.06.21 월요일'
 const formatDateLabel = (iso: string): string => {
-  const d = new Date(iso);
+  const d = parseServerDate(iso);
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
   return `${d.getFullYear()}.${mm}.${dd} ${WEEKDAYS[d.getDay()]}요일`;
@@ -14,7 +15,7 @@ const formatDateLabel = (iso: string): string => {
 
 // 같은 날짜인지 판별 (연·월·일 기준)
 const sameDay = (a: string, b: string): boolean =>
-  new Date(a).toDateString() === new Date(b).toDateString();
+  parseServerDate(a).toDateString() === parseServerDate(b).toDateString();
 
 type Props = {
   messages: ChatMessage[];

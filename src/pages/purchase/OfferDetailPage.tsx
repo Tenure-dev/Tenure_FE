@@ -70,6 +70,7 @@ const OfferDetailPage = () => {
       status={data.status}
       remainingSeconds={data.remainingSeconds}
       itemId={data.item.itemId}
+      purchaseOfferId={offerIdNum}
       itemNavigationPath={`/items/${data.item.itemId}`}
       brandName={data.item.brandName}
       itemName={data.item.itemName}

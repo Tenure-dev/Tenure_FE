@@ -7,8 +7,8 @@ export interface ChatRoomSummary {
   opponentProfileImgUrl: string | null;
   brandName: string;
   itemName: string;
-  lastMessage: string;
-  lastMessageAt: string;
+  lastMessage: string | null; // 메시지 없으면 null
+  lastMessageAt: string | null; // 메시지 없으면 null
   unreadCount: number;
 }
 
@@ -58,11 +58,11 @@ export interface ChatRoomDetailResponse {
   itemImageUrl: string | null;
   brandName: string;
   itemName: string;
-  productStatus: ProductStatus;
-  price: number;
+  productStatus: ProductStatus | null; // 상품 row 없으면(미등록 제안) null
+  price: number | null; // 상품 없으면 null → 제안금액으로 대체 표시
   lastWornAt: string | null;
   tradeId: number | null;
-  productId: number;
+  productId: number | null; // 상품 row 없으면 null
   itemId: number;
   buyer: boolean;
   purchaseIntentId: number | null; // SENT 구매 의사 ID, 없으면 null

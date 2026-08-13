@@ -4,12 +4,12 @@ import type { ChatProduct, ChatRole, SaleStatus, TradeStatus } from '../model/ty
 import type { ChatRoomDetailResponse, ProductStatus } from './dto';
 
 // 채팅방 생성 또는 조회 (아이템 상세 페이지 채팅하기 버튼).
-// 판매자가 받은 구매 제안 상세에서 열 땐 purchaseOfferId를 함께 보내 제안자↔소유자 방을 잡는다.
 export const createOrGetChatRoom = (itemId: number, purchaseOfferId?: number) =>
-  api.post<{ chatRoomId: number }>('/chats', {
-    itemId,
-    ...(purchaseOfferId != null && { purchaseOfferId }),
-  });
+  api.post<{ chatRoomId: number }>('/chats', { itemId, purchaseOfferId });
+
+// 채팅방 생성 또는 조회 (거래 상세 페이지 채팅하기 버튼).
+export const createOrGetChatRoomByTrade = (tradeId: number) =>
+  api.post<{ chatRoomId: number }>(`/chats/trades/${tradeId}`);
 
 // 채팅방 상세 조회 (프로덕트 바 데이터)
 export const getChatRoom = (chatRoomId: number) => {

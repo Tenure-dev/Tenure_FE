@@ -8,6 +8,8 @@ import { getItemDetail } from '@/features/mypage/api/itemsApi';
 import type { ItemDetailResponse } from '@/features/mypage/model/items';
 import { getDaysAgo } from '@/features/mypage/lib/daysAgo';
 import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
+import { Toast } from '@/shared/components';
+import { useToast } from '@/shared/hooks/useToast';
 import TagLoading from '@/pages/camera/component/TagLoading';
 import TagResultSheet, {
   MIDDLE as RESULT_SHEET_DEFAULT_H,
@@ -43,6 +45,7 @@ type Props = {
   className?: string;
 };
 
+const MAX_TAGS = 5; // 한 게시물에 붙일 수 있는 최대 태그 수
 const BOX_W = 0.26;
 const BOX_H = 0.22;
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
@@ -140,6 +143,7 @@ const OotdTagEditor = ({
   const [query, setQuery] = useState('');
   const [newItemOpen, setNewItemOpen] = useState(false);
   const [showBox, setShowBox] = useState(true);
+  const { message: toastMessage, show: showToast, hide: hideToast } = useToast();
 
   const activeBox = boxes.find((b) => b.id === activeBoxId) ?? null;
   const tagCount = boxes.filter((b) => b.itemId).length; // 아이템 부착된 박스 = 완성 태그
@@ -266,6 +270,11 @@ const OotdTagEditor = ({
   // 이미지 빈 곳 탭 → 그 위치에 박스 생성 + 활성화 + 분석 API 호출
   const handleAreaClick = (e: MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).dataset.tagArea !== 'true') return; // 박스/버튼 클릭은 무시
+    // 완성 태그가 최대치면 새 박스 생성 차단 (기존 태그 편집/이동은 그대로)
+    if (tagCount >= MAX_TAGS) {
+      showToast(`태그는 최대 ${MAX_TAGS}개까지 추가할 수 있어요.`);
+      return;
+    }
     const rect = e.currentTarget.getBoundingClientRect();
     const cx = (e.clientX - rect.left) / rect.width;
     const cy = (e.clientY - rect.top) / rect.height;
@@ -401,6 +410,8 @@ const OotdTagEditor = ({
           onSubmit={handleRegister}
         />
       )}
+
+      <Toast message={toastMessage} onClose={hideToast} />
     </div>
   );
 };

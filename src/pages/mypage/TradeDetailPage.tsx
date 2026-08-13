@@ -8,7 +8,7 @@ import { useTradeStatusChange } from '@/features/trade/api/useTradeStatusChange'
 import type { TradeStatus } from '@/features/trade/api/types';
 import { buildTradeTimeline } from '@/features/trade/lib/buildTradeTimeline';
 import { resolveImageUrl } from '@/shared/lib/resolveImageUrl';
-import { createOrGetChatRoom } from '@/features/chat/api/room';
+import { createOrGetChatRoomByTrade } from '@/features/chat/api/room';
 
 const SectionTitle = ({ children }: { children: ReactNode }) => (
   <p className="px-[16px] pt-[24px] pb-[8px] text-[12px] text-[#767676]">{children}</p>
@@ -152,7 +152,7 @@ const TradeDetailPage = () => {
     if (isChatLoading) return;
     setIsChatLoading(true);
     try {
-      const { chatRoomId } = await createOrGetChatRoom(trade.itemId);
+      const { chatRoomId } = await createOrGetChatRoomByTrade(trade.tradeId);
       navigate(`/chat/${chatRoomId}`);
     } finally {
       setIsChatLoading(false);

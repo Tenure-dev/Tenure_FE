@@ -90,7 +90,7 @@ const ShippingInputPage = () => {
 
   if (registerShipmentMutation.isPending) {
     return (
-      <div className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col items-center justify-center gap-4 bg-[#FFFFFF] font-sans">
+      <div className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-col items-center justify-center gap-4 bg-[#FFFFFF] font-sans">
         <div className="size-[32px] animate-spin rounded-full border-2 border-[#00AAFF] border-t-transparent" />
         <p className="text-[13px] text-[#767676]">
           배송 정보를 찾고 있습니다. 잠시만 기다려주세요.
@@ -100,7 +100,7 @@ const ShippingInputPage = () => {
   }
 
   return (
-    <div className="relative mx-auto min-h-screen w-full max-w-[390px] bg-[#FFFFFF] font-sans">
+    <div className="relative mx-auto min-h-dvh w-full max-w-[390px] bg-[#FFFFFF] font-sans">
       <header className="flex h-[52px] items-center justify-between border-b border-[#F0F0F0] px-[16px]">
         <button type="button" onClick={() => navigate(-1)} aria-label="뒤로가기">
           <ChevronLeft size={24} className="text-[#111111]" />

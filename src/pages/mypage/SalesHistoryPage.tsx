@@ -58,7 +58,7 @@ const SalesHistoryPage = () => {
   );
 
   return (
-    <div className="min-h-screen w-full bg-[#FFFFFF] font-sans">
+    <div className="min-h-dvh w-full bg-[#FFFFFF] font-sans">
       {header}
 
       {isPending ? (

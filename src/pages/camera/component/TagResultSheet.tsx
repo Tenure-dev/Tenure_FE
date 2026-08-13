@@ -17,6 +17,7 @@ type Props = {
   onSearchClose: () => void;
   onNewItem: () => void;
   onBbox: () => void;
+  analyzing?: boolean; // 활성 박스 분석 진행 중 → 목록 스켈레톤 표시
   overlay?: 'absolute' | 'fixed';
   onHeightChange?: (height: number) => void;
   onExpandedChange?: (expanded: boolean) => void; // 시트가 최대 높이에 도달했는지
@@ -47,6 +48,7 @@ const TagResultSheet = ({
   onSearchClose,
   onNewItem,
   onBbox,
+  analyzing = false,
   overlay = 'absolute',
   onHeightChange,
   onExpandedChange,
@@ -176,14 +178,22 @@ const TagResultSheet = ({
         ) : (
           <div className="border-border-secondary border-b pb-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-title-2 font-semibold">분석한 결과</h2>
+              {analyzing ? (
+                <div className="bg-bg-secondary h-6 w-24 animate-pulse rounded" />
+              ) : (
+                <h2 className="text-title-2 font-semibold">분석한 결과</h2>
+              )}
               <button type="button" onClick={onSearchOpen} aria-label="검색">
                 <SearchIcon />
               </button>
             </div>
-            <p className="text-body-3 text-text-secondary mt-1">
-              유사한 아이템 {items.length}개 찾았습니다.
-            </p>
+            {analyzing ? (
+              <div className="bg-bg-secondary mt-2 h-4 w-40 animate-pulse rounded" />
+            ) : (
+              <p className="text-body-3 text-text-secondary mt-1">
+                유사한 아이템 {items.length}개 찾았습니다.
+              </p>
+            )}
           </div>
         )}
 
@@ -200,16 +210,33 @@ const TagResultSheet = ({
             </button>
 
             <h3 className="text-body-2 mt-5 mb-2 font-semibold">기존 아이템</h3>
-            <div className="flex flex-col gap-2">
-              {filtered.map((item) => (
-                <TagItemRow
-                  key={item.id}
-                  item={item}
-                  selected={item.id === activeItemId}
-                  onToggle={onSelect}
-                />
-              ))}
-            </div>
+            {analyzing ? (
+              <div className="flex animate-pulse flex-col gap-2">
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className="bg-bg-quaternary flex h-20 w-full items-center gap-2.5 rounded-xl px-3"
+                  >
+                    <div className="bg-bg-secondary size-12 shrink-0 rounded-full" />
+                    <div className="flex flex-col gap-2">
+                      <div className="bg-bg-secondary h-4 w-40 rounded" />
+                      <div className="bg-bg-secondary h-3 w-24 rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {filtered.map((item) => (
+                  <TagItemRow
+                    key={item.id}
+                    item={item}
+                    selected={item.id === activeItemId}
+                    onToggle={onSelect}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

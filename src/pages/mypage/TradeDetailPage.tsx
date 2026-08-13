@@ -38,7 +38,7 @@ const ACTION_MARK_DELIVERED = 'MARK_DELIVERED';
 const ACTION_CONFIRM_PURCHASE = 'CONFIRM_PURCHASE';
 
 const MessageScreen = ({ message, onBack }: { message: string; onBack: () => void }) => (
-  <div className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col bg-[#FFFFFF] font-sans">
+  <div className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-col bg-[#FFFFFF] font-sans">
     <header className="flex h-[52px] items-center px-[16px]">
       <button type="button" onClick={onBack} aria-label="뒤로가기">
         <ChevronLeft size={24} className="text-[#111111]" />
@@ -147,8 +147,8 @@ const TradeDetailPage = () => {
   };
 
   return (
-    <div className="relative mx-auto min-h-screen w-full max-w-[390px] bg-[#FFFFFF] font-sans">
-      <header className="flex h-[52px] items-center justify-between border-b border-[#F0F0F0] px-[16px]">
+    <div className="relative mx-auto min-h-dvh w-full max-w-[390px] bg-[#FFFFFF] font-sans">
+      <header className="sticky top-0 z-10 flex h-[52px] items-center justify-between border-b border-[#F0F0F0] bg-white px-[16px]">
         <button type="button" onClick={handleBack} aria-label="뒤로가기">
           <ChevronLeft size={24} className="text-[#111111]" />
         </button>

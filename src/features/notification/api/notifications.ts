@@ -30,7 +30,7 @@ const toNotificationItem = (dto: NotificationDto): NotificationItem => ({
   brandName: dto.brandName,
   itemName: dto.itemName,
   senderUsername: dto.senderUsername,
-  isRead: dto.isRead,
+  isRead: dto.read,
   urgent: dto.category === 'NEEDS_ACTION',
   createdAt: new Date(dto.createdAt).getTime(),
   targetType: dto.targetType,

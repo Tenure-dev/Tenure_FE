@@ -11,6 +11,7 @@ import FollowAvatarRow from '@/features/feed/ui/FollowAvatarRow';
 import type { FeedCard, FeedTab } from '@/features/feed/model/types';
 import { useFeedQuery } from '@/features/feed/model/useFeedQuery';
 import { useFollowings } from '@/features/feed/model/useFollowings';
+import { useHasUnreadNotifications } from '@/features/notification/api/useHasUnreadNotifications';
 import { USER_NAME_STORAGE_KEY } from '@/shared/lib/api';
 import { resolveFileUrl } from '@/shared/lib/resolveFileUrl';
 
@@ -23,6 +24,7 @@ const FeedPage = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { data: hasUnreadNotification } = useHasUnreadNotifications();
   const { message: toastMessage, show: showToast, hide: hideToast } = useToast();
   const initialToastRef = useRef((location.state as { toast?: string } | null)?.toast ?? null);
 
@@ -70,7 +72,11 @@ const FeedPage = () => {
 
   return (
     <div className="bg-bg-white flex min-h-screen flex-col">
-      <FeedHeader userName={userName} onNotificationClick={() => navigate('/notifications')} />
+      <FeedHeader
+        userName={userName}
+        hasUnreadNotification={hasUnreadNotification}
+        onNotificationClick={() => navigate('/notifications')}
+      />
 
       <FeedIntro />
 

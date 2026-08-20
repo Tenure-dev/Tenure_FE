@@ -7,7 +7,7 @@ export interface ViewHeaderProps {
 }
 
 const ViewHeader = ({ onBack, onMoreClick }: ViewHeaderProps) => (
-  <div className="bg-bg-white sticky top-0 z-30 flex items-center justify-between py-3">
+  <div className="bg-bg-white sticky top-0 z-30 flex items-center justify-between px-4 py-3">
     <button type="button" onClick={onBack} aria-label="뒤로가기">
       <img src={leftArrow} alt="" className="size-5" />
     </button>
